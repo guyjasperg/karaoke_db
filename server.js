@@ -142,33 +142,6 @@ app.get('/api/songs/search', (req, res) => {
     }
 });
 
-// // Configure multer for file uploads
-// const upload = multer({
-//     dest: 'uploads/', // Destination folder for uploaded files
-//     limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50MB
-// });
-
-// API to handle database file upload
-// app.post('/api/upload', upload.single('dbFile'), (req, res) => {
-//     if (!req.file) {
-//         return res.status(400).json({ error: 'No file uploaded' });
-//     }
-
-//     const tempPath = req.file.path;
-//     const targetPath = path.join(__dirname, 'uploads', req.file.originalname);
-
-//     // Move the file to the target location
-//     fs.rename(tempPath, targetPath, (err) => {
-//         if (err) {
-//             return res.status(500).json({ error: 'Failed to move file' });
-//         }
-
-//         // Optionally, you can add code here to process the uploaded database file
-
-//         res.status(200).json({ message: 'File uploaded successfully', filePath: targetPath });
-//     });
-// });
-
 // Multer configuration for database file upload
 const dbStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -232,6 +205,22 @@ app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
     }
 });
 
+// Endpoint to download a file
+app.get('/api/download/:filename', (req, res) => {
+    console.log('Downloading file:', './mydatabase.sqlite');
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, filename);
+
+    console.log(`Downloading file: ${filePath}`);
+
+    // Send the file for download
+    res.download(filePath, filename, (err) => {
+        if (err) {
+            console.error('Error downloading file:', err);
+            res.status(500).json({ error: 'Failed to download file.' });
+        }
+    });
+});
 
 // Serve static files (HTML, CSS, JS)
 app.use(express.static('./'));

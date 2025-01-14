@@ -3,5 +3,10 @@ module.exports = {
   theme: {
     extend: {},
   },
+  variants: {
+    extend: {
+        backgroundColor: ['odd', 'even'],
+    },
+},
   plugins: [],
 };

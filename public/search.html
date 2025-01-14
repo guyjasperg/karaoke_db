@@ -24,8 +24,10 @@
                 return;
             }
             tbody.innerHTML = songs.map(song => `
-                <tr class="hover:bg-gray-50 transition duration-200">
-                    <td class="p-3 text-gray-700">${song.Artist}</td>
+                <tr class="hover:bg-gray-50 odd:bg-gray-500 even:bg-white transition duration-200 border-b border-gray-500">
+                    <td class="p-3 text-gray-700">
+                        <a href="#" onclick="document.getElementById('searchField').value='Artist'; document.getElementById('searchQuery').value='${song.Artist}'; searchSongs(); return false;" class="text-blue-500 hover:text-blue-700 hover:underline">${song.Artist}</a>
+                    </td>
                     <td class="p-3 text-gray-700">${song.Title}</td>
                     <td class="p-3 text-gray-700">${new Date(song.Duration).toISOString().substr(14, 5)}</td>
                 </tr>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table with Alternate Row Colors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">Sample Table</h1>
+        <table class="w-full bg-white rounded-lg shadow-md overflow-hidden">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left text-gray-700">Name</th>
+                    <th class="p-3 text-left text-gray-700">Role</th>
+                    <th class="p-3 text-left text-gray-700">Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Row 1 -->
+                <tr class="hover:bg-gray-50 transition duration-200 odd:bg-blue-100 even:bg-white">
+                    <td class="p-3 text-gray-700">John Doe</td>
+                    <td class="p-3 text-gray-700">Software Engineer</td>
+                    <td class="p-3 text-gray-700">john.doe@example.com</td>
+                </tr>
+                <!-- Row 2 -->
+                <tr class="hover:bg-gray-50 transition duration-200 odd:bg-blue-100 even:bg-white">
+                    <td class="p-3 text-gray-700">Jane Smith</td>
+                    <td class="p-3 text-gray-700">Product Manager</td>
+                    <td class="p-3 text-gray-700">jane.smith@example.com</td>
+                </tr>
+                <!-- Row 3 -->
+                <tr class="hover:bg-gray-50 transition duration-200 odd:bg-blue-100 even:bg-white">
+                    <td class="p-3 text-gray-700">Alice Johnson</td>
+                    <td class="p-3 text-gray-700">UI/UX Designer</td>
+                    <td class="p-3 text-gray-700">alice.johnson@example.com</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
