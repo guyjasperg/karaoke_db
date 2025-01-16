@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Request</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+        <!-- Back to Main Page Button -->
+        <a href="/index.html" class="block w-full text-center bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 mb-6">
+            ← Back to Main Page
+        </a>
+
+        <h1 class="text-2xl font-bold text-center mb-6">Song Request</h1>
+        <form id="songRequestForm" class="space-y-4">
+            <!-- Title Field -->
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">Title:</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+
+            <!-- Artist Field -->
+            <div>
+                <label for="artist" class="block text-sm font-medium text-gray-700">Artist:</label>
+                <input
+                    type="text"
+                    id="artist"
+                    name="artist"
+                    required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+
+            <!-- URL Field -->
+            <div>
+                <label for="url" class="block text-sm font-medium text-gray-700">URL:</label>
+                <input
+                    type="text"
+                    id="url"
+                    name="url"
+                    required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+
+            <!-- Submit Button -->
+            <button
+                type="submit"
+                class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                Submit
+            </button>
+        </form>
+
+        <!-- Response Message -->
+        <div id="response" class="mt-6 p-4 rounded-md hidden overflow-auto max-h-48">
+            <!-- Response content will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('songRequestForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+
+            // Get form data
+            const title = document.getElementById('title').value;
+            const artist = document.getElementById('artist').value;
+            const url = document.getElementById('url').value;
+
+            // Prepare the request body
+            const requestBody = {
+                Title: title,
+                Artist: artist,
+                url: url
+            };
+
+            try {
+                // Send the POST request to the server
+                const response = await fetch('http://localhost:3000/api/songrequest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                // Parse the response
+                const data = await response.json();
+
+                // Display the response message
+                const responseDiv = document.getElementById('response');
+                responseDiv.classList.remove('hidden');
+
+                if (response.status === 201) {
+                    responseDiv.className = 'mt-6 p-4 rounded-md bg-green-100 text-green-700 overflow-auto max-h-48';
+                    responseDiv.innerHTML = `
+                        <p class="font-semibold">Song added successfully!</p>
+                        <pre class="mt-2 whitespace-pre-wrap">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else if (response.status === 409) {
+                    responseDiv.className = 'mt-6 p-4 rounded-md bg-red-100 text-red-700 overflow-auto max-h-48';
+                    responseDiv.innerHTML = `
+                        <p class="font-semibold">Song already exists!</p>
+                        <pre class="mt-2 whitespace-pre-wrap">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    responseDiv.className = 'mt-6 p-4 rounded-md bg-red-100 text-red-700 overflow-auto max-h-48';
+                    responseDiv.innerHTML = `<p class="font-semibold">An error occurred: ${response.statusText}</p>`;
+                }
+            } catch (error) {
+                // Handle any errors
+                const responseDiv = document.getElementById('response');
+                responseDiv.classList.remove('hidden');
+                responseDiv.className = 'mt-6 p-4 rounded-md bg-red-100 text-red-700 overflow-auto max-h-48';
+                responseDiv.innerHTML = `<p class="font-semibold">An error occurred: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

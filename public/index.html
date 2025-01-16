@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Song Management</title>
-    <link href="/styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen p-4 sm:p-8">
     <div class="max-w-7xl mx-auto">
@@ -12,28 +12,35 @@
         <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">🎵 Song Management</h1>
             <div class="flex space-x-4">
-            <a href="/search.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
-                🔍 Search Songs
-            </a>
-            <a href="/UploadDB.html" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-200">
-                📂 Upload Database
-            </a>
+                <a href="/search.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 text-center">
+                    🔍 Search Songs
+                </a>
+                <a href="/UploadDB.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-200 text-center">
+                    📂 Upload Database
+                </a>
+                <a href="/SongRequestAdd.html" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition duration-200 text-center">
+                    🎶 Song List
+                </a>
             </div>
-        </div>
+        </div> 
 
-        <!-- Add Song Form -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Add New Song</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input type="text" id="Artist" placeholder="Artist" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="Title" placeholder="Title" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="Genre" placeholder="Genre" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="Rating" placeholder="Rating" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="Duration" placeholder="Duration" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="Cast" placeholder="Cast" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="addSong()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 sm:col-span-2">
-                    ➕ Add Song
+        <!-- Add Song Form (Collapsed by Default) -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-700">Add New Song</h2>
+                <button id="toggleFormButton" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                    ➕ Show Form
                 </button>
+            </div>
+            <div id="addSongForm" class="bg-white p-6 rounded-lg shadow-md hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="text" id="Artist" placeholder="Artist" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="Title" placeholder="Title" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="Duration" placeholder="Duration" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="addSong()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 sm:col-span-2">
+                        ➕ Add Song
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -44,11 +51,15 @@
                     <tr>
                         <th class="p-3 text-left text-gray-700">Artist</th>
                         <th class="p-3 text-left text-gray-700">Title</th>
-                        <th class="p-3 text-left text-gray-700">Genre</th>
-                        <th class="p-3 text-left text-gray-700">Rating</th>
                         <th class="p-3 text-left text-gray-700">Duration</th>
-                        <th class="p-3 text-left text-gray-700">Cast</th>
                         <th class="p-3 text-left text-gray-700">Actions</th>
+                    </tr>
+                    <!-- Filter Row -->
+                    <tr id="filterRow">
+                        <th class="p-2"><input type="text" id="filterArtist" placeholder="Filter Artist" class="w-full p-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></th>
+                        <th class="p-2"><input type="text" id="filterTitle" placeholder="Filter Title" class="w-full p-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></th>
+                        <th class="p-2"></th> <!-- Empty cell for Duration -->
+                        <th class="p-2"></th> <!-- Empty cell for Actions -->
                     </tr>
                 </thead>
                 <tbody id="songsTable">
@@ -57,111 +68,151 @@
             </table>
             <div class="flex justify-between items-center p-4">
                 <button id="prevPage" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200" onclick="prevPage()">Previous</button>
-                <span id="pageInfo" class="text-gray-700"></span>
-                <button id="nextPage" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200" onclick="nextPage()">Next</button>
+                <div class="flex items-center space-x-2">
+                    <span id="pageInfo" class="text-gray-700"></span>
+                    <span class="text-gray-700">|</span>
+                    <label for="rowsPerPage" class="text-gray-700">Rows Per Page:</label>
+                    <select id="rowsPerPage" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="changeRowsPerPage()">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <button id="nextPage" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition w-auto w-2 duration-200" onclick="nextPage()">Next</button>
             </div>
         </div>
     </div>
 
     <script>
         let currentPage = 1;
-        const rowsPerPage = 10;
-        let songs = [];
+        let rowsPerPage = 10; // Default rows per page
 
-        // Fetch and display songs
-        const fetchSongs = async () => {
-            console.log('Fetching songs...');
-            const response = await fetch('/api/songs');
-            songs = await response.json();
-            displaySongs();
+        // Function to format duration (MM:ss)
+        const formatDuration = (seconds) => {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            const paddedSeconds = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds;
+            return `${minutes}:${paddedSeconds}`;
         };
 
-        // Display songs with pagination
-        const displaySongs = () => {
+        // Function to refetch songs based on filters and pagination
+        const refetchSongs = async () => {
+            const filterArtist = document.getElementById('filterArtist').value;
+            const filterTitle = document.getElementById('filterTitle').value;
+
+            // Build the query string
+            const queryParams = new URLSearchParams({
+                artist: filterArtist,
+                title: filterTitle,
+                page: currentPage,
+                limit: rowsPerPage, // Use the selected rows per page
+            });
+
+            // Fetch songs from the server
+            const response = await fetch(`/api/songs?${queryParams}`);
+            const { data: songs, pagination } = await response.json();
+
+            // Display the filtered songs
+            displaySongs(songs);
+
+            // Update pagination controls
+            updatePaginationControls(pagination);
+        };
+
+        // Function to update pagination controls
+        const updatePaginationControls = (pagination) => {
+            document.getElementById('pageInfo').textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
+            document.getElementById('prevPage').disabled = pagination.page === 1;
+            document.getElementById('nextPage').disabled = pagination.page === pagination.totalPages;
+        };
+
+        // Function to display songs in the table
+        const displaySongs = (songs) => {
             console.log('Displaying songs...');
             const tbody = document.getElementById('songsTable');
             tbody.innerHTML = '';
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const paginatedSongs = songs.slice(start, end);
 
-            paginatedSongs.forEach(song => {
+            songs.forEach((song, index) => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 transition duration-200';
+                row.className = index % 2 === 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-50 hover:bg-gray-100';
                 row.innerHTML = `
                     <td class="p-3 text-gray-700">${song.Artist}</td>
                     <td class="p-3 text-gray-700">${song.Title}</td>
-                    <td class="p-3 text-gray-700">${song.Genre}</td>
-                    <td class="p-3 text-gray-700">${song.Rating}</td>
-                    <td class="p-3 text-gray-700">${new Date(song.Duration).toISOString().substr(14, 5)}</td>
-                    <td class="p-3 text-gray-700">${song.Cast}</td>
+                    <td class="p-3 text-gray-700">${formatDuration(song.Duration)}</td>
                     <td class="p-3 text-gray-700">
-                        <button onclick="deleteSong('${song._id}')" class="text-red-500 hover:text-red-700">Delete</button>
+                        <div class="relative inline-block group">
+                            <button onclick="deleteSong('${song.songid}')" class="text-red-500 hover:text-red-700">
+                                <!-- Heroicon: Trash -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <!-- Tooltip -->
+                            <div class="absolute invisible group-hover:visible bg-black text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-2">
+                                Delete Song
+                                <div class="absolute w-2 h-2 bg-black transform rotate-45 -translate-x-1/2 -bottom-1 left-1/2"></div>
+                            </div>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(row);
             });
-
-            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${Math.ceil(songs.length / rowsPerPage)}`;
-            document.getElementById('prevPage').disabled = currentPage === 1;
-            document.getElementById('nextPage').disabled = end >= songs.length;
         };
 
-        // Add a new song
-        const addSong = async () => {
-            const artist = document.getElementById('Artist').value;
-            const title = document.getElementById('Title').value;
-            const genre = document.getElementById('Genre').value;
-            const rating = document.getElementById('Rating').value;
-            const duration = document.getElementById('Duration').value;
-            const cast = document.getElementById('Cast').value;
-
-            const response = await fetch('/api/songs', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ artist, title, genre, rating, duration, cast }),
-            });
-
-            if (response.ok) {
-                fetchSongs(); // Refresh the table
-                document.getElementById('Artist').value = '';
-                document.getElementById('Title').value = '';
-                document.getElementById('Genre').value = '';
-                document.getElementById('Rating').value = '';
-                document.getElementById('Duration').value = '';
-                document.getElementById('Cast').value = '';
-            }
+        // Function to change rows per page
+        const changeRowsPerPage = () => {
+            rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+            currentPage = 1; // Reset to the first page when changing rows per page
+            refetchSongs();
         };
 
-        // Delete a song
-        const deleteSong = async (songid) => {
-            const response = await fetch(`/api/songs/${songid}`, {
-                method: 'DELETE',
-            });
-            if (response.ok) {
-                fetchSongs(); // Refresh the table
-            }
+        // Function to toggle the Add Song Form
+        const toggleForm = () => {
+            const form = document.getElementById('addSongForm');
+            const button = document.getElementById('toggleFormButton');
+
+            form.classList.toggle('hidden');
+            button.textContent = form.classList.contains('hidden') ? '➕ Show Form' : '➖ Hide Form';
         };
+
+        // Add event listener to the toggle button
+        document.getElementById('toggleFormButton').addEventListener('click', toggleForm);
 
         // Pagination controls
         const prevPage = () => {
             if (currentPage > 1) {
                 currentPage--;
-                displaySongs();
+                refetchSongs();
             }
         };
 
         const nextPage = () => {
-            if ((currentPage * rowsPerPage) < songs.length) {
+            const totalPages = parseInt(document.getElementById('pageInfo').textContent.split(' ')[3]);
+            if (currentPage < totalPages) {
                 currentPage++;
-                displaySongs();
+                refetchSongs();
             }
         };
 
-        // Load songs when the page loads
-        window.onload = fetchSongs;
+        // Add event listeners to filter inputs
+        window.onload = () => {
+            const filterInputs = document.querySelectorAll('#filterRow input');
+            console.log(filterInputs); // Verify the inputs are selected
+
+            filterInputs.forEach(input => {
+                input.addEventListener('keydown', (e) => {
+                    console.log(`Key pressed: ${e.key}`);
+                    if (e.key === 'Enter') {
+                        currentPage = 1; // Reset to the first page when filtering
+                        refetchSongs();
+                    }
+                });
+            });
+
+            // Load songs when the page loads
+            refetchSongs();
+        };
     </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ const multer = require('multer');
 const fs = require('fs');
 
 const app = express();
+app.use(express.json());
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, './mydatabase.sqlite');
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,68 @@ const TEMP_DB_PATH = `./uploads/${TEMP_DB_NAME}`; // Temporary path for the uplo
 
 const BACKUP_DIR = './backups/'; // Directory for database backups
 const UPLOAD_DIR = './uploads/'; // Directory for uploaded files
+
+// Global variable to store a list of songs
+let songList = [
+    { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "http://example.com/song1" },
+    { SequenceID: 2, Title: "Song Title 2", Artist: "Artist 2", url: "http://example.com/song2" },
+    // Add more songs as needed
+];
+
+// Endpoint to get the list of songs
+app.get('/api/songrequests', (req, res) => {
+    res.status(200).json(songList);
+});
+
+// Endpoint to add a song to songsList
+app.post('/api/songrequest', (req, res) => {
+    console.log(req.body)
+    const { Title, Artist, url } = req.body;
+
+    if (!Title && !Artist && !url) {
+        return res.status(400).json({ error: 'Please enter at least a one field!' });
+    }
+
+    // Check if the song already exists
+    const existingSong = songList.find(song =>
+        song.Title.toLowerCase() === Title.toLowerCase() &&
+        song.Artist.toLowerCase() === Artist.toLowerCase()
+    );
+
+    if (existingSong) {
+        // If the song already exists, return a 409 Conflict response
+        return res.status(409).json({
+            message: "Song already exists",
+            existingSong
+        });
+    }
+
+    // If the song doesn't exist, create a new song
+    const newSong = {
+        SequenceID: songList.length ? songList[songList.length - 1].SequenceID + 1 : 1,
+        Title,
+        Artist,
+        url
+    };
+
+    // Add the new song to the list
+    songList.push(newSong);
+
+    // Return a 201 Created response with the new song
+    res.status(201).json(newSong);
+});
+
+// Endpoint to delete a song from songsList
+app.delete('/api/songrequest/:sequenceID', (req, res) => {
+    const { sequenceID } = req.params;
+    const index = songList.findIndex(song => song.SequenceID == sequenceID);
+    if (index !== -1) {
+        const deletedSong = songList.splice(index, 1);
+        res.status(200).json(deletedSong);
+    } else {
+        res.status(404).json({ error: 'Song not found' });
+    }
+});
 
 // Ensure backup directory exists
 if (!fs.existsSync(BACKUP_DIR)) {
@@ -67,13 +130,43 @@ const initializeDatabase = () => {
 
 // API to get all users
 app.get('/api/songs', (req, res) => {
-    const sql = `SELECT * FROM dbSongs`;
+    const { artist, title, page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    let sql = `SELECT * FROM dbSongs WHERE 1=1`;
+    let countSql = `SELECT COUNT(*) AS total FROM dbSongs WHERE 1=1`;
+
+    if (artist) sql += ` AND Artist LIKE '%${artist}%'`;
+    if (title) sql += ` AND Title LIKE '%${title}%'`;
+
+    sql += ` LIMIT ${limit} OFFSET ${offset}`;
+
+    if (artist) countSql += ` AND Artist LIKE '%${artist}%'`;
+    if (title) countSql += ` AND Title LIKE '%${title}%'`;
+ 
     db.all(sql, [], (err, rows) => {
         if (err) {
-            res.status(500).json({ error: err.message });
-        } else {
-            res.json(rows);
+            return res.status(500).json({ error: err.message });
         }
+
+        db.get(countSql, [], (err, countResult) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            const totalSongs = countResult.total;
+            const totalPages = Math.ceil(totalSongs / limit);
+
+            res.json({
+                data: rows,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    totalSongs,
+                    totalPages,
+                },
+            });
+        });
     });
 });
 
@@ -104,6 +197,12 @@ app.delete('/api/songs/:songid', (req, res) => {
             res.json({ deleted: this.changes });
         }
     });
+});
+
+// API to get a message
+app.get('/api/getMessage', (req, res) => {
+    const randomNumber = Math.floor(Math.random() * 1000);
+    res.status(200).json({ message: `Hello, this is your message! Random number: ${randomNumber}` });
 });
 
 // API to search users
