@@ -95,8 +95,8 @@
                 <input type="text" id="editTitle" placeholder="Title" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <input type="text" id="editUrl" placeholder="URL" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <select id="editStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
+                    <option value="Pending">Active</option>
+                    <option value="Downloaded">Inactive</option>
                 </select>
             </div>
             <div class="flex justify-end space-x-4 mt-6">
@@ -251,7 +251,7 @@
             document.getElementById('editArtist').value = song.Artist;
             document.getElementById('editTitle').value = song.Title;
             document.getElementById('editUrl').value = song.url || '';
-            document.getElementById('editStatus').value = song.Status || 'Active';
+            document.getElementById('editStatus').value = song.Status || 'Pending';
 
             // Store the current edit ID
             currentEditId = sequenceID;
