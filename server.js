@@ -20,8 +20,7 @@ const UPLOAD_DIR = './uploads/'; // Directory for uploaded files
 
 // Global variable to store a list of songs
 let songList = [
-    { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "http://example.com/song1" },
-    { SequenceID: 2, Title: "Song Title 2", Artist: "Artist 2", url: "http://example.com/song2" },
+    { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "",Status: "Pending" }
     // Add more songs as needed
 ];
 
@@ -66,6 +65,28 @@ app.post('/api/songrequest', (req, res) => {
 
     // Return a 201 Created response with the new song
     res.status(201).json(newSong);
+});
+
+// Endpoint to update a song in songList
+app.put('/api/songrequest/:sequenceID', (req, res) => {
+    const { sequenceID } = req.params;
+    const { Artist, Title, url, Status } = req.body;
+
+    // Find the song in the songList array
+    const songIndex = songList.findIndex(song => song.SequenceID == sequenceID);
+
+    if (songIndex === -1) {
+        return res.status(404).json({ error: 'Song not found' });
+    }
+
+    // Update the song with the new data
+    if (Artist) songList[songIndex].Artist = Artist;
+    if (Title) songList[songIndex].Title = Title;
+    if (url) songList[songIndex].url = url;
+    if (Status) songList[songIndex].Status = Status;
+
+    // Return the updated song
+    res.status(200).json(songList[songIndex]);
 });
 
 // Endpoint to delete a song from songsList

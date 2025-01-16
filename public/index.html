@@ -18,8 +18,8 @@
                 <a href="/UploadDB.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-200 text-center">
                     📂 Upload Database
                 </a>
-                <a href="/SongRequestAdd.html" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition duration-200 text-center">
-                    🎶 Song List
+                <a href="/SongRequest.html" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition duration-200 text-center">
+                    🎶 Requested Songs
                 </a>
             </div>
         </div> 
@@ -67,7 +67,10 @@
                 </tbody>
             </table>
             <div class="flex justify-between items-center p-4">
-                <button id="prevPage" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200" onclick="prevPage()">Previous</button>
+                <button id="prevPage" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200" onclick="prevPage()">
+                    <span class="hidden sm:inline">Previous</span>
+                    <span class="sm:hidden"><</span>
+                </button>
                 <div class="flex items-center space-x-2">
                     <span id="pageInfo" class="text-gray-700"></span>
                     <span class="text-gray-700">|</span>
@@ -79,7 +82,10 @@
                         <option value="100">100</option>
                     </select>
                 </div>
-                <button id="nextPage" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition w-auto w-2 duration-200" onclick="nextPage()">Next</button>
+                <button id="nextPage" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200" onclick="nextPage()">
+                    <span class="hidden sm:inline">Next</span>
+                    <span class="sm:hidden">></span>
+                </button>
             </div>
         </div>
     </div>
@@ -90,7 +96,7 @@
 
         // Function to format duration (MM:ss)
         const formatDuration = (seconds) => {
-            const minutes = Math.floor(seconds / 60);
+            const minutes = Math.floor(seconds/1000 / 60);
             const remainingSeconds = seconds % 60;
             const paddedSeconds = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds;
             return `${minutes}:${paddedSeconds}`;
