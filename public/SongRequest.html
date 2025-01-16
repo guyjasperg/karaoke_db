@@ -95,8 +95,8 @@
                 <input type="text" id="editTitle" placeholder="Title" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <input type="text" id="editUrl" placeholder="URL" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <select id="editStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="Pending">Active</option>
-                    <option value="Downloaded">Inactive</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Downloaded">Downloaded</option>
                 </select>
             </div>
             <div class="flex justify-end space-x-4 mt-6">
@@ -195,7 +195,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ Artist: artist, Title: title, url, Status: "Active" }), // Default status is "Active"
+                body: JSON.stringify({ Artist: artist, Title: title, url, Status: "Pending" }), // Default status is "Active"
             });
 
             if (response.ok) {

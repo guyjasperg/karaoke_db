@@ -18,28 +18,55 @@ const TEMP_DB_PATH = `./uploads/${TEMP_DB_NAME}`; // Temporary path for the uplo
 const BACKUP_DIR = './backups/'; // Directory for database backups
 const UPLOAD_DIR = './uploads/'; // Directory for uploaded files
 
+const SONGREQUEST_LIST_FILE = path.join(__dirname, 'songRequests.json'); // Path to the JSON file
+
 // Global variable to store a list of songs
-let songList = [
-    { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "",Status: "Pending" }
-    // Add more songs as needed
-];
+let songRequests = [];
+// let songList = [
+//     { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "",Status: "Pending" }
+//     // Add more songs as needed
+// ];
+
+// Load songList from JSON file on startup
+try {
+    const data = fs.readFileSync(SONGREQUEST_LIST_FILE, 'utf8');
+    songRequests = JSON.parse(data);
+    console.log('Loaded songList from JSON file.');
+} catch (err) {
+    if (err.code === 'ENOENT') {
+        console.log('songList.json not found. Initializing with an empty array.');
+        songRequests = [];
+    } else {
+        console.error('Error reading songList.json:', err);
+    }
+}
+
+// Helper function to save songList to JSON file
+const saveSongRequestsToFile = () => {
+    try {
+        fs.writeFileSync(SONGREQUEST_LIST_FILE, JSON.stringify(songRequests, null, 2), 'utf8');
+        console.log('Saved songList to JSON file.');
+    } catch (err) {
+        console.error('Error writing to songList.json:', err);
+    }
+};
 
 // Endpoint to get the list of songs
 app.get('/api/songrequests', (req, res) => {
-    res.status(200).json(songList);
+    res.status(200).json(songRequests);
 });
 
 // Endpoint to add a song to songsList
 app.post('/api/songrequest', (req, res) => {
     console.log(req.body)
-    const { Title, Artist, url } = req.body;
+    const { Title, Artist, url,Status } = req.body;
 
     if (!Title && !Artist && !url) {
         return res.status(400).json({ error: 'Please enter at least a one field!' });
     }
 
     // Check if the song already exists
-    const existingSong = songList.find(song =>
+    const existingSong = songRequests.find(song =>
         song.Title.toLowerCase() === Title.toLowerCase() &&
         song.Artist.toLowerCase() === Artist.toLowerCase()
     );
@@ -53,15 +80,21 @@ app.post('/api/songrequest', (req, res) => {
     }
 
     // If the song doesn't exist, create a new song
+    let sequenceID = songRequests.length ? songRequests[songRequests.length - 1].SequenceID + 1 : 1
     const newSong = {
-        SequenceID: songList.length ? songList[songList.length - 1].SequenceID + 1 : 1,
+        SequenceID: sequenceID,
         Title,
         Artist,
-        url
+        url,
+        Status
     };
 
     // Add the new song to the list
-    songList.push(newSong);
+    songRequests.push(newSong);
+
+    // Save the updated songList to the JSON file
+    saveSongRequestsToFile();
+    console.log(`Song with ID ${sequenceID} added.`);
 
     // Return a 201 Created response with the new song
     res.status(201).json(newSong);
@@ -73,28 +106,37 @@ app.put('/api/songrequest/:sequenceID', (req, res) => {
     const { Artist, Title, url, Status } = req.body;
 
     // Find the song in the songList array
-    const songIndex = songList.findIndex(song => song.SequenceID == sequenceID);
+    const songIndex = songRequests.findIndex(song => song.SequenceID == sequenceID);
 
     if (songIndex === -1) {
         return res.status(404).json({ error: 'Song not found' });
     }
 
     // Update the song with the new data
-    if (Artist) songList[songIndex].Artist = Artist;
-    if (Title) songList[songIndex].Title = Title;
-    if (url) songList[songIndex].url = url;
-    if (Status) songList[songIndex].Status = Status;
+    if (Artist) songRequests[songIndex].Artist = Artist;
+    if (Title) songRequests[songIndex].Title = Title;
+    if (url) songRequests[songIndex].url = url;
+    if (Status) songRequests[songIndex].Status = Status;
+
+    // Save the updated songList to the JSON file
+    saveSongRequestsToFile();
+    console.log(`Song with ID ${sequenceID} updated.`);
 
     // Return the updated song
-    res.status(200).json(songList[songIndex]);
+    res.status(200).json(songRequests[songIndex]);
 });
 
 // Endpoint to delete a song from songsList
 app.delete('/api/songrequest/:sequenceID', (req, res) => {
     const { sequenceID } = req.params;
-    const index = songList.findIndex(song => song.SequenceID == sequenceID);
+    const index = songRequests.findIndex(song => song.SequenceID == sequenceID);
     if (index !== -1) {
-        const deletedSong = songList.splice(index, 1);
+        const deletedSong = songRequests.splice(index, 1);
+
+        // Save the updated songList to the JSON file
+        saveSongRequestsToFile();
+        console.log(`Song with ID ${sequenceID} deleted.`);
+
         res.status(200).json(deletedSong);
     } else {
         res.status(404).json({ error: 'Song not found' });
