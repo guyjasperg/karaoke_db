@@ -72,9 +72,17 @@
                     <span class="sm:hidden"><</span>
                 </button>
                 <div class="flex items-center space-x-2">
-                    <span id="pageInfo" class="text-gray-700"></span>
+                    <span id="pageInfo" class="text-gray-700">
+                        <span class="hidden sm:inline">Page </span> <!-- Show "Page" on larger screens -->
+                        <span>${pagination.page}</span> <!-- Always show current page -->
+                        <span> of </span> <!-- Show "of" on larger screens -->
+                        <span>${pagination.totalPages}</span> <!-- Always show total pages -->
+                    </span>
                     <span class="text-gray-700">|</span>
-                    <label for="rowsPerPage" class="text-gray-700">Rows Per Page:</label>
+                    <label for="rowsPerPage" class="text-gray-700">
+                        <span class="hidden sm:inline">Rows Per Page:</span>
+                        <span class="sm:hidden">Rows</span>
+                    </label>
                     <select id="rowsPerPage" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="changeRowsPerPage()">
                         <option value="10">10</option>
                         <option value="20">20</option>
@@ -128,7 +136,13 @@
 
         // Function to update pagination controls
         const updatePaginationControls = (pagination) => {
-            document.getElementById('pageInfo').textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
+            const pageInfo = document.getElementById('pageInfo');
+            pageInfo.innerHTML = `
+                <span class="hidden sm:inline">Page </span>
+                <span>${pagination.page}</span>
+                <span> of </span>
+                <span>${pagination.totalPages}</span>
+            `;
             document.getElementById('prevPage').disabled = pagination.page === 1;
             document.getElementById('nextPage').disabled = pagination.page === pagination.totalPages;
         };
