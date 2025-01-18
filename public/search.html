@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Songs</title>
-    <link href="/styles.css" rel="stylesheet">
+    <link href="./styles.css" rel="stylesheet">
     <script type="module" src="../js/main.js"></script>
     <script>
         // Function to search songs
@@ -24,7 +24,7 @@
                 return;
             }
             tbody.innerHTML = songs.map(song => `
-                <tr class="hover:bg-gray-50 odd:bg-gray-500 even:bg-white transition duration-200 border-b border-gray-500">
+                <tr class="hover:bg-gray-100 odd:bg-gray-50 even:bg-white transition duration-200 border-b border-gray-100">
                     <td class="p-3 text-gray-700">
                         <a href="#" onclick="document.getElementById('searchField').value='Artist'; document.getElementById('searchQuery').value='${song.Artist}'; searchSongs(); return false;" class="text-blue-500 hover:text-blue-700 hover:underline">${song.Artist}</a>
                     </td>
@@ -66,7 +66,7 @@
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
             <div id="resultCount" class="p-2 text-gray-500 text-right">[Result Count]</div>
             <table class="w-full">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-200">
                     <tr>
                         <th class="p-3 text-left text-gray-700">Artist</th>
                         <th class="p-3 text-left text-gray-700">Title</th>
