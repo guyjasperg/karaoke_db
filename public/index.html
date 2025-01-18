@@ -100,6 +100,7 @@
 
     <script>
         let currentPage = 1;
+        let totalPages = 0;
         let rowsPerPage = 10; // Default rows per page
 
         // Function to format duration (MM:ss)
@@ -126,6 +127,7 @@
             // Fetch songs from the server
             const response = await fetch(`/api/songs?${queryParams}`);
             const { data: songs, pagination } = await response.json();
+            totalPages = pagination.totalPages;
 
             // Display the filtered songs
             displaySongs(songs);
@@ -136,6 +138,7 @@
 
         // Function to update pagination controls
         const updatePaginationControls = (pagination) => {
+            console.log(`Updating pagination controls... ${pagination.page} of ${pagination.totalPages}`);
             const pageInfo = document.getElementById('pageInfo');
             pageInfo.innerHTML = `
                 <span class="hidden sm:inline">Page </span>
@@ -201,6 +204,7 @@
 
         // Pagination controls
         const prevPage = () => {
+            console.log('Previous page');
             if (currentPage > 1) {
                 currentPage--;
                 refetchSongs();
@@ -208,7 +212,6 @@
         };
 
         const nextPage = () => {
-            const totalPages = parseInt(document.getElementById('pageInfo').textContent.split(' ')[3]);
             if (currentPage < totalPages) {
                 currentPage++;
                 refetchSongs();
