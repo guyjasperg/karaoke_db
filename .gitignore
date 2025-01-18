@@ -1,4 +1,5 @@
 node_modules/
 backups/
+uploads/
 ./mydatabase.sqlite 
 ./songrequests.json
