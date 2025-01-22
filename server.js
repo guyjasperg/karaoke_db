@@ -5,6 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+// const Trie = require('./public/Trie');
 
 const app = express();
 app.use(express.json());
@@ -26,6 +27,10 @@ let songRequests = [];
 //     { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "",Status: "Pending" }
 //     // Add more songs as needed
 // ];
+
+// const trie = new Trie();
+// trie.insert('apple');
+// trie.insert('banana');
 
 // Load songList from JSON file on startup
 try {
@@ -302,6 +307,29 @@ app.get('/api/songs/search', (req, res) => {
             }
         });
     }
+});
+
+// Endpoint to fetch unique artist names from the database
+app.get("/artist-names", (req, res) => {
+    console.log('Fetching artist names...');
+    const query = `
+                SELECT DISTINCT Artist 
+                FROM dbSongs 
+                WHERE Artist IS NOT NULL 
+                AND Artist != '' 
+                ORDER BY Artist
+            `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error("Error fetching Artist names:", err);
+            return res.status(500).json({ error: "Failed to fetch artist names" });
+        }
+        console.log('Fetched artist names:', rows);
+        // Send the list of artist names to the client
+        const artistNames = rows.map((row) => row);
+        res.json({ artistNames });
+    });
 });
 
 // Multer configuration for database file upload
