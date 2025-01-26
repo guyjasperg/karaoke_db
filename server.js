@@ -5,6 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const os = require('os');
 // const Trie = require('./public/Trie');
 
 const app = express();
@@ -20,9 +21,12 @@ const BACKUP_DIR = './backups/'; // Directory for database backups
 const UPLOAD_DIR = './uploads/'; // Directory for uploaded files
 
 const SONGREQUEST_LIST_FILE = path.join(__dirname, 'songRequests.json'); // Path to the JSON file
+const SONGQUEUE_LIST_FILE = path.join(__dirname, 'songQueue.json'); // Path to the JSON file
 
 // Global variable to store a list of songs
 let songRequests = [];
+let songQueue = [];
+
 // let songList = [
 //     { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "",Status: "Pending" }
 //     // Add more songs as needed
@@ -32,7 +36,17 @@ let songRequests = [];
 // trie.insert('apple');
 // trie.insert('banana');
 
-// Load songList from JSON file on startup
+// Helper function to save json data to file
+const saveToFile = (jsonFile, filename) => {
+    try {
+        fs.writeFileSync(filename, JSON.stringify(jsonFile, null, 2), 'utf8');
+        console.log(`Saved data to ${filename}.`);
+    } catch (err) {
+        console.error(`Error writing to ${filename}:`, err);
+    }
+};
+
+// Load songRequests from JSON file on startup
 try {
     const data = fs.readFileSync(SONGREQUEST_LIST_FILE, 'utf8');
     songRequests = JSON.parse(data);
@@ -45,16 +59,6 @@ try {
         console.error('Error reading songList.json:', err);
     }
 }
-
-// Helper function to save songList to JSON file
-const saveSongRequestsToFile = () => {
-    try {
-        fs.writeFileSync(SONGREQUEST_LIST_FILE, JSON.stringify(songRequests, null, 2), 'utf8');
-        console.log('Saved songList to JSON file.');
-    } catch (err) {
-        console.error('Error writing to songList.json:', err);
-    }
-};
 
 // Endpoint to get the list of songs
 app.get('/api/songrequests', (req, res) => {
@@ -98,7 +102,7 @@ app.post('/api/songrequest', (req, res) => {
     songRequests.push(newSong);
 
     // Save the updated songList to the JSON file
-    saveSongRequestsToFile();
+    saveToFile(songRequests,SONGREQUEST_LIST_FILE);
     console.log(`Song with ID ${sequenceID} added.`);
 
     // Return a 201 Created response with the new song
@@ -124,7 +128,7 @@ app.put('/api/songrequest/:sequenceID', (req, res) => {
     if (Status) songRequests[songIndex].Status = Status;
 
     // Save the updated songList to the JSON file
-    saveSongRequestsToFile();
+    saveToFile(songRequests,SONGREQUEST_LIST_FILE);
     console.log(`Song with ID ${sequenceID} updated.`);
 
     // Return the updated song
@@ -139,13 +143,115 @@ app.delete('/api/songrequest/:sequenceID', (req, res) => {
         const deletedSong = songRequests.splice(index, 1);
 
         // Save the updated songList to the JSON file
-        saveSongRequestsToFile();
+        saveToFile(songRequests,SONGREQUEST_LIST_FILE);
         console.log(`Song with ID ${sequenceID} deleted.`);
 
         res.status(200).json(deletedSong);
     } else {
         res.status(404).json({ error: 'Song not found' });
     }
+});
+
+// Load songQueue from JSON file on startup
+try {
+    const data = fs.readFileSync(SONGQUEUE_LIST_FILE, 'utf8');
+    songQueue = JSON.parse(data);
+    console.log('Loaded songQueue from JSON file.');
+} catch (err) {
+    if (err.code === 'ENOENT') {
+        console.log('songQueue.json not found. Initializing with an empty array.');
+        songQueue = [];
+    } else {
+        console.error('Error reading songQueue.json:', err);
+    }
+}
+
+// Endpoint to get the list of songs in the queue
+app.get('/api/songqueue', (req, res) => {
+    res.status(200).json(songQueue);
+});
+
+// Endpoint to get all songs in the queue for a given sessionId
+app.get('/api/songqueue/session/:sessionId', (req, res) => {
+    const { sessionId } = req.params;
+
+    // Filter the songQueue to find songs with the matching sessionId
+    const songsForSession = songQueue.filter(song => song.sessionId === sessionId);
+
+    if (songsForSession.length === 0) {
+        return res.status(404).json({ message: 'No songs found for the given sessionId.' });
+    }
+
+    // Return the filtered songs
+    res.status(200).json(songsForSession);
+});
+
+// Endpoint to add a song to the queue
+app.post('/api/songqueue', (req, res) => {
+    const { sessionId, Artist, Title, filePath, status } = req.body;
+
+    if (!sessionId || !Artist || !Title || !filePath) {
+        return res.status(400).json({ error: 'All fields are required!' });
+    }
+
+    // Check if the song already exists in the queue
+    // const existingSong = songQueue.find(song =>
+    //     song.sessionId === sessionId &&
+    //     song.Artist.toLowerCase() === Artist.toLowerCase() &&
+    //     song.Title.toLowerCase() === Title.toLowerCase()
+    // );
+
+    // if (existingSong) {
+    //     return res.status(409).json({
+    //         message: "Song already exists in the queue",
+    //         existingSong
+    //     });
+    // }
+
+    // Generate a unique sequenceID
+    const sequenceID = songQueue.length ? songQueue[songQueue.length - 1].sequenceID + 1 : 1;
+
+    // Create a new song queue item
+    const newSong = {
+        sequenceID,
+        sessionId,
+        Artist,
+        Title,
+        filePath,
+        status
+    };
+
+    // Add the new song to the queue
+    songQueue.push(newSong);
+
+    // Save the updated songQueue to the JSON file
+    saveToFile(songQueue, SONGQUEUE_LIST_FILE);
+    console.log(`SessionId[${sessionId}]: Song with ID ${sequenceID} added to the queue. (${Artist} - ${Title})`);
+
+    // Return the new song
+    res.status(201).json(newSong);
+});
+
+// Endpoint to delete a song from the queue
+app.delete('/api/songqueue/:sequenceID', (req, res) => {
+    const { sequenceID } = req.params;
+
+    // Find the index of the song in the queue
+    const index = songQueue.findIndex(song => song.sequenceID == sequenceID);
+
+    if (index === -1) {
+        return res.status(404).json({ error: 'Song not found in the queue' });
+    }
+
+    // Remove the song from the queue
+    const deletedSong = songQueue.splice(index, 1);
+
+    // Save the updated songQueue to the JSON file
+    saveToFile(songQueue, SONGQUEUE_LIST_FILE);
+    console.log(`Song with ID ${sequenceID} deleted from the queue.`);
+
+    // Return the deleted song
+    res.status(200).json(deletedSong);
 });
 
 // Ensure backup directory exists
@@ -195,8 +301,7 @@ const initializeDatabase = () => {
     });
 };
 
-
-// API to get all users
+// API to get all songs
 app.get('/api/songs', (req, res) => {
     const { artist, title, page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -238,7 +343,7 @@ app.get('/api/songs', (req, res) => {
     });
 });
 
-// API to add a new user
+// API to add a new song
 app.post('/api/songs', (req, res) => {
     const { Artist, Title, DiscId, Duration, path, filename, searchstring } = req.body;
     const sql = `
@@ -254,7 +359,7 @@ app.post('/api/songs', (req, res) => {
     });
 });
 
-// API to delete a user
+// API to delete a song
 app.delete('/api/songs/:songid', (req, res) => {
     const { songid } = req.params;
     const sql = `DELETE FROM dbSongs WHERE songid = ?`;
@@ -273,10 +378,10 @@ app.get('/api/getMessage', (req, res) => {
     res.status(200).json({ message: `Hello, this is your message! Random number: ${randomNumber}` });
 });
 
-// API to search users
+// API to search songs
 app.get('/api/songs/search', (req, res) => {
     const { query, field } = req.query;
-    console.log('Search queryx:', query, 'Field:', field);
+    console.log('Search query', query, 'Field:', field);
     let sql;
     const searchTerm = `%${query}%`;
 
@@ -325,7 +430,7 @@ app.get("/artist-names", (req, res) => {
             console.error("Error fetching Artist names:", err);
             return res.status(500).json({ error: "Failed to fetch artist names" });
         }
-        console.log('Fetched artist names:', rows);
+        // console.log('Fetched artist names:', rows);
         // Send the list of artist names to the client
         const artistNames = rows.map((row) => row);
         res.json({ artistNames });
@@ -412,11 +517,38 @@ app.get('/api/download/:filename', (req, res) => {
     });
 });
 
+// API endpoint to list all video files
+app.get('/api/videos', (req, res) => {
+  fs.readdir(videoDir, (err, files) => {
+    if (err) {
+      return res.status(500).json({ error: 'Unable to read directory' });
+    }
+    const videoFiles = files.filter(file => file.endsWith('.mp4')); // Filter for video files
+    res.json({ videos: videoFiles });
+  });
+});
+
 // Serve static files (HTML, CSS, JS)
 app.use(express.static('./'));
 app.use(express.static('./public'));
 
+const videoDir = '/Users/guyjasper/Documents/Guy/Projects/Python/HelloWorld/NEW_SONGS/';
+app.use('/videos', express.static(videoDir));
+
+// Function to get the local IP address
+function getLocalIpAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const interfaceName in interfaces) {
+    for (const iface of interfaces[interfaceName]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '0.0.0.0'; // Fallback
+}
+
 // Start the server
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+const server = app.listen(PORT, () => {
+    console.log(`Server running at http://${getLocalIpAddress()}:${PORT}`);
 });

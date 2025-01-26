@@ -30,7 +30,6 @@ function initializeTrie() {
                     if (Array.isArray(data.artistNames)) {
                         console.log("Inserting artist names into Trie...");
                         data.artistNames.forEach((name) => {
-                            console.log("Inserting artist name:", name);
                             if (typeof name.Artist === "string" && name.Artist.trim() !== "") {
                                 trie.insert(name.Artist);
                             } else {
