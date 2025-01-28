@@ -1,10 +1,18 @@
-// Global Trie instance
-let trie;
+import Trie from "./Trie.js";
 
-// Fetch artist names from the server and initialize the Trie
-function initializeTrie() {
-    console.log("Initializing Trie...");
+// Global Trie instance
+let trie = new Trie();
+
+// Fetch artist - title names from the server and initialize the Trie
+window.initializeTrie = async (forceInit = false) => {
+    console.log("Initializing Trie...");    
     return new Promise((resolve, reject) => {
+        if(forceInit){
+            //need to refresh data for the Trie
+            console.log("Forcing Trie initialization...");
+            localStorage.removeItem("trieData");
+        }
+
         // Check if Trie data is already stored in localStorage
         const storedTrieData = localStorage.getItem("trieData");
 
@@ -17,29 +25,26 @@ function initializeTrie() {
         } else {
             // Fetch artist names from the server
             console.log("Fetching artist names from server...");
-            fetch("/artist-names")
+            fetch("/api/uniquesongs")
                 .then((response) => response.json())
                 .then((data) => {
-                    // Log the data for debugging
-                    console.log("Fetched artist names:", data);
-
+                    console.log("Fetched songs from db:  ",data);
                     // Initialize the Trie
                     trie = new Trie();
 
                     // Validate and insert each artist name
-                    if (Array.isArray(data.artistNames)) {
-                        console.log("Inserting artist names into Trie...");
-                        data.artistNames.forEach((name) => {
-                            if (typeof name.Artist === "string" && name.Artist.trim() !== "") {
-                                trie.insert(name.Artist);
-                            } else {
-                                console.warn("Invalid artist name:", name);
-                            }
+                    if (Array.isArray(data.songs)) {
+                        // Log the data for debugging
+                        console.log("Fetched songs from db:  ",data.songs.length);
+                        console.log("Inserting artist - title names into Trie...");
+                        data.songs.forEach((song) => {
+                            trie.insert(song.song);
                         });
                     } else {
-                        console.error("Expected artistNames to be an array, but got:", data.artistNames);
+                        console.error("Expected artistNames to be an array, but got:", data.songs);
                         throw new Error("Invalid data format: artistNames is not an array");
                     }
+                    console.log(`Total words in Trie: ${trie.getWordCount()}`);
 
                     // Serialize the Trie and store it in localStorage
                     localStorage.setItem("trieData", JSON.stringify(trie.serialize()));
@@ -48,7 +53,7 @@ function initializeTrie() {
                     resolve(); // Resolve the Promise after initialization
                 })
                 .catch((error) => {
-                    console.error("Error fetching artist names:", error);
+                    console.error("Error fetching songs:", error);
                     reject(error); // Reject the Promise if there's an error
                 });
         }
@@ -84,7 +89,7 @@ function setupSearch() {
     });
 }
 
-// Initialize the Trie and set up search functionality
+// // Initialize the Trie and set up search functionality
 initializeTrie()
     .then(() => {
         // setupSearch();

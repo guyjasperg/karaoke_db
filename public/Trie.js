@@ -201,3 +201,6 @@ class Trie {
 
 // console.log(trie.combinedSearch("ar")); 
 // ["Taylor Swift"]
+
+// Export the Trie class
+export default Trie; 

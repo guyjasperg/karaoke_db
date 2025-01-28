@@ -357,7 +357,10 @@ app.get('/api/uniquesongs', (req, res) => {
         }else
         {
             console.log(`Get Unique Songs: returned ${rows.length} songs.`);
-            res.json(rows);
+
+            // Send the list to the client
+            const songs = rows.map((row) => row);
+            res.json({ songs });
         }
     });
 });
@@ -434,7 +437,7 @@ app.get('/api/songs/search', (req, res) => {
 });
 
 // Endpoint to fetch unique artist names from the database
-app.get("/artist-names", (req, res) => {
+app.get("/api/artist-names", (req, res) => {
     console.log('Fetching artist names...');
     const query = `
                 SELECT DISTINCT Artist 

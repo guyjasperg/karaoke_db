@@ -16,12 +16,17 @@
                 <a href="/search.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 text-center">
                     🔍 Search Songs
                 </a>
-                <a href="/UploadDB.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-200 text-center">
+                <a href="/UploadDB.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 text-center">
                     📂 Upload Database
                 </a>
                 <a href="/SongRequest.html" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition duration-200 text-center">
                     🎶 Requested Songs
                 </a>
+                <button 
+                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 text-center"
+                    onclick="initializeTrie(true)" ">
+                    Refresh Trie
+                </button>
             </div>
         </div> 
 
@@ -98,7 +103,7 @@
             </div>
         </div>
     </div>
-
+        
     <script>
         let currentPage = 1;
         let totalPages = 0;
@@ -219,6 +224,13 @@
             }
         };
 
+        // const refreshTrie =  () => {
+        //     console.log('Refreshing Trie');
+        //     //removing localstorage
+        //     localStorage.removeItem('trieData');
+        //     InitializeTrie();
+        // };
+
         // Add event listeners to filter inputs
         window.onload = () => {
             const filterInputs = document.querySelectorAll('#filterRow input');
@@ -236,10 +248,9 @@
 
             // Load songs when the page loads
             refetchSongs();
+            
         };
     </script>
-
-    <script src="trie.js"></script> <!-- Trie implementation -->
-    <script src="app.js"></script> <!-- Shared JavaScript -->
 </body>
+    <script type="module" src="app.js" defer></script> <!-- Shared JavaScript -->
 </html>
