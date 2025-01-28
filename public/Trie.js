@@ -112,8 +112,10 @@ class Trie {
         const combinedResultsSet = new Set([...prefixMatches, ...substringMatches]);
 
         // Step 4: Convert the Set back to an array and sort the results alphabetically
-        const combinedResults = Array.from(combinedResultsSet).sort((a, b) => a.localeCompare(b));
-        return combinedResults;
+        // const combinedResults = Array.from(combinedResultsSet).sort((a, b) => a.localeCompare(b));
+
+        // return combinedResults;
+        return combinedResultsSet;
     }
 
     // Serialize the Trie (convert it to a JSON-compatible object)

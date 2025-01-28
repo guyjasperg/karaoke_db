@@ -53,7 +53,7 @@
             if (!match) return text; // Handle empty match
 
             const regex = new RegExp(match, 'gi'); // Case-insensitive, global match
-            return text.replace(regex, '<span class="highlight">$&</span>');
+            return text.replace(regex, '<span class="font-bold">$&</span>');
         }
     </script>
 </head>

@@ -345,9 +345,9 @@ app.get('/api/songs', (req, res) => {
 
 // API to get all unique Artist - Title 
 app.get('/api/uniquesongs', (req, res) => {
-    const sql = `SELECT   DISTINCT TRIM((Artist || ' - '  || Title)) as song 
+    const sql = `SELECT   DISTINCT TRIM((coalesce(Artist,'') || ' - '  || coalesce( Title,''))) as song 
                 FROM dbSongs 
-				WHERE song is not NULL
+                WHERE song IS NOT NULL
                 ORDER BY song`;
  
     db.all(sql, [], (err, rows) => {
