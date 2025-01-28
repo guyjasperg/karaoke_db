@@ -22,8 +22,10 @@
             const triesearchresult = window.trie.combinedSearch(query);
             trieresult.innerHTML = '';
             triesearchresult.forEach(element => {
+                const highlightedtext = highlightMatch(element, query);
                 const li = document.createElement('li');
-                li.textContent = element;
+                // li.textContent = element;
+                li.innerHTML = highlightedtext;
                 trieresult.appendChild(li);
             });
 
@@ -46,6 +48,13 @@
             `).join('');
             resultCount.textContent = `${songs.length} song(s) found.`;
         };
+
+        function highlightMatch(text, match) {
+            if (!match) return text; // Handle empty match
+
+            const regex = new RegExp(match, 'gi'); // Case-insensitive, global match
+            return text.replace(regex, '<span class="highlight">$&</span>');
+        }
     </script>
 </head>
 <body class="bg-gray-50 min-h-screen p-4 sm:p-8">
