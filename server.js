@@ -343,6 +343,25 @@ app.get('/api/songs', (req, res) => {
     });
 });
 
+// API to get all unique Artist - Title 
+app.get('/api/uniquesongs', (req, res) => {
+    const sql = `SELECT   DISTINCT TRIM((Artist || ' - '  || Title)) as song 
+                FROM dbSongs 
+				WHERE song is not NULL
+                ORDER BY song`;
+ 
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.log(`Get Unique Songs Error: ${err.message}`);
+            return res.status(500).json({ error: err.message });
+        }else
+        {
+            console.log(`Get Unique Songs: returned ${rows.length} songs.`);
+            res.json(rows);
+        }
+    });
+});
+
 // API to add a new song
 app.post('/api/songs', (req, res) => {
     const { Artist, Title, DiscId, Duration, path, filename, searchstring } = req.body;
