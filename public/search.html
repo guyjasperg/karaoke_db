@@ -9,12 +9,24 @@
     <script>
         // Function to search songs
         const searchSongs = async () => {
+
+
             const query = document.getElementById('searchQuery').value;
             const field = document.getElementById('searchField').value;
             if (!query) {
                 window.modal.open('Song Search', 'Please enter a search term.','error');
                 return;
             }
+
+            const trieresult = document.getElementById('trieresult');
+            const triesearchresult = window.trie.combinedSearch(query);
+            trieresult.innerHTML = '';
+            triesearchresult.forEach(element => {
+                const li = document.createElement('li');
+                li.textContent = element;
+                trieresult.appendChild(li);
+            });
+
             const response = await fetch(`/api/songs/search?query=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`);
             const songs = await response.json();
             const tbody = document.querySelector('#searchResults');
@@ -65,6 +77,9 @@
         <!-- Search Results Table -->
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
             <div id="resultCount" class="p-2 text-gray-500 text-right">[Result Count]</div>
+            <div class="p-2 text-gray-500">Result from Trie
+                <ul id="trieresult"></ul>
+            </div>
             <table class="w-full">
                 <thead class="bg-gray-200">
                     <tr>
@@ -80,4 +95,5 @@
         </div>
     </div>
 </body>
+<script type="module" src="app.js" defer></script>
 </html>

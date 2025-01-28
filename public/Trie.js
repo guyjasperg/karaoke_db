@@ -100,6 +100,8 @@ class Trie {
 
     // Combined search: First search for prefix matches, then add substring matches (without duplicates)
     combinedSearch(query) {
+        console.log("combinedSearch", query);
+
         // Step 1: Get prefix matches (case-insensitive, preserve original case)
         const prefixMatches = this.getWordsWithPrefix(query);
 
@@ -111,7 +113,6 @@ class Trie {
 
         // Step 4: Convert the Set back to an array and sort the results alphabetically
         const combinedResults = Array.from(combinedResultsSet).sort((a, b) => a.localeCompare(b));
-
         return combinedResults;
     }
 

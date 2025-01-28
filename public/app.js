@@ -21,6 +21,7 @@ window.initializeTrie = async (forceInit = false) => {
             trie = Trie.deserialize(JSON.parse(storedTrieData));
             console.log("Trie initialized from localStorage");            
             console.log(`Total words in Trie: ${trie.getWordCount()}`);
+            window.trie = trie;
             resolve(); // Resolve the Promise immediately
         } else {
             // Fetch artist names from the server
@@ -28,7 +29,7 @@ window.initializeTrie = async (forceInit = false) => {
             fetch("/api/uniquesongs")
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log("Fetched songs from db:  ",data);
+                    // console.log("Fetched songs from db:  ",data);
                     // Initialize the Trie
                     trie = new Trie();
 
@@ -50,6 +51,7 @@ window.initializeTrie = async (forceInit = false) => {
                     localStorage.setItem("trieData", JSON.stringify(trie.serialize()));
 
                     console.log("Trie initialized with artist names from server");
+                    window.trie = trie;
                     resolve(); // Resolve the Promise after initialization
                 })
                 .catch((error) => {
@@ -97,3 +99,5 @@ initializeTrie()
     .catch((error) => {
         console.error("Failed to initialize Trie:", error);
     });
+
+window.trie = trie;
