@@ -30,7 +30,9 @@
                 return;
             }
             resultCount.textContent = `${triesearchresult.size} song(s) found.`;
-
+            
+            //clear previous result
+            tbody.innerHTML='';
             triesearchresult.forEach(element => {
                 const highlightedtext = highlightMatch(element, query);
                 const tr = document.createElement('tr');

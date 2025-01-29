@@ -554,7 +554,8 @@ app.get('/api/videos', (req, res) => {
 app.use(express.static('./'));
 app.use(express.static('./public'));
 
-const videoDir = '/Users/guyjasper/Documents/Guy/Projects/Python/HelloWorld/NEW_SONGS/';
+// const videoDir = '/Users/guyjasper/Documents/Guy/Projects/Python/HelloWorld/NEW_SONGS/';
+const videoDir = '/Volumes/KINGSTONSSD/_Karaoke/'
 app.use('/videos', express.static(videoDir));
 
 // Function to get the local IP address
