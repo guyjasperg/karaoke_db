@@ -8,9 +8,8 @@
     <script type="module" src="../js/main.js"></script>
     <script>
         // Function to search songs
-        const searchSongs = async () => {
-
-
+        const searchSongs = async () => {            
+            const searchQuery = document.getElementById('searchQuery');
             const query = document.getElementById('searchQuery').value;
             const field = document.getElementById('searchField').value;
             if (!query) {
@@ -18,35 +17,47 @@
                 return;
             }
 
-            const trieresult = document.getElementById('trieresult');
-            const triesearchresult = window.trie.combinedSearch(query);
-            trieresult.innerHTML = '';
-            triesearchresult.forEach(element => {
-                const highlightedtext = highlightMatch(element, query);
-                const li = document.createElement('li');
-                // li.textContent = element;
-                li.innerHTML = highlightedtext;
-                trieresult.appendChild(li);
-            });
+            console.log(`Searching for ${query} in ${field}...`);
 
-            const response = await fetch(`/api/songs/search?query=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`);
-            const songs = await response.json();
             const tbody = document.querySelector('#searchResults');
             const resultCount = document.querySelector('#resultCount');
-            if (songs.length === 0) {
-                window.modal.open('No songs found!', 'Please try a different search term.\nOr request for song to be downloaded :)', 'warning');
+
+            // query from trie object
+            const triesearchresult = window.trie.combinedSearch(query);
+            if (triesearchresult.size === 0) {
+                console.log('No songs found!');
+                window.modal.open('No songs found!', 'Please try a different search term.\nOr request for song to be downloaded :)', 'warning', searchQuery);
                 return;
             }
-            tbody.innerHTML = songs.map(song => `
-                <tr class="hover:bg-gray-100 odd:bg-gray-50 even:bg-white transition duration-200 border-b border-gray-100">
-                    <td class="p-3 text-gray-700">
-                        <a href="#" onclick="document.getElementById('searchField').value='Artist'; document.getElementById('searchQuery').value='${song.Artist}'; searchSongs(); return false;" class="text-blue-500 hover:text-blue-700 hover:underline">${song.Artist}</a>
-                    </td>
-                    <td class="p-3 text-gray-700">${song.Title}</td>
-                    <td class="p-3 text-gray-700">${new Date(song.Duration).toISOString().substr(14, 5)}</td>
-                </tr>
-            `).join('');
-            resultCount.textContent = `${songs.length} song(s) found.`;
+            resultCount.textContent = `${triesearchresult.size} song(s) found.`;
+
+            triesearchresult.forEach(element => {
+                const highlightedtext = highlightMatch(element, query);
+                const tr = document.createElement('tr');
+                tr.classList.add('hover:bg-gray-100', 'odd:bg-gray-50', 'even:bg-white', 'transition', 'duration-200', 'border-b', 'border-gray-100');
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-900">${highlightedtext}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+
+            // const response = await fetch(`/api/songs/search?query=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`);
+            // const songs = await response.json();
+            // if (songs.length === 0) {
+            //     window.modal.open('No songs found!', 'Please try a different search term.\nOr request for song to be downloaded :)', 'warning');
+            //     return;
+            // }
+            // tbody.innerHTML = songs.map(song => /*HTML*/`
+            //     <tr class="hover:bg-gray-100 odd:bg-gray-50 even:bg-white transition duration-200 border-b border-gray-100">
+            //         <td class="p-3 text-gray-700">
+            //             <a href="#" onclick="document.getElementById('searchField').value='Artist'; document.getElementById('searchQuery').value='${song.Artist}'; searchSongs(); return false;" class="text-blue-500 hover:text-blue-700 hover:underline">${song.Artist}</a>
+            //         </td>
+            //         <td class="p-3 text-gray-700">${song.Title}</td>
+            //         <td class="p-3 text-gray-700">${new Date(song.Duration).toISOString().substr(14, 5)}</td>
+            //     </tr>
+            // `).join('');
+            // resultCount.textContent = `${songs.length} song(s) found.`;
         };
 
         function highlightMatch(text, match) {
@@ -55,6 +66,20 @@
             const regex = new RegExp(match, 'gi'); // Case-insensitive, global match
             return text.replace(regex, '<span class="font-bold">$&</span>');
         }
+
+        onload = () => {
+            const myInput = document.getElementById('searchQuery');
+            const myButton = document.getElementById('btnSearch');
+
+            myInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    myButton.click();
+                }
+                else if (event.key === 'Escape') {
+                    myInput.value = '';
+                }
+            });            
+        };
     </script>
 </head>
 <body class="bg-gray-50 min-h-screen p-4 sm:p-8">
@@ -76,8 +101,8 @@
                     <option value="Artist">Artist</option>
                     <option value="Title">Title</option>
                 </select>
-                <input type="text" id="searchQuery" placeholder="Search by Title, Genre, or Cast" class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onfocus="this.select()" onkeydown="if(event.key === 'Escape') this.value = ''; if(event.key === 'Enter') document.querySelector('button[onclick=\'searchSongs()\']').click();">
-                <button onclick="searchSongs()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                <input type="text" id="searchQuery" placeholder="Search by Title, Genre, or Cast" class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onfocus="this.select()">
+                <button id="btnSearch" onclick="searchSongs()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
                     🔍 Search
                 </button>
             </div>
@@ -86,15 +111,12 @@
         <!-- Search Results Table -->
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
             <div id="resultCount" class="p-2 text-gray-500 text-right">[Result Count]</div>
-            <div class="p-2 text-gray-500">Result from Trie
-                <ul id="trieresult"></ul>
-            </div>
             <table class="w-full">
                 <thead class="bg-gray-200">
                     <tr>
-                        <th class="p-3 text-left text-gray-700">Artist</th>
+                        <!-- <th class="p-3 text-left text-gray-700">Artist</th> -->
                         <th class="p-3 text-left text-gray-700">Title</th>
-                        <th class="p-3 text-left text-gray-700">Duration</th>
+                        <!-- <th class="p-3 text-left text-gray-700">Duration</th> -->
                     </tr>
                 </thead>
                 <tbody id="searchResults">

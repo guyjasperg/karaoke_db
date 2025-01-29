@@ -1,9 +1,12 @@
 // components/Modal.js
 export class Modal {
   constructor() {
+    this.focusElementId = null; // Store the ID of the element to focus after closing the modal
+
     // Create modal overlay
     this.modalOverlay = document.createElement('div');
     this.modalOverlay.id = 'modalOverlay';
+    this.modalOverlay.tabIndex = -1; // Allow the overlay to be focused
     this.modalOverlay.className =
       'fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center';
 
@@ -61,24 +64,29 @@ export class Modal {
     // Append modal overlay to body
     document.body.appendChild(this.modalOverlay);
 
-    // Event listeners
-    this.closeButton.addEventListener('click', () => this.close());
-    document.addEventListener('keydown', (event) => {
+    this.close = this.close.bind(this); // Bind 'this'
+    this.closeButton.addEventListener('click', this.close); // Use bound close
+    
+    this.keydownHandler = (event) => { // Store the handler
       if (event.key === 'Escape' || event.key === 'Enter') {
+        event.preventDefault(); // Prevent form submission if Enter is pressed.
         this.close();
       }
-    });
-    this.modalOverlay.addEventListener('click', (event) => {
+    };
+
+    this.overlayClickHandler = (event) => { // Store the handler
       if (event.target === this.modalOverlay) {
         this.close();
       }
-    });
+    }
+
   }
 
   // Method to open the modal
-  open(title, message, buttonType = 'default') {
+  open(title, message, buttonType = 'default', inputID) {
     this.modalTitle.textContent = title;
     this.modalMessage.textContent = message;
+    this.focusElementId = inputID;
 
     // Set button color and icon based on buttonType
     if (buttonType === 'error') {
@@ -126,11 +134,27 @@ export class Modal {
     // Show the modal
     this.modalOverlay.classList.remove('hidden');
     this.modalOverlay.classList.add('flex');
+
+    // Add event listeners AFTER the modal is shown (using setTimeout 0)
+    setTimeout(() => {
+      document.addEventListener('keydown', this.keydownHandler);
+      this.modalOverlay.addEventListener('click', this.overlayClickHandler);
+
+      this.modalOverlay.focus();
+    }, 0);
   }
 
   // Method to close the modal
-  close() {
+  close(focusElementId) {
+    document.removeEventListener('keydown', this.keydownHandler);
+    this.modalOverlay.removeEventListener('click', this.overlayClickHandler);
+
     this.modalOverlay.classList.remove('flex');
     this.modalOverlay.classList.add('hidden');
+
+    // Add this line to blur the input:
+    if(this.focusElementId!==null){
+      this.focusElementId.focus();
+    }
   }
 }
