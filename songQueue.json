@@ -1,192 +1,25 @@
-[
-  {
-    "sequenceID": 1,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "BULOY",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/BULOY - Parokya Ni Edgar.mp4",
-    "status": "pending"
-  },
-  {
-    "sequenceID": 2,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "Don'T Touch My Birdie",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Don'T Touch My Birdie - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 3,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "Alumni Homecoming",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Alumni Homecoming - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 4,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya ni Edgar",
-    "Title": "GITARA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/GITARA - Parokya ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 5,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya ni Edgar",
-    "Title": "GITARA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/GITARA - Parokya ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 6,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "Don'T Touch My Birdie",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Don'T Touch My Birdie - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 7,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya ni Edgar",
-    "Title": "HALAGA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/HALAGA - Parokya ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 8,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya ni Edgar",
-    "Title": "HALAGA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/HALAGA - Parokya ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 9,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "Mang Jose",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Mang Jose - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 10,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "HARANA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/HARANA - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 11,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "Don'T Touch My Birdie",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Don'T Touch My Birdie - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 12,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "HARANA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/HARANA - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 13,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "BULOY",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/BULOY - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 14,
-    "sessionId": "session-w88d4mlic",
-    "Artist": "Parokya ni Edgar",
-    "Title": "HALAGA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/HALAGA - Parokya ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 15,
-    "sessionId": "session-hwcqraad2",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "BULOY",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/BULOY - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 16,
-    "sessionId": "session-hwcqraad2",
-    "Artist": "Guns N' Roses",
-    "Title": "Sweet Child O' Mine",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Sweet Child O' Mine - Guns N' Roses.mp4"
-  },
-  {
-    "sequenceID": 17,
-    "sessionId": "session-hwcqraad2",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "Maniwala Ka Sana",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Maniwala Ka Sana - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 18,
-    "sessionId": "YUOM",
-    "Artist": "PAROKYA NI EDGAR",
-    "Title": "ULAN",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/ULAN - PAROKYA NI EDGAR.mp4"
-  },
-  {
-    "sequenceID": 19,
-    "sessionId": "YUOM",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "This Guy'S In Love With You Pare",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/This Guy'S In Love With You Pare - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 20,
-    "sessionId": "YUOM",
-    "Artist": "Eraserheads",
-    "Title": "HUWAG MO NANG ITANONG",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/HUWAG MO NANG ITANONG - Eraserheads.mp4"
-  },
-  {
-    "sequenceID": 21,
-    "sessionId": "TXJS",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "BULOY",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/BULOY - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 22,
-    "sessionId": "TXJS",
-    "Artist": "Parokya ni Edgar",
-    "Title": "HALAGA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/HALAGA - Parokya ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 23,
-    "sessionId": "TXJS",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "HARANA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/HARANA - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 24,
-    "sessionId": "TXJS",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "HARANA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/HARANA - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 25,
-    "sessionId": "TXJS",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "HARANA",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/HARANA - Parokya Ni Edgar.mp4"
-  },
-  {
-    "sequenceID": 26,
-    "sessionId": "TXJS",
-    "Artist": "Eraserheads",
-    "Title": "HUWAG MO NANG ITANONG",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/HUWAG MO NANG ITANONG - Eraserheads.mp4"
-  },
-  {
-    "sequenceID": 27,
-    "sessionId": "WXQV",
-    "Artist": "Parokya Ni Edgar",
-    "Title": "BULOY",
-    "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/BULOY - Parokya Ni Edgar.mp4"
+{
+  "WXQV": {
+    "songs": [
+      {
+        "sequenceID": 1,
+        "Artist": "Parokya Ni Edgar",
+        "Title": "BULOY",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/BULOY - Parokya Ni Edgar.mp4"
+      },
+      {
+        "sequenceID": 2,
+        "Artist": "Parokya ni Edgar",
+        "Title": "GITARA",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/KARAOKE FOR MEN/GITARA - Parokya ni Edgar.mp4"
+      },
+      {
+        "sequenceID": 3,
+        "Artist": "Parokya Ni Edgar",
+        "Title": "Inuman Na",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Inuman Na - Parokya Ni Edgar.mp4"
+      }
+    ],
+    "lastUpdate": "2025-01-29T11:40:09.842Z"
   }
-]
+}

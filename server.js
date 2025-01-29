@@ -25,7 +25,7 @@ const SONGQUEUE_LIST_FILE = path.join(__dirname, 'songQueue.json'); // Path to t
 
 // Global variable to store a list of songs
 let songRequests = [];
-let songQueue = [];
+const songQueue = {};
 
 // let songList = [
 //     { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "",Status: "Pending" }
@@ -39,6 +39,7 @@ let songQueue = [];
 // Helper function to save json data to file
 const saveToFile = (jsonFile, filename) => {
     try {
+        console.log(`jsonfile ${jsonFile}`);
         fs.writeFileSync(filename, JSON.stringify(jsonFile, null, 2), 'utf8');
         console.log(`Saved data to ${filename}.`);
     } catch (err) {
@@ -155,15 +156,35 @@ app.delete('/api/songrequest/:sequenceID', (req, res) => {
 // Load songQueue from JSON file on startup
 try {
     const data = fs.readFileSync(SONGQUEUE_LIST_FILE, 'utf8');
-    songQueue = JSON.parse(data);
-    console.log('Loaded songQueue from JSON file.');
+    const parsedData = JSON.parse(data);
+
+    // Validate parsed data: Check if it's an object and has the expected structure
+    if (typeof parsedData === 'object' && parsedData !== null) {
+        for (const sessionId in parsedData) {
+            if (parsedData.hasOwnProperty(sessionId) && Array.isArray(parsedData[sessionId].songs)) {
+                songQueue[sessionId] = {
+                    songs: parsedData[sessionId].songs,
+                    lastUpdate: parsedData[sessionId].lastUpdate ? new Date(parsedData[sessionId].lastUpdate) : new Date() // Handle missing lastUpdate
+                };
+            } else {
+                console.warn(`Invalid data format in songQueue.json for session ${sessionId}. Skipping.`);
+            }
+        }
+        console.log('Loaded songQueue from JSON file:', songQueue);
+    } else {
+        console.warn('Invalid JSON format in songQueue.json. Initializing with an empty object.');
+    }
 } catch (err) {
     if (err.code === 'ENOENT') {
-        console.log('songQueue.json not found. Initializing with an empty array.');
-        songQueue = [];
+        console.log('songQueue.json not found. Initializing with an empty object.');
     } else {
-        console.error('Error reading songQueue.json:', err);
+        console.error('Error reading or parsing songQueue.json:', err);
     }
+}
+
+// Ensure songQueue is always initialized as an object with the correct structure
+if (typeof songQueue !== 'object' || songQueue === null) {
+    songQueue = {};
 }
 
 // Endpoint to get the list of songs in the queue
@@ -175,46 +196,36 @@ app.get('/api/songqueue', (req, res) => {
 app.get('/api/songqueue/session/:sessionId', (req, res) => {
     const { sessionId } = req.params;
 
-    // Filter the songQueue to find songs with the matching sessionId
-    const songsForSession = songQueue.filter(song => song.sessionId === sessionId);
-
-    if (songsForSession.length === 0) {
+    if (!songQueue[sessionId]) {
         return res.status(404).json({ message: 'No songs found for the given sessionId.' });
-    }
+    }    
 
-    // Return the filtered songs
-    res.status(200).json(songsForSession);
+    res.status(200).json(songQueue[sessionId].songs); // Return the songs array
 });
 
 // Endpoint to add a song to the queue
 app.post('/api/songqueue', (req, res) => {
     const { sessionId, Artist, Title, filePath, status } = req.body;
-
+    console.log(sessionId,Artist,Title,filePath);
     if (!sessionId || !Artist || !Title || !filePath) {
         return res.status(400).json({ error: 'All fields are required!' });
     }
 
-    // Check if the song already exists in the queue
-    // const existingSong = songQueue.find(song =>
-    //     song.sessionId === sessionId &&
-    //     song.Artist.toLowerCase() === Artist.toLowerCase() &&
-    //     song.Title.toLowerCase() === Title.toLowerCase()
-    // );
+    // Ensure the session exists in songQueue
+    if (!songQueue[sessionId]) {
+        songQueue[sessionId] = {
+            songs: [], // Initialize the songs array for this session
+            lastUpdate: new Date() // Add lastUpdate property
+        };
+    }
 
-    // if (existingSong) {
-    //     return res.status(409).json({
-    //         message: "Song already exists in the queue",
-    //         existingSong
-    //     });
-    // }
-
-    // Generate a unique sequenceID
-    const sequenceID = songQueue.length ? songQueue[songQueue.length - 1].sequenceID + 1 : 1;
+    // Generate sequenceID based on sessionId
+    const highestSequenceId = getHighestSequenceId(sessionId);
+    const sequenceID = highestSequenceId + 1;
 
     // Create a new song queue item
     const newSong = {
         sequenceID,
-        sessionId,
         Artist,
         Title,
         filePath,
@@ -222,9 +233,12 @@ app.post('/api/songqueue', (req, res) => {
     };
 
     // Add the new song to the queue
-    songQueue.push(newSong);
+    songQueue[sessionId].songs.push(newSong); // Add to the correct session's songs array
+    songQueue[sessionId].lastUpdate = new Date(); // Update lastUpdate
 
     // Save the updated songQueue to the JSON file
+    console.log('saving to file')
+    console.log(`songQueue: ${songQueue}`);
     saveToFile(songQueue, SONGQUEUE_LIST_FILE);
     console.log(`SessionId[${sessionId}]: Song with ID ${sequenceID} added to the queue. (${Artist} - ${Title})`);
 
@@ -232,26 +246,74 @@ app.post('/api/songqueue', (req, res) => {
     res.status(201).json(newSong);
 });
 
+// Helper function to find the highest sequence ID for a given session (modified)
+function getHighestSequenceId(sessionId) {
+    if (!songQueue[sessionId]) {
+        return 0; // No songs for this session yet
+    }
+    const songsForSession = songQueue[sessionId].songs; // Access the songs array
+    if (songsForSession.length === 0) {
+        return 0;
+    }
+    const maxSequenceId = Math.max(...songsForSession.map(song => song.sequenceID));
+    console.log(`getHighestSequenceId: ${maxSequenceId}`)
+    return maxSequenceId;
+}
+
+// Utility function to delete old sessions
+function deleteOldSessions(days) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days); // Calculate the date cutoff
+
+    let deletedSessions = [];
+
+    for (const sessionId in songQueue) {
+        if (songQueue.hasOwnProperty(sessionId)) {
+            const lastUpdate = new Date(songQueue[sessionId].lastUpdate); // Convert to Date object
+
+            if (lastUpdate < cutoffDate) {
+                deletedSessions.push(sessionId);
+                delete songQueue[sessionId]; // Delete the session
+                console.log(`Session ${sessionId} deleted (last update was ${lastUpdate})`);
+            }
+        }
+    }
+
+    saveToFile(songQueue, SONGQUEUE_LIST_FILE); // Save the updated songQueue
+    return deletedSessions; // Return an array of deleted session IDs (optional)
+}
+
+//execute every hour
+setInterval(() => {
+    deleteOldSessions(3); // Delete sessions older than 3 days
+}, 60 * 60 * 1000); // 60 minutes * 60 seconds * 1000 milliseconds (1 hour)
+
+
 // Endpoint to delete a song from the queue
 app.delete('/api/songqueue/:sequenceID', (req, res) => {
-    const { sequenceID } = req.params;
+    const { sessionID, sequenceID } = req.params;
 
-    // Find the index of the song in the queue
-    const index = songQueue.findIndex(song => song.sequenceID == sequenceID);
+    if (!songQueue[sessionId]) {
+        return res.status(404).json({ message: 'No songs found for the given sessionId.' });
+    }
 
-    if (index === -1) {
-        return res.status(404).json({ error: 'Song not found in the queue' });
+    const songsForSession = songQueue[sessionId].songs;
+    const songIndex = songsForSession.findIndex(song => song.sequenceID === parseInt(sequenceID)); // Parse sequenceID to integer
+
+    if (songIndex === -1) {
+        return res.status(404).json({ message: 'No song found with the given sequenceID for this session.' });
     }
 
     // Remove the song from the queue
-    const deletedSong = songQueue.splice(index, 1);
+    const removedSong = songsForSession.splice(songIndex, 1)[0]; // Remove the song
+    songQueue[sessionId].lastUpdate = new Date(); // Update lastUpdate
 
     // Save the updated songQueue to the JSON file
     saveToFile(songQueue, SONGQUEUE_LIST_FILE);
     console.log(`Song with ID ${sequenceID} deleted from the queue.`);
 
     // Return the deleted song
-    res.status(200).json(deletedSong);
+    res.status(200).json(removedSong);
 });
 
 // Ensure backup directory exists
