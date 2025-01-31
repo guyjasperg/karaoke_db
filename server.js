@@ -622,8 +622,8 @@ const videoDir = '/Volumes/KINGSTONSSD/_Karaoke/'
 // Middleware to check if the requested file exists
 app.use('/videos', (req, res, next) => {
     // Construct the full path to the requested file
-    // const filePath = path.join(videoDir, req.path);
-    const filePath = '/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/ANG GAAN NG FEELING - GENEVA CRUZ.mp4'
+    const filePath = path.join(videoDir, decodeURIComponent(req.path));
+    // const filePath = '/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/ANG GAAN NG FEELING - GENEVA CRUZ.mp4'
     console.log(filePath);
 
     // Check if the file exists
