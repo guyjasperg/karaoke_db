@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Songs</title>
     <link href="./styles.css" rel="stylesheet">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"> -->
     <script type="module" src="../js/main.js"></script>
     <script>
         // Function to search songs
@@ -80,10 +81,16 @@
                 else if (event.key === 'Escape') {
                     myInput.value = '';
                 }
-            });            
+            });  
+            
+            const countDisplay = document.getElementById('trieCount');
+            countDisplay.textContent = `Songs in DB: ${window.trie.getWordCount()}`
         };
     </script>
 </head>
+
+
+            
 <body class="bg-gray-50 min-h-screen p-4 sm:p-8">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
@@ -93,18 +100,40 @@
                 🎵 Back to Song Management
             </a>
         </div>
+        <span id="trieCount" class="text-xs px-2 text-slate-700">
+            Songs in DB: 
+        </span>
 
         <!-- Search Form -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="bg-white p-6 rounded-lg shadow-md mt-2 mb-8">
             <h2 class="text-xl font-semibold text-gray-700 mb-4">Search Songs</h2>
             <div class="flex flex-col sm:flex-row gap-4">
-                <select id="searchField" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- Dropdown -->
+                <select id="searchField"
+                    class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="ALL">ALL</option>
                     <option value="Artist">Artist</option>
                     <option value="Title">Title</option>
                 </select>
-                <input type="text" id="searchQuery" placeholder="Search by Title, Genre, or Cast" class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onfocus="this.select()">
-                <button id="btnSearch" onclick="searchSongs()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+        
+                <!-- Search Input Box -->
+                <div class="flex-1 relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                        </svg>
+                        <span class="sr-only">Search icon</span>
+                    </div>
+                    <input type="text"  id="searchQuery" 
+                        class="block w-full p-2 pl-10 text-md text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500" onfocus="this.select()"
+                        placeholder="Search...">
+                </div>
+        
+                <!-- Search Button -->
+                <button id="btnSearch" onclick="searchSongs()"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 hidden">
                     🔍 Search
                 </button>
             </div>

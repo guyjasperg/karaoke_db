@@ -617,8 +617,26 @@ app.get('/api/videos', (req, res) => {
 app.use(express.static('./'));
 app.use(express.static('./public'));
 
-// const videoDir = '/Users/guyjasper/Documents/Guy/Projects/Python/HelloWorld/NEW_SONGS/';
 const videoDir = '/Volumes/KINGSTONSSD/_Karaoke/'
+
+// Middleware to check if the requested file exists
+app.use('/videos', (req, res, next) => {
+    // Construct the full path to the requested file
+    // const filePath = path.join(videoDir, req.path);
+    const filePath = '/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/ANG GAAN NG FEELING - GENEVA CRUZ.mp4'
+    console.log(filePath);
+
+    // Check if the file exists
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+        if (err) {
+            // File does not exist, respond with 404
+            return res.status(404).json({ error: 'File not found' });
+        }
+        // File exists, proceed to serve it
+        next();
+    });
+});
+
 app.use('/videos', express.static(videoDir));
 
 // Function to get the local IP address
