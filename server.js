@@ -197,7 +197,7 @@ app.get('/api/songqueue/session/:sessionId', (req, res) => {
     const { sessionId } = req.params;
 
     if (!songQueue[sessionId]) {
-        return res.status(404).json({ message: 'No songs found for the given sessionId.' });
+        return res.status(404).json({ message: `No songs found for the given sessionId. [${sessionId}]` });
     }    
 
     res.status(200).json(songQueue[sessionId].songs); // Return the songs array
@@ -291,7 +291,8 @@ setInterval(() => {
 
 // Endpoint to delete a song from the queue
 app.delete('/api/songqueue/:sequenceID', (req, res) => {
-    const { sessionID, sequenceID } = req.params;
+    const { sequenceID } = req.params;
+    const sessionId = req.query.sessionID; // Get sessionId from query parameters
 
     if (!songQueue[sessionId]) {
         return res.status(404).json({ message: 'No songs found for the given sessionId.' });
@@ -310,7 +311,7 @@ app.delete('/api/songqueue/:sequenceID', (req, res) => {
 
     // Save the updated songQueue to the JSON file
     saveToFile(songQueue, SONGQUEUE_LIST_FILE);
-    console.log(`Song with ID ${sequenceID} deleted from the queue.`);
+    console.log(`[${sessionId}] Song with ID ${sequenceID} deleted from the queue.`);
 
     // Return the deleted song
     res.status(200).json(removedSong);
