@@ -7,6 +7,9 @@ const multer = require('multer');
 const fs = require('fs');
 const os = require('os');
 // const Trie = require('./public/Trie');
+const http = require('http');
+const socketIo = require('socket.io');
+const ini = require('ini');
 
 const app = express();
 app.use(express.json());
@@ -51,7 +54,7 @@ const saveToFile = (jsonFile, filename) => {
 try {
     const data = fs.readFileSync(SONGREQUEST_LIST_FILE, 'utf8');
     songRequests = JSON.parse(data);
-    console.log('Loaded songList from JSON file.');
+    // console.log('Loaded songList from JSON file.');
 } catch (err) {
     if (err.code === 'ENOENT') {
         console.log('songList.json not found. Initializing with an empty array.');
@@ -170,7 +173,7 @@ try {
                 console.warn(`Invalid data format in songQueue.json for session ${sessionId}. Skipping.`);
             }
         }
-        console.log('Loaded songQueue from JSON file:', songQueue);
+        // console.log('Loaded songQueue from JSON file:', songQueue);
     } else {
         console.warn('Invalid JSON format in songQueue.json. Initializing with an empty object.');
     }
@@ -242,8 +245,42 @@ app.post('/api/songqueue', (req, res) => {
     saveToFile(songQueue, SONGQUEUE_LIST_FILE);
     console.log(`SessionId[${sessionId}]: Song with ID ${sequenceID} added to the queue. (${Artist} - ${Title})`);
 
+    //broadcast event
+    io.emit('songQueueUpdated', { action: 'add', song: newSong, sessionID: sequenceID });
+
     // Return the new song
     res.status(201).json(newSong);
+});
+
+// Endpoint to delete a song from the queue
+app.delete('/api/songqueue/:sequenceID', (req, res) => {
+    const { sequenceID } = req.params;
+    const sessionId = req.query.sessionID; // Get sessionId from query parameters
+
+    if (!songQueue[sessionId]) {
+        return res.status(404).json({ message: 'No songs found for the given sessionId.' });
+    }
+
+    const songsForSession = songQueue[sessionId].songs;
+    const songIndex = songsForSession.findIndex(song => song.sequenceID === parseInt(sequenceID)); // Parse sequenceID to integer
+
+    if (songIndex === -1) {
+        return res.status(404).json({ message: 'No song found with the given sequenceID for this session.' });
+    }
+
+    // Remove the song from the queue
+    const removedSong = songsForSession.splice(songIndex, 1)[0]; // Remove the song
+    songQueue[sessionId].lastUpdate = new Date(); // Update lastUpdate
+
+    // Save the updated songQueue to the JSON file
+    saveToFile(songQueue, SONGQUEUE_LIST_FILE);
+    console.log(`[${sessionId}] Song with ID ${sequenceID} deleted from the queue.`);
+
+    // broadcast event
+    io.emit('songQueueUpdated', { action: 'remove', song: newSong, sessionID: sessionId });
+
+    // Return the deleted song
+    res.status(200).json(removedSong);
 });
 
 // Helper function to find the highest sequence ID for a given session (modified)
@@ -289,33 +326,6 @@ setInterval(() => {
 }, 60 * 60 * 1000); // 60 minutes * 60 seconds * 1000 milliseconds (1 hour)
 
 
-// Endpoint to delete a song from the queue
-app.delete('/api/songqueue/:sequenceID', (req, res) => {
-    const { sequenceID } = req.params;
-    const sessionId = req.query.sessionID; // Get sessionId from query parameters
-
-    if (!songQueue[sessionId]) {
-        return res.status(404).json({ message: 'No songs found for the given sessionId.' });
-    }
-
-    const songsForSession = songQueue[sessionId].songs;
-    const songIndex = songsForSession.findIndex(song => song.sequenceID === parseInt(sequenceID)); // Parse sequenceID to integer
-
-    if (songIndex === -1) {
-        return res.status(404).json({ message: 'No song found with the given sequenceID for this session.' });
-    }
-
-    // Remove the song from the queue
-    const removedSong = songsForSession.splice(songIndex, 1)[0]; // Remove the song
-    songQueue[sessionId].lastUpdate = new Date(); // Update lastUpdate
-
-    // Save the updated songQueue to the JSON file
-    saveToFile(songQueue, SONGQUEUE_LIST_FILE);
-    console.log(`[${sessionId}] Song with ID ${sequenceID} deleted from the queue.`);
-
-    // Return the deleted song
-    res.status(200).json(removedSong);
-});
 
 // Ensure backup directory exists
 if (!fs.existsSync(BACKUP_DIR)) {
@@ -613,11 +623,22 @@ app.get('/api/videos', (req, res) => {
   });
 });
 
+// Create an HTTP server
+server = http.createServer(app);
+
+// Initialize socket.io
+const io = socketIo(server);
+
 // Serve static files (HTML, CSS, JS)
 app.use(express.static('./'));
 app.use(express.static('./public'));
 
-const videoDir = '/Volumes/KINGSTONSSD/_Karaoke/'
+// Read the ini file
+const config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
+
+// Get the video directory from the ini file
+const videoDir = config.paths.videoDir;
+console.log(`videoDir: ${videoDir}`);
 
 // Middleware to check if the requested file exists
 app.use('/videos', (req, res, next) => {
@@ -652,7 +673,24 @@ function getLocalIpAddress() {
   return '0.0.0.0'; // Fallback
 }
 
+// Handle socket connections
+io.on('connection', (socket) => {
+    console.log(`A user connected: ${socket.id}`);
+
+    // Handle incoming messages from clients
+    socket.on('message', (data) => {
+        console.log('Message received:', data);
+        // Broadcast the message to all connected clients
+        io.emit('message', data);
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        console.log('A user disconnected:', socket.id);
+    });
+});
+
 // Start the server
-const server = app.listen(PORT, () => {
+server = app.listen(PORT, () => {
     console.log(`Server running at http://${getLocalIpAddress()}:${PORT}`);
 });
