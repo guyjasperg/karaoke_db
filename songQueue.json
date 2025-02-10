@@ -123,5 +123,70 @@
       }
     ],
     "lastUpdate": "2025-02-08T08:05:10.631Z"
+  },
+  "AEDG": {
+    "songs": [],
+    "lastUpdate": "2025-02-09T13:50:51.800Z"
+  },
+  "UNTI": {
+    "songs": [
+      {
+        "sequenceID": 1,
+        "Artist": "Parokya ni Edgar",
+        "Title": "Alumni Homecoming",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Alumni Homecoming - Parokya Ni Edgar.mp4"
+      },
+      {
+        "sequenceID": 2,
+        "Artist": "Parokya ni Edgar",
+        "Title": "Don't Touch My Birdie",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Don'T Touch My Birdie - Parokya Ni Edgar.mp4"
+      },
+      {
+        "sequenceID": 3,
+        "Artist": "Oasis",
+        "Title": "Stand By Me",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/Stand By Me - Oasis.mp4"
+      },
+      {
+        "sequenceID": 4,
+        "Artist": "The Company",
+        "Title": "Now That I Have You",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/NOW THAT I HAVE YOU - The Company.mp4"
+      }
+    ],
+    "lastUpdate": "2025-02-09T12:02:20.843Z"
+  },
+  "PWBE": {
+    "songs": [
+      {
+        "sequenceID": 1,
+        "Artist": "Parokya ni Edgar",
+        "Title": "Buloy",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OPM KARAOKE/BULOY - Parokya Ni Edgar.mp4"
+      }
+    ],
+    "lastUpdate": "2025-02-09T11:57:30.119Z"
+  },
+  "GMPY": {
+    "songs": [
+      {
+        "sequenceID": 1,
+        "Artist": "Rem",
+        "Title": "Losing My Religion",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/OLDIES/REM - Losing My Religion.mkv"
+      },
+      {
+        "sequenceID": 2,
+        "Artist": "R. E. M",
+        "Title": "Losing My Religion",
+        "filePath": "/Volumes/KINGSTONSSD/_Karaoke/BEST OF 90s/R. E. M - Losing My Religion.mp4"
+      }
+    ],
+    "lastUpdate": "2025-02-09T13:36:28.202Z"
+  },
+  "session-zd1sz1jpd": {
+    "songs": [],
+    "lastUpdate": "2025-02-10T05:41:00.622Z"
   }
 }

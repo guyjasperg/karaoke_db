@@ -524,8 +524,8 @@ app.get('/api/songs/search', (req, res) => {
 			} else {
 				const formattedRows = rows.map((row) => ({
 					...row,
-					Artist: toTitleCase(row.Artist.trim()),
-					Title: toTitleCase(row.Title.trim()),
+					Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
+					Title: row.Title ? toTitleCase(row.Title.trim()) : '',
 				}));
 				res.json(formattedRows);
 			}
@@ -542,8 +542,8 @@ app.get('/api/songs/search', (req, res) => {
 			} else {
 				const formattedRows = rows.map((row) => ({
 					...row,
-					Artist: toTitleCase(row.Artist.trim()),
-					Title: toTitleCase(row.Title.trim()),
+					Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
+					Title: row.Title ? toTitleCase(row.Title.trim()) : '',
 				}));
 				res.json(formattedRows);
 			}
