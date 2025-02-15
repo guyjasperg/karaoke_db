@@ -6,7 +6,7 @@ let trie = new Trie();
 // Fetch artist - title names from the server and initialize the Trie
 window.initializeTrie = async (forceInit = false) => {
 	console.log('Initializing Trie...');
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		if (forceInit) {
 			//need to refresh data for the Trie
 			console.log('Forcing Trie initialization...');
@@ -26,6 +26,7 @@ window.initializeTrie = async (forceInit = false) => {
 		} else {
 			// Fetch artist names from the server
 			console.log('Fetching artist names from server...');
+			// await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate a 2-second delay
 			fetch('/api/uniquesongs')
 				.then((response) => response.json())
 				.then((data) => {
