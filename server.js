@@ -668,21 +668,46 @@ app.get('/api/videos', (req, res) => {
 server = http.createServer(app);
 
 // Initialize socket.io
+// const io = new Server(server, {
+// 	cors: {
+// 		origin: (origin, callback) => {
+// 			const allowedOrigins = [
+// 				'http://192.168.1.6:5173', // Development frontend
+// 				'https://your-production-domain.com', // Production frontend
+// 			];
+// 			if (!origin || allowedOrigins.includes(origin)) {
+// 				callback(null, true); // Allow the request
+// 			} else {
+// 				callback(new Error('Not allowed by CORS')); // Block the request
+// 			}
+// 		},
+// 		methods: ['GET', 'POST'],
+// 	},
+// });
 const io = new Server(server, {
 	cors: {
-		origin: (origin, callback) => {
-			const allowedOrigins = [
-				'http://192.168.1.6:5173', // Development frontend
-				'https://your-production-domain.com', // Production frontend
-			];
-			if (!origin || allowedOrigins.includes(origin)) {
-				callback(null, true); // Allow the request
-			} else {
-				callback(new Error('Not allowed by CORS')); // Block the request
-			}
-		},
-		methods: ['GET', 'POST'],
+		origin: '*', // Allow all origins (replace with trusted domains in production)
+		methods: ['GET', 'POST'], // Allowed HTTP methods
 	},
+});
+
+// // Middleware to extract the token from headers
+// app.use((req, res, next) => {
+// 	const token = req.headers['x-api-token'] || req.headers['authorization'];
+// 	app.locals.requestToken = token; // Store the token for later use
+// 	next();
+// });
+
+io.use((socket, next) => {
+	console.log('Socket:', socket.handshake.auth);
+	const token = socket.handshake.auth.token; // Extract the token from the auth object
+
+	// Validate the token
+	if (token === 'karaoke-player-app') {
+		return next(); // Allow the connection
+	}
+
+	next(new Error('Authentication error: Invalid token')); // Block the connection
 });
 
 // Serve static files (HTML, CSS, JS)
@@ -691,7 +716,6 @@ app.use(express.static('./public'));
 
 // Read the ini file
 const config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
-
 // Get the video directory from the ini file
 const videoDir = config.paths.videoDir;
 console.log(`videoDir: ${videoDir}`);
@@ -713,6 +737,63 @@ app.use('/videos', (req, res, next) => {
 		next();
 	});
 });
+
+// Serve HLS files based on song name
+app.get('/hls/:song', (req, res) => {
+	console.log(`Request received for /hls/${req.params.song}/${req.params.file}`);
+	const songName = req.params.song;
+	const fileName = req.params.file;
+	const filePath = path.join(__dirname, 'hls', songName, fileName);
+
+	if (!fs.existsSync(filePath)) {
+		console.log(`File not found: ${filePath}`);
+		return res.status(404).send('File not found');
+	}
+
+	const stat = fs.statSync(filePath);
+	const fileSize = stat.size;
+	const range = req.headers.range;
+
+	if (range) {
+		const parts = range.replace(/bytes=/, '').split('-');
+		const start = parseInt(parts[0], 10);
+		const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+		const chunksize = end - start + 1;
+		const file = fs.createReadStream(filePath, { start, end });
+		res.writeHead(206, {
+			'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+			'Accept-Ranges': 'bytes',
+			'Content-Length': chunksize,
+			'Content-Type': fileName.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t',
+		});
+		file.pipe(res);
+	} else {
+		res.sendFile(filePath);
+	}
+});
+
+// app.get('/videos/:filename*', (req, res) => {
+// 	console.log('Serving video:', req.params.filename);
+// 	const filename = req.params.filename + (req.params[0] || ''); // Include subfolder if present
+// 	const filePath = path.join(__dirname, 'videos', filename); // Adjust path
+
+// 	if (filename.endsWith('.mp4')) {
+// 		res.setHeader('Content-Type', 'video/mp4');
+// 	}
+
+// 	res.sendFile(filePath, (err) => {
+// 		if (err) {
+// 			console.error('Error serving video:', err);
+// 			res.status(404).json({ error: 'Video not found' });
+// 		}
+// 	});
+// });
+
+// // Catch-all for debugging
+// app.use((req, res) => {
+// 	console.log(`Unhandled request: ${req.method} ${req.url}`);
+// 	res.status(404).send('Not found');
+// });
 
 app.use('/videos', express.static(videoDir));
 
@@ -750,6 +831,33 @@ io.on('connection', (socket) => {
 // server = app.listen(PORT, () => {
 // 	console.log(`Server running at http://${getLocalIpAddress()}:${PORT}`);
 // });
-server.listen(PORT, () => {
-	console.log(`Server running at http://${getLocalIpAddress()}:${PORT}`);
+server.listen(PORT, (err) => {
+	if (err) {
+		if (err.code === 'EADDRINUSE') {
+			console.warn(`Port ${PORT} is in use, trying another port...`);
+			server.listen(0); // Use an ephemeral port
+		} else {
+			console.error('Error starting server:', err);
+		}
+	} else {
+		console.log(`Server running at http://${getLocalIpAddress()}:${server.address().port}`);
+	}
+});
+
+// Handle server errors
+server.on('error', (err) => {
+	if (err.code === 'EADDRINUSE') {
+		console.warn(`Port ${PORT} is in use, trying another port...`);
+		server.listen(0); // Use an ephemeral port
+	} else {
+		console.error('Unexpected error starting server:', err);
+		console.log('Shutting down the server...');
+		process.exit(1); // Stop the web app on error
+	}
+});
+
+// Handle server success
+server.on('listening', () => {
+	const address = server.address();
+	console.log(`Server is listening on http://${getLocalIpAddress()}:${address.port}`);
 });
