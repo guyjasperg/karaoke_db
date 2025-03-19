@@ -11,6 +11,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const ini = require('ini');
 const { toTitleCase } = require('./utils');
+const { url } = require('inspector');
 
 const app = express();
 app.use(express.json());
@@ -59,8 +60,11 @@ try {
 
 	// Format Artist and Title properties
 	songRequests = songRequests.map((request) => ({
+		SequenceID: request.SequenceID,
 		Artist: toTitleCase(request.Artist.trim()),
 		Title: toTitleCase(request.Title.trim()),
+		url: request.url,
+		Status: request.Status,
 	}));
 } catch (err) {
 	if (err.code === 'ENOENT') {
@@ -587,7 +591,61 @@ const dbStorage = multer.diskStorage({
 });
 const uploadDb = multer({ storage: dbStorage });
 
-// Endpoint for database file upload
+// Add function to store Trie data
+const storeTrieData = async () => {
+	try {
+		// Get all unique songs from the database
+		const sql = `SELECT DISTINCT TRIM((coalesce(Artist,'') || ' - '  || coalesce( Title,''))) as song 
+					FROM dbSongs 
+					WHERE song IS NOT NULL
+					ORDER BY song`;
+
+		db.all(sql, [], (err, rows) => {
+			if (err) {
+				console.error('Error getting songs for Trie:', err);
+				return;
+			}
+
+			// Format songs
+			const songs = rows.map((row) => toTitleCase(row.song.trim()));
+
+			// Create Trie data structure matching app.js format
+			const trieData = {
+				songs: songs.map((song) => ({ song })), // Match the format expected by app.js
+				lastUpdated: new Date().toISOString(),
+			};
+
+			// Store in a file
+			const trieFilePath = path.join(__dirname, 'public', 'trieData.json');
+			fs.writeFileSync(trieFilePath, JSON.stringify(trieData, null, 2));
+			console.log(`Trie data stored with ${songs.length} songs`);
+
+			// Also store in localStorage format for direct use
+			const localStorageTrieData = {
+				root: {},
+				wordCount: songs.length,
+			};
+			songs.forEach((song) => {
+				let current = localStorageTrieData.root;
+				for (const char of song) {
+					if (!current[char]) {
+						current[char] = {};
+					}
+					current = current[char];
+				}
+				current.isEndOfWord = true;
+			});
+
+			const localStorageFilePath = path.join(__dirname, 'public', 'localStorageTrieData.json');
+			fs.writeFileSync(localStorageFilePath, JSON.stringify(localStorageTrieData, null, 2));
+			console.log('LocalStorage Trie data stored');
+		});
+	} catch (error) {
+		console.error('Error storing Trie data:', error);
+	}
+};
+
+// Modify the upload-db endpoint to store Trie data
 app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
 	console.log('Uploading database file...');
 	if (!req.file) {
@@ -622,6 +680,8 @@ app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
 				console.error('Error reopening database:', err.message);
 			} else {
 				console.log('Database connection refreshed.');
+				// Store new Trie data
+				storeTrieData();
 			}
 		});
 
@@ -630,6 +690,9 @@ app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
 			message: 'Database file uploaded and replaced successfully!',
 			backupFile: backupFileName,
 		});
+
+		// Emit socket event to all connected clients to update their Tries
+		io.emit('databaseUpdated', { message: 'Database updated, refreshing Trie...' });
 	} catch (err) {
 		console.error('Error during database file replacement:', err);
 		res.status(500).json({ error: 'Failed to replace the database file.' });

@@ -1,384 +1,555 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Song Requests</title>
-    <link href="./styles.css" rel="stylesheet">
-</head>
-<body class="bg-gray-50 min-h-screen p-4 sm:p-8 items-center justify-center">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">🎵 Song Requests</h1>
-            <div class="flex space-x-4">
-                <a href="/index.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 text-center">
-                    🏠 Back to Home
-                </a>
-            </div>
-        </div>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Song Requests</title>
+		<link href="./styles.css" rel="stylesheet" />
+	</head>
+	<body class="bg-gray-50 min-h-screen p-4 sm:p-8 items-center justify-center">
+		<div class="max-w-7xl mx-auto">
+			<!-- Header -->
+			<div class="flex flex-col sm:flex-row justify-between items-center mb-8">
+				<h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">🎵 Song Requests</h1>
+				<div class="flex space-x-4">
+					<a
+						href="/index.html"
+						class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 text-center"
+					>
+						🏠 Back to Home
+					</a>
+				</div>
+			</div>
 
-        <!-- Add New Song Form -->
-        <div class="mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-700">Add New Song</h2>
-                <button id="toggleFormButton" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
-                    ➕ Show Form
-                </button>
-            </div>
-            <div id="addSongForm" class="bg-white p-6 rounded-lg shadow-md hidden">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input type="text" id="newArtist" placeholder="Artist" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <input type="text" id="newTitle" placeholder="Title" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <input type="text" id="newUrl" placeholder="URL" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button onclick="addNewSong()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 sm:col-span-2">
-                        ➕ Add Song
-                    </button>
-                </div>
-            </div>
-        </div>
+			<!-- Add New Song Form -->
+			<div class="mb-8">
+				<div class="flex justify-between items-center mb-4">
+					<h2 class="text-xl font-semibold text-gray-700">Add New Song</h2>
+					<button
+						id="toggleFormButton"
+						class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+					>
+						➕ Show Form
+					</button>
+				</div>
+				<div id="addSongForm" class="bg-white p-6 rounded-lg shadow-md hidden">
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<input
+							type="text"
+							id="newArtist"
+							placeholder="Artist"
+							class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+						<input
+							type="text"
+							id="newTitle"
+							placeholder="Title"
+							class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+						<input
+							type="text"
+							id="newUrl"
+							placeholder="URL"
+							class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+						<button
+							onclick="addNewSong()"
+							class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 sm:col-span-2"
+						>
+							➕ Add Song
+						</button>
+					</div>
+				</div>
+			</div>
 
-        <!-- Song Requests Table -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-gray-100 border-b-2 border-gray-500">
-                    <tr>
-                        <th class="p-3 text-left text-gray-700">Artist</th>
-                        <th class="p-3 text-left text-gray-700">Title</th>
-                        <th class="p-3 text-left text-gray-700 hidden sm:table-cell">URL</th>
-                        <th class="p-3 text-left text-gray-700">Status</th> <!-- New Status column -->
-                        <th class="p-3 text-left text-gray-700 hidden sm:table-cell">Actions</th>
-                    </tr>
-                    <!-- Filter Row -->
-                    <tr id="filterRow">
-                        <th class="p-2"><input type="text" id="filterArtist" placeholder="Filter Artist" class="w-full text-sm font-normal p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></th>
-                        <th class="p-2"><input type="text" id="filterTitle" placeholder="Filter Title" class="w-full font-medium p-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></th>
-                        <th class="p-2 hidden sm:table-cell"></th> <!-- Empty cell for URL -->
-                        <th class="p-2"></th> <!-- Empty cell for Status -->
-                        <th class="p-2 hidden sm:table-cell"></th> <!-- Empty cell for Actions -->
-                    </tr>
-                </thead>
-                <tbody id="songsTable">
-                    <!-- Song requests will be inserted here -->
-                </tbody>
-            </table>
-            <div class="flex justify-between items-center p-4">
-                <button id="prevPage" class="w-32 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200" onclick="prevPage()">
-                    <span class="hidden sm:inline">Previous</span>
-                    <span class="sm:hidden"><</span>
-                </button>
-                <div class="flex items-center space-x-2">
-                    <span id="pageInfo" class="text-gray-700"></span>
-                    <span class="text-gray-700">|</span>
-                    <label for="rowsPerPage" class="text-gray-700">Rows Per Page:</label>
-                    <select id="rowsPerPage" class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="changeRowsPerPage()">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                </div>
-                <button id="nextPage" class="w-32 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200" onclick="nextPage()">
-                    <span class="hidden sm:inline">Next</span>
-                    <span class="sm:hidden">></span>
-                </button>
-            </div>
-        </div>
-    </div>
+			<!-- Song Requests Table -->
+			<div class="bg-white rounded-lg shadow-md overflow-hidden">
+				<table class="w-full">
+					<thead class="bg-gray-100 border-b-2 border-gray-500">
+						<tr>
+							<th class="p-3 text-left text-gray-700">Artist</th>
+							<th class="p-3 text-left text-gray-700">Title</th>
+							<th class="p-3 text-left text-gray-700 hidden sm:table-cell">URL</th>
+							<th class="p-3 text-left text-gray-700">Status</th>
+							<!-- New Status column -->
+							<th class="p-3 text-left text-gray-700 hidden sm:table-cell">Actions</th>
+						</tr>
+						<!-- Filter Row -->
+						<tr id="filterRow">
+							<th class="p-2">
+								<input
+									type="text"
+									id="filterArtist"
+									placeholder="Filter Artist"
+									class="w-full text-sm font-normal p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+								/>
+							</th>
+							<th class="p-2">
+								<input
+									type="text"
+									id="filterTitle"
+									placeholder="Filter Title"
+									class="w-full font-medium p-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+								/>
+							</th>
+							<th class="p-2 hidden sm:table-cell"></th>
+							<!-- Empty cell for URL -->
+							<th class="p-2"></th>
+							<!-- Empty cell for Status -->
+							<th class="p-2 hidden sm:table-cell"></th>
+							<!-- Empty cell for Actions -->
+						</tr>
+					</thead>
+					<tbody id="songsTable">
+						<!-- Song requests will be inserted here -->
+					</tbody>
+				</table>
+				<div class="flex justify-between items-center p-4">
+					<button
+						id="prevPage"
+						class="w-32 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+						onclick="prevPage()"
+					>
+						<span class="hidden sm:inline">Previous</span>
+						<span class="sm:hidden"><</span>
+					</button>
+					<div class="flex items-center space-x-2">
+						<span id="pageInfo" class="text-gray-700"></span>
+						<span class="text-gray-700">|</span>
+						<label for="rowsPerPage" class="text-gray-700">Rows Per Page:</label>
+						<select
+							id="rowsPerPage"
+							class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							onchange="changeRowsPerPage()"
+						>
+							<option value="10">10</option>
+							<option value="20">20</option>
+							<option value="50">50</option>
+							<option value="100">100</option>
+						</select>
+					</div>
+					<button
+						id="nextPage"
+						class="w-32 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+						onclick="nextPage()"
+					>
+						<span class="hidden sm:inline">Next</span>
+						<span class="sm:hidden">></span>
+					</button>
+				</div>
+			</div>
+		</div>
 
-    <!-- Modal Backdrop for Modal 1 -->
-    <div id="modalBackdrop1" class="fixed inset-0 bg-black bg-opacity-50 hidden" onclick="closeModalOnClickOutside(event, 'modalBackdrop1')">
-        <!-- Modal 1 -->
-        <div id="modal1" class="fixed inset-0 flex items-center justify-center">
-            <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-                <!-- Modal Content -->
-                <h2 class="text-xl font-bold mb-4">Delete Song Entry</h2>
-                <p class="text-gray-700 mb-6">Are you sure you want to delete selected item?</p>
+		<!-- Modal Backdrop for Modal 1 -->
+		<div
+			id="modalBackdrop1"
+			class="fixed inset-0 bg-black bg-opacity-50 hidden"
+			onclick="closeModalOnClickOutside(event, 'modalBackdrop1')"
+		>
+			<!-- Modal 1 -->
+			<div id="modal1" class="fixed inset-0 flex items-center justify-center">
+				<div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+					<!-- Modal Content -->
+					<h2 class="text-xl font-bold mb-4">Delete Song Entry</h2>
+					<p class="text-gray-700 mb-6">Are you sure you want to delete selected item?</p>
 
-                <!-- Buttons -->
-                <div class="flex justify-center space-x-4">
-                    <button onclick="handleButtonClick('cancel')" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200">
-                        Cancel
-                    </button>
-                    <button onclick="handleButtonClick('confirm')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
-                        Confirm
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+					<!-- Buttons -->
+					<div class="flex justify-center space-x-4">
+						<button
+							onclick="handleButtonClick('cancel')"
+							class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200"
+						>
+							Cancel
+						</button>
+						<button
+							onclick="handleButtonClick('confirm')"
+							class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+						>
+							Confirm
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden">
-        <div class="fixed inset-0 bg-white p-6 rounded-lg shadow-md w-full max-w-md items-center justify-center">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Edit Song</h2>
-            <div class="space-y-4">
-                <input type="text" id="editArtist" placeholder="Artist" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="editTitle" placeholder="Title" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="editUrl" placeholder="URL" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <select id="editStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="Pending">Pending</option>
-                    <option value="Downloaded">Downloaded</option>
-                </select>
-            </div>
-            <div class="flex justify-end space-x-4 mt-6">
-                <button onclick="closeEditModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200">Cancel</button>
-                <button onclick="updateSong()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">Save</button>
-            </div>
-        </div>
-    </div>
+		<!-- Edit Modal -->
+		<div
+			id="editModal"
+			class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden"
+		>
+			<div
+				class="fixed inset-0 bg-white p-6 rounded-lg shadow-md w-full max-w-md items-center justify-center"
+			>
+				<h2 class="text-xl font-semibold text-gray-800 mb-4">Edit Song</h2>
+				<div class="space-y-4">
+					<input
+						type="text"
+						id="editArtist"
+						placeholder="Artist"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					<input
+						type="text"
+						id="editTitle"
+						placeholder="Title"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					<input
+						type="text"
+						id="editUrl"
+						placeholder="URL"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					<select
+						id="editStatus"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					>
+						<option value="Pending">Pending</option>
+						<option value="Downloaded">Downloaded</option>
+					</select>
+				</div>
+				<div class="flex justify-end space-x-4 mt-6">
+					<button
+						onclick="closeEditModal()"
+						class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200"
+					>
+						Cancel
+					</button>
+					<button
+						onclick="updateSong()"
+						class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+					>
+						Save
+					</button>
+				</div>
+			</div>
+		</div>
 
-    <!-- Edit Song Modal -->
-    <div id="editSongModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden">
-        <div class="fixed inset-0 bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Edit Song</h2>
-            <div class="space-y-4">
-                <input type="text" id="editArtist" placeholder="Artist" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="editTitle" placeholder="Title" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="editUrl" placeholder="URL" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <select id="editStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="Pending">Pending</option>
-                    <option value="Downloaded">Downloaded</option>
-                </select>
-            </div>
-            <div class="flex justify-end space-x-4 mt-6">
-                <button onclick="closeEditModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200">Cancel</button>
-                <button onclick="updateSong()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">Save</button>
-            </div>
-        </div>
-    </div>
+		<!-- Edit Song Modal -->
+		<div
+			id="editSongModal"
+			class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden"
+		>
+			<div class="fixed inset-0 bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+				<h2 class="text-xl font-semibold text-gray-800 mb-4">Edit Song</h2>
+				<div class="space-y-4">
+					<input
+						type="text"
+						id="editArtist"
+						placeholder="Artist"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					<input
+						type="text"
+						id="editTitle"
+						placeholder="Title"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					<input
+						type="text"
+						id="editUrl"
+						placeholder="URL"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					<select
+						id="editStatus"
+						class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					>
+						<option value="Pending">Pending</option>
+						<option value="Downloaded">Downloaded</option>
+					</select>
+				</div>
+				<div class="flex justify-end space-x-4 mt-6">
+					<button
+						onclick="closeEditModal()"
+						class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200"
+					>
+						Cancel
+					</button>
+					<button
+						onclick="updateSong()"
+						class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+					>
+						Save
+					</button>
+				</div>
+			</div>
+		</div>
 
-    <script>
-        let currentPage = 1;
-        let rowsPerPage = 10; // Default rows per page
-        let currentEditId = null;
-        let songRequests = []; // Global variable to store fetched song requests
+		<script>
+			let currentPage = 1;
+			let rowsPerPage = 10; // Default rows per page
+			let currentEditId = null;
+			let songRequests = []; // Global variable to store fetched song requests
 
-        // Function to fetch song requests from the server
-        const fetchSongRequests = async () => {
-            const filterArtist = document.getElementById('filterArtist').value;
-            const filterTitle = document.getElementById('filterTitle').value;
+			// Function to fetch song requests from the server
+			const fetchSongRequests = async () => {
+				const filterArtist = document.getElementById('filterArtist').value;
+				const filterTitle = document.getElementById('filterTitle').value;
 
-            // Build the query string
-            const queryParams = new URLSearchParams({
-                artist: filterArtist,
-                title: filterTitle,
-                page: currentPage,
-                limit: rowsPerPage,
-            });
+				// Build the query string
+				const queryParams = new URLSearchParams({
+					artist: filterArtist,
+					title: filterTitle,
+					page: currentPage,
+					limit: rowsPerPage,
+				});
 
-            // Fetch song requests from the server
-            const response = await fetch(`/api/songrequests?${queryParams}`);
-            songRequests = await response.json();
+				// Fetch song requests from the server
+				const response = await fetch(`/api/songrequests?${queryParams}`);
+				songRequests = await response.json();
 
-            // Display the song requests
-            displaySongRequests(songRequests);
+				// Display the song requests
+				displaySongRequests(songRequests);
 
-            // Update pagination controls
-            updatePaginationControls(songRequests.length);
-        };
+				// Update pagination controls
+				updatePaginationControls(songRequests.length);
+			};
 
-        // Function to display song requests in the table
-        const displaySongRequests = (songRequests) => {
-            const tbody = document.getElementById('songsTable');
-            tbody.innerHTML = '';
+			// Function to display song requests in the table
+			const displaySongRequests = (songRequests) => {
+				const tbody = document.getElementById('songsTable');
+				tbody.innerHTML = '';
 
-            songRequests.forEach((song, index) => {
-                const row = document.createElement('tr');
-                row.className = index % 2 === 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-50 hover:bg-gray-100';
-                row.innerHTML = `
-                    <td class="p-3 text-gray-700">${song.Artist}</td>
-                    <td class="p-3 text-gray-700">${song.Title}</td>
-                    <td class="p-3 text-gray-700 hidden sm:table-cell">
-                        ${song.url ? `
-                            <div class="relative inline-block group">
-                                <a href="${song.url}" target="_blank" class="text-blue-500 hover:underline">YT Link</a>
-                                <!-- Tooltip -->
-                                <div class="absolute z-10 invisible group-hover:visible bg-slate-700 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap">
-                                    ${song.url}
-                                    <div class="absolute w-2 h-2 bg-slate-700 transform rotate-45 -translate-x-1/2 -bottom-1 left-1/2"></div>
-                                </div>
-                            </div>
-                        ` : '--'}
-                    </td>
-                    <td class="p-3 text-gray-700">${song.Status || '--'}</td>
-                    <td class="p-3 text-gray-700 hidden sm:table-cell">
-                        <button onclick="openEditModal(${song.SequenceID})" class="text-blue-500 hover:text-blue-700 mr-2">
-                            <!-- Heroicon: Pencil -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                        </button>
-                        <button onclick="deleteSongRequest(${song.SequenceID})" class="text-red-500 hover:text-red-700">
-                            <!-- Heroicon: Trash -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        };
+				songRequests.forEach((song, index) => {
+					console.log(song);
+					const row = document.createElement('tr');
+					row.className =
+						index % 2 === 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-50 hover:bg-gray-100';
+					const artistCell = document.createElement('td');
+					artistCell.className = 'p-3 text-gray-700';
+					artistCell.textContent = song.Artist;
 
-        // Function to add a new song
-        const addNewSong = async () => {
-            const artist = document.getElementById('newArtist').value;
-            const title = document.getElementById('newTitle').value;
-            const url = document.getElementById('newUrl').value;
+					const titleCell = document.createElement('td');
+					titleCell.className = 'p-3 text-gray-700';
+					titleCell.textContent = song.Title;
 
-            if (!artist || !title) {
-                alert('Please fill in Artist and Title fields!');
-                return;
-            }
+					const urlCell = document.createElement('td');
+					urlCell.className = 'p-3 text-gray-700 hidden sm:table-cell';
+					if (song.url) {
+						const linkWrapper = document.createElement('div');
+						linkWrapper.className = 'relative inline-block group';
 
-            const response = await fetch('/api/songrequest', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ Artist: artist, Title: title, url, Status: "Pending" }), // Default status is "Active"
-            });
+						const link = document.createElement('a');
+						link.href = song.url;
+						link.target = '_blank';
+						link.className = 'text-blue-500 hover:underline';
+						link.textContent = 'YT Link';
 
-            if (response.ok) {
-                // Clear the form
-                document.getElementById('newArtist').value = '';
-                document.getElementById('newTitle').value = '';
-                document.getElementById('newUrl').value = '';
+						const tooltip = document.createElement('div');
+						tooltip.className =
+							'absolute z-10 invisible group-hover:visible bg-slate-700 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap';
+						tooltip.textContent = song.url;
 
-                // Refresh the song list
-                fetchSongRequests();
-            } else {
-                alert('Failed to add the song. Please try again.');
-            }
-        };
+						const tooltipArrow = document.createElement('div');
+						tooltipArrow.className =
+							'absolute w-2 h-2 bg-slate-700 transform rotate-45 -translate-x-1/2 -bottom-1 left-1/2';
 
-        // Function to update the song
-        const updateSong = async () => {
-            const artist = document.getElementById('editArtist').value;
-            const title = document.getElementById('editTitle').value;
-            const url = document.getElementById('editUrl').value;
-            const status = document.getElementById('editStatus').value;
+						tooltip.appendChild(tooltipArrow);
+						linkWrapper.appendChild(link);
+						linkWrapper.appendChild(tooltip);
+						urlCell.appendChild(linkWrapper);
+					} else {
+						urlCell.textContent = '--';
+					}
 
-            if (!artist || !title) {
-                alert('Please fill in Artist and Title fields!');
-                return;
-            }
+					const statusCell = document.createElement('td');
+					statusCell.className = 'p-3 text-gray-700';
+					statusCell.textContent = song.Status || '--';
 
-            const response = await fetch(`/api/songrequest/${currentEditId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ Artist: artist, Title: title, url, Status: status }),
-            });
+					const actionsCell = document.createElement('td');
+					actionsCell.className = 'p-3 text-gray-700 hidden sm:table-cell';
 
-            if (response.ok) {
-                // Refresh the song list
-                fetchSongRequests();
-                // Close the modal
-                closeEditModal();
-            } else {
-                alert('Failed to update the song. Please try again.');
-            }
-        };
+					const editButton = document.createElement('button');
+					editButton.onclick = () => openEditModal(song.SequenceID);
+					editButton.className = 'text-blue-500 hover:text-blue-700 mr-2';
+					editButton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                    `;
 
-        // Function to open the edit modal
-        const openEditModal = (sequenceID) => {
-            console.log('Editing song with ID:', sequenceID);
-            const song = songRequests.find(song => song.SequenceID == sequenceID);
-            if (!song) return;
+					const deleteButton = document.createElement('button');
+					deleteButton.onclick = () => deleteSongRequest(song.SequenceID);
+					deleteButton.className = 'text-red-500 hover:text-red-700';
+					deleteButton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    `;
 
-            // Populate the modal fields
-            document.getElementById('editArtist').value = song.Artist;
-            document.getElementById('editTitle').value = song.Title;
-            document.getElementById('editUrl').value = song.url || '';
-            document.getElementById('editStatus').value = song.Status || 'Pending';
+					actionsCell.appendChild(editButton);
+					actionsCell.appendChild(deleteButton);
 
-            // Store the current edit ID
-            currentEditId = sequenceID;
+					row.appendChild(artistCell);
+					row.appendChild(titleCell);
+					row.appendChild(urlCell);
+					row.appendChild(statusCell);
+					row.appendChild(actionsCell);
 
-            // Show the modal
-            // document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('modalBackdrop1').classList.remove('hidden');
-        };
+					tbody.appendChild(row);
+				});
+			};
 
-        // Function to close the edit modal
-        const closeEditModal = () => {
-            document.getElementById('editModal').classList.add('hidden');
-            currentEditId = null;
-        };
+			// Function to add a new song
+			const addNewSong = async () => {
+				const artist = document.getElementById('newArtist').value;
+				const title = document.getElementById('newTitle').value;
+				const url = document.getElementById('newUrl').value;
 
-        // Function to toggle the Add Song Form
-        const toggleForm = () => {
-            const form = document.getElementById('addSongForm');
-            const button = document.getElementById('toggleFormButton');
+				if (!artist || !title) {
+					alert('Please fill in Artist and Title fields!');
+					return;
+				}
 
-            form.classList.toggle('hidden');
-            button.textContent = form.classList.contains('hidden') ? '➕ Show Form' : '➖ Hide Form';
-        };
+				const response = await fetch('/api/songrequest', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ Artist: artist, Title: title, url, Status: 'Pending' }), // Default status is "Active"
+				});
 
-        // Add event listener to the toggle button
-        document.getElementById('toggleFormButton').addEventListener('click', toggleForm);
+				if (response.ok) {
+					// Clear the form
+					document.getElementById('newArtist').value = '';
+					document.getElementById('newTitle').value = '';
+					document.getElementById('newUrl').value = '';
 
-        // Function to update pagination controls
-        const updatePaginationControls = (totalSongs) => {
-            const totalPages = Math.ceil(totalSongs / rowsPerPage);
-            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
-            document.getElementById('prevPage').disabled = currentPage === 1;
-            document.getElementById('nextPage').disabled = currentPage === totalPages;
-        };
+					// Refresh the song list
+					fetchSongRequests();
+				} else {
+					alert('Failed to add the song. Please try again.');
+				}
+			};
 
-        // Function to change rows per page
-        const changeRowsPerPage = () => {
-            rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
-            currentPage = 1; // Reset to the first page
-            fetchSongRequests();
-        };
+			// Function to update the song
+			const updateSong = async () => {
+				const artist = document.getElementById('editArtist').value;
+				const title = document.getElementById('editTitle').value;
+				const url = document.getElementById('editUrl').value;
+				const status = document.getElementById('editStatus').value;
 
-        // Pagination controls
-        const prevPage = () => {
-            openEditModal(1);
-            return;
-            if (currentPage > 1) {
-                currentPage--;
-                fetchSongRequests();
-            }
-        };
+				if (!artist || !title) {
+					alert('Please fill in Artist and Title fields!');
+					return;
+				}
 
-        const nextPage = () => {
-            const totalPages = parseInt(document.getElementById('pageInfo').textContent.split(' ')[3]);
-            if (currentPage < totalPages) {
-                currentPage++;
-                fetchSongRequests();
-            }
-        };
+				const response = await fetch(`/api/songrequest/${currentEditId}`, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ Artist: artist, Title: title, url, Status: status }),
+				});
 
-        // Function to delete a song request
-        const deleteSongRequest = async (sequenceID) => {
-            const response = await fetch(`/api/songrequest/${sequenceID}`, {
-                method: 'DELETE',
-            });
-            if (response.ok) {
-                fetchSongRequests(); // Refresh the list after deletion
-            }
-        };
+				if (response.ok) {
+					// Refresh the song list
+					fetchSongRequests();
+					// Close the modal
+					closeEditModal();
+				} else {
+					alert('Failed to update the song. Please try again.');
+				}
+			};
 
-        // Add event listeners to filter inputs
-        window.onload = () => {
-            const filterInputs = document.querySelectorAll('#filterRow input');
-            filterInputs.forEach(input => {
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        currentPage = 1; // Reset to the first page when filtering
-                        fetchSongRequests();
-                    }
-                });
-            });
+			// Function to open the edit modal
+			const openEditModal = (sequenceID) => {
+				console.log('Editing song with ID:', sequenceID);
+				const song = songRequests.find((song) => song.SequenceID == sequenceID);
+				if (!song) return;
 
-            // Load song requests when the page loads
-            fetchSongRequests();
-        };
-    </script>
-</body>
+				// Populate the modal fields
+				document.getElementById('editArtist').value = song.Artist;
+				document.getElementById('editTitle').value = song.Title;
+				document.getElementById('editUrl').value = song.url || '';
+				document.getElementById('editStatus').value = song.Status || 'Pending';
+
+				// Store the current edit ID
+				currentEditId = sequenceID;
+
+				// Show the modal
+				// document.getElementById('editModal').classList.remove('hidden');
+				document.getElementById('editModal').classList.remove('hidden');
+			};
+
+			// Function to close the edit modal
+			const closeEditModal = () => {
+				document.getElementById('editModal').classList.add('hidden');
+				currentEditId = null;
+			};
+
+			// Function to toggle the Add Song Form
+			const toggleForm = () => {
+				const form = document.getElementById('addSongForm');
+				const button = document.getElementById('toggleFormButton');
+
+				form.classList.toggle('hidden');
+				button.textContent = form.classList.contains('hidden') ? '➕ Show Form' : '➖ Hide Form';
+			};
+
+			// Add event listener to the toggle button
+			document.getElementById('toggleFormButton').addEventListener('click', toggleForm);
+
+			// Function to update pagination controls
+			const updatePaginationControls = (totalSongs) => {
+				const totalPages = Math.ceil(totalSongs / rowsPerPage);
+				document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+				document.getElementById('prevPage').disabled = currentPage === 1;
+				document.getElementById('nextPage').disabled = currentPage === totalPages;
+			};
+
+			// Function to change rows per page
+			const changeRowsPerPage = () => {
+				rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+				currentPage = 1; // Reset to the first page
+				fetchSongRequests();
+			};
+
+			// Pagination controls
+			const prevPage = () => {
+				openEditModal(1);
+				return;
+				if (currentPage > 1) {
+					currentPage--;
+					fetchSongRequests();
+				}
+			};
+
+			const nextPage = () => {
+				const totalPages = parseInt(document.getElementById('pageInfo').textContent.split(' ')[3]);
+				if (currentPage < totalPages) {
+					currentPage++;
+					fetchSongRequests();
+				}
+			};
+
+			// Function to delete a song request
+			const deleteSongRequest = async (sequenceID) => {
+				console.log('Deleting song with ID:', sequenceID);
+				const response = await fetch(`/api/songrequest/${sequenceID}`, {
+					method: 'DELETE',
+				});
+				if (response.ok) {
+					fetchSongRequests(); // Refresh the list after deletion
+				}
+			};
+
+			// Add event listeners to filter inputs
+			window.onload = () => {
+				const filterInputs = document.querySelectorAll('#filterRow input');
+				filterInputs.forEach((input) => {
+					input.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter') {
+							currentPage = 1; // Reset to the first page when filtering
+							fetchSongRequests();
+						}
+					});
+				});
+
+				// Load song requests when the page loads
+				fetchSongRequests();
+			};
+		</script>
+	</body>
 </html>

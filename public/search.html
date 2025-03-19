@@ -6,10 +6,11 @@
 		<title>Search Songs</title>
 		<link href="./styles.css" rel="stylesheet" />
 		<!-- <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"> -->
-		<script type="module" src="../js/main.js"></script>
+		<script type="module" src="../js/main.js" defer></script>
 		<script>
 			// Function to search songs
 			const searchSongs = async () => {
+				console.log('Searching songs...');
 				const searchQuery = document.getElementById('searchQuery');
 				const query = document.getElementById('searchQuery').value;
 				const field = document.getElementById('searchField').value;
@@ -109,8 +110,8 @@
 						'border-gray-100'
 					);
 					tr.innerHTML = `
-                    <td class="p-3 text-gray-900">${highlightedtext}</td>
-                `;
+			                 <td class="p-3 text-gray-900">${highlightedtext}</td>
+			             `;
 					tbody.appendChild(tr);
 				});
 
@@ -139,42 +140,58 @@
 				return text.replace(regex, '<span class="font-bold">$&</span>');
 			}
 
-			onload = () => {
-				const myInput = document.getElementById('searchQuery');
-				const myButton = document.getElementById('btnSearch');
+			function handle_key_input(event) {
+				if (event.key === 'Enter') {
+					searchSongs();
+				}
+			}
 
-				myInput.addEventListener('keydown', (event) => {
+			onload = async () => {
+				console.log('Page loaded');
+				document.getElementById('btnSearch').addEventListener('click', searchSongs);
+				document.getElementById('searchQuery').addEventListener('keydown', function (event) {
 					if (event.key === 'Enter') {
-						myButton.click();
+						searchSongs();
 					} else if (event.key === 'Escape') {
 						myInput.value = '';
 					}
 				});
 
-				const countDisplay = document.getElementById('trieCount');
-				countDisplay.textContent = `Songs in DB: ${window.trie.getWordCount()}`;
+				try {
+					// Load Trie data from localStorage format file
+					console.log('Loading Trie data...');
+					// Initialize Trie with the loaded data
+					window.initializeTrie(true);
+
+					const countDisplay = document.getElementById('trieCount');
+					countDisplay.textContent = `Songs in DB: ${window.trie.getWordCount()}`;
+				} catch (error) {
+					console.error('Error loading Trie data:', error);
+					// Fallback to normal initialization if file loading fails
+					handleInitializeTrie();
+				}
 			};
 		</script>
 	</head>
 
-	<body class="bg-gray-50 min-h-screen p-4 sm:p-8">
+	<body class="bg-gray-50 min-h-screen p-1 sm:p-2">
 		<div class="max-w-7xl mx-auto">
 			<!-- Header -->
-			<div class="flex flex-col sm:flex-row justify-between items-center mb-8">
-				<h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">🔍 Search Songs</h1>
+			<div class="flex flex-col sm:flex-row mb-4 sm:mb-2 justify-between items-center">
+				<h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-4">🔍 Search Songs</h1>
 				<a
 					href="/index.html"
-					class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+					class="bg-green-500 text-white px-4 rounded-lg hover:bg-blue-600 transition duration-200"
 				>
 					🎵 Back to Song Management
 				</a>
 			</div>
-			<span id="trieCount" class="text-xs px-2 text-slate-700"> Songs in DB: </span>
 
 			<!-- Search Form -->
-			<div class="bg-white p-6 rounded-lg shadow-md mt-2 mb-8">
-				<h2 class="text-xl font-semibold text-gray-700 mb-4">Search Songs</h2>
-				<div class="flex flex-col sm:flex-row gap-4">
+			<div class="bg-white rounded-lg shadow-md p-2 mb-2 sm:p-4 sm:mb-4">
+				<h2 class="text-xl font-semibold text-gray-700 mb-0">Search Songs</h2>
+				<span id="trieCount" class="text-xs text-slate-700"> Songs in DB: </span>
+				<div class="flex flex-col sm:flex-row gap-2">
 					<!-- Dropdown -->
 					<select
 						id="searchField"
@@ -218,7 +235,7 @@
 					<button
 						id="btnSearch"
 						onclick="searchSongs()"
-						class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 hidden"
+						class="bg-blue-500 text-white px-4 rounded-lg hover:bg-blue-600 transition duration-200 hidden sm:block"
 					>
 						🔍 Search
 					</button>
@@ -227,7 +244,7 @@
 
 			<!-- Search Results Table -->
 			<div class="bg-white rounded-lg shadow-md overflow-hidden">
-				<div id="resultCount" class="p-2 text-gray-500 text-right">[Result Count]</div>
+				<div id="resultCount" class="p-2 text-gray-500 text-right text-xs">[Result Count]</div>
 				<table class="w-full">
 					<thead class="bg-gray-200">
 						<tr>

@@ -154,6 +154,7 @@ class Trie {
 
 	// Get the total number of words in the Trie
 	getWordCount() {
+		console.log('getWordCount()');
 		return this._countWords(this.root);
 	}
 
