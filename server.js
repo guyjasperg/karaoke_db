@@ -264,13 +264,14 @@ app.post('/api/songqueue', (req, res) => {
 
 	// Save the updated songQueue to the JSON file
 	console.log('saving to file');
-	console.log(`songQueue: ${songQueue}`);
+	// console.log(`songQueue: ${songQueue}`);
 	saveToFile(songQueue, SONGQUEUE_LIST_FILE);
 	console.log(
 		`SessionId[${sessionId}]: Song with ID ${sequenceID} added to the queue. (${Artist} - ${Title})`
 	);
 
 	//broadcast event
+	console.log('emitting songQueueUpdated event');
 	io.emit('songQueueUpdated', { action: 'add', song: newSong, sessionID: sessionId });
 
 	// Return the new song
@@ -798,6 +799,27 @@ app.use('/videos', (req, res, next) => {
 		}
 		// File exists, proceed to serve it
 		next();
+	});
+});
+
+// Endpoint to check if a file exists
+app.get('/api/file-exists', (req, res) => {
+	const { filePath } = req.query;
+
+	if (!filePath) {
+		return res.status(400).json({ error: 'filePath query parameter is required.' });
+	}
+
+	const absolutePath = path.resolve(filePath); // Resolve the absolute path
+
+	fs.access(absolutePath, fs.constants.F_OK, (err) => {
+		if (err) {
+			console.log(`File does not exist: ${absolutePath}`);
+			return res.status(404).json({ exists: false, message: 'File does not exist.' });
+		}
+
+		console.log(`File exists: ${absolutePath}`);
+		res.status(200).json({ exists: true, message: 'File exists.' });
 	});
 });
 

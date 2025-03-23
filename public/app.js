@@ -30,7 +30,7 @@ window.initializeTrie = async (forceInit = false) => {
 			fetch('/api/uniquesongs')
 				.then((response) => response.json())
 				.then((data) => {
-					// console.log("Fetched songs from db:  ",data);
+					console.log('Fetched songs from db:  ', data);
 					// Initialize the Trie
 					trie = new Trie();
 
