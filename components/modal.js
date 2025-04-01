@@ -193,7 +193,7 @@ export class Modal {
 			// Set button colors for Yes/No buttons
 			this.yesButton.className =
 				'bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-24';
-			this.noButton.className = 'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 w-24';
+			this.noButton.className = 'bg-red-400 text-white px-4 py-2 rounded hover:bg-red-600 w-24';
 
 			// Set up Yes/No button handlers
 			this.yesButton.onclick = () => {

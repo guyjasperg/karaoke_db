@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+// const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const multer = require('multer');
@@ -15,6 +16,14 @@ const { url } = require('inspector');
 
 const app = express();
 app.use(express.json());
+
+// Use cors middleware with specific origin allowed
+// const corsOptions = {
+// 	origin: 'chrome-extension://YOUR_EXTENSION_ID', // Replace with your extension ID
+// 	methods: 'GET,POST,OPTIONS', // Include OPTIONS
+// 	allowedHeaders: 'Content-Type',
+// };
+// app.use(cors(corsOptions));
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, './mydatabase.sqlite');
 const PORT = process.env.PORT || 3000;
@@ -61,8 +70,8 @@ try {
 	// Format Artist and Title properties
 	songRequests = songRequests.map((request) => ({
 		SequenceID: request.SequenceID,
-		Artist: toTitleCase(request.Artist.trim()),
-		Title: toTitleCase(request.Title.trim()),
+		Artist: request.Artist ? toTitleCase(request.Artist.trim()) : '',
+		Title: request.Title ? toTitleCase(request.Title.trim()) : '',
 		url: request.url,
 		Status: request.Status,
 	}));
@@ -80,8 +89,22 @@ app.get('/api/songrequests', (req, res) => {
 	res.status(200).json(songRequests);
 });
 
+//handle preflight OPTIONS request
+app.options('/api/songrequest', (req, res) => {
+	console.log('Preflight OPTIONS request received');
+	res.header('Access-Control-Allow-Origin', 'chrome-extension://bphhmfookodgepnfeficaakapfldemem');
+	res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+	res.header('Access-Control-Allow-Headers', 'Content-Type');
+	res.status(200).send(); //  Important:  Send a response!
+});
+
 // Endpoint to add a song to songsList
 app.post('/api/songrequest', (req, res) => {
+	res.header('Access-Control-Allow-Origin', 'chrome-extension://bphhmfookodgepnfeficaakapfldemem');
+	res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+	res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+	console.log('Received POST request to add a song');
 	console.log(req.body);
 	const { Title, Artist, url, Status } = req.body;
 
