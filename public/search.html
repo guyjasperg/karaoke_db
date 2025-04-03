@@ -365,8 +365,9 @@
 					}
 				}
 
-				const spokenText = finalTranscript + interimTranscript;
-				document.getElementById('searchQuery').value = spokenText;
+				//const spokenText = finalTranscript + interimTranscript;
+				//document.getElementById('searchQuery').value = spokenText;
+				document.getElementById('searchQuery').value = finalTranscript;
 
 				// Reset the timeout on each result
 				clearTimeout(timeout);
