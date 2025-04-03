@@ -294,7 +294,7 @@
 					<!-- New Button -->
 					<button
 						id="btnMic"
-						class="p-2 rounded-full hover:bg-gray-300 transition duration-200"
+						class="p-2 rounded-full text-gray-500 hover:bg-gray-300 transition duration-200"
 						style="background-color: transparent"
 					>
 						<svg
@@ -396,8 +396,8 @@
 					recognition.start();
 					console.log('Speech recognition started.');
 					const micButton = document.getElementById('btnMic');
-					micButton.classList.add('animate-pulse');
 					micButton.querySelector('svg').classList.replace('text-gray-500', 'text-red-500'); // Change icon color to green
+					micButton.classList.add('animate-pulse');
 				} catch (error) {
 					console.error('Error starting speech recognition:', error);
 				}
