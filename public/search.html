@@ -387,7 +387,8 @@
 				console.log('Speech recognition stopped.');
 				const micButton = document.getElementById('btnMic');
 				micButton.classList.remove('animate-pulse');
-				micButton.querySelector('svg').classList.replace('text-red-500', 'text-gray-500'); // Change icon color back to original
+				//micButton.querySelector('svg').classList.replace('text-red-500', 'text-gray-500'); // Change icon color back to original
+				micButton.querySelector('svg').style.fill = 'gray'; // Change icon color back to original
 			};
 
 			document.getElementById('btnMic').addEventListener('click', () => {
@@ -396,7 +397,8 @@
 					recognition.start();
 					console.log('Speech recognition started.');
 					const micButton = document.getElementById('btnMic');
-					micButton.querySelector('svg').classList.replace('text-gray-500', 'text-red-500'); // Change icon color to green
+					//micButton.querySelector('svg').classList.replace('text-gray-500', 'text-red-500'); // Change icon color to green
+					micButton.querySelector('svg').style.fill = 'red'; // Change icon color to red
 					micButton.classList.add('animate-pulse');
 				} catch (error) {
 					console.error('Error starting speech recognition:', error);
