@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Web Speech API Example (Active Icon)</title>
+		<style>
+			#speechIcon {
+				display: none; /* Initially hidden */
+				width: 30px;
+				height: 30px;
+				background-color: red; /* Or use an icon image */
+				border-radius: 50%;
+				position: fixed;
+				top: 10px;
+				right: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Speech Recognition</h1>
+		<p>Speak into your microphone...</p>
+		<button id="startButton">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 384 512"
+				style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px"
+			>
+				<path
+					d="M192 0C139 0 96 43 96 96l0 160c0 53 43 96 96 96s96-43 96-96l0-160c0-53-43-96-96-96zM64 216c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 89.1 66.2 162.7 152 174.4l0 33.6-48 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l72 0 72 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0 0-33.6c85.8-11.7 152-85.3 152-174.4l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 70.7-57.3 128-128 128s-128-57.3-128-128l0-40z"
+				/>
+			</svg>
+			Start Recognition
+		</button>
+		<p id="result"></p>
+		<div id="speechIcon"></div>
+
+		<script>
+			if ('webkitSpeechRecognition' in window && 'speechSynthesis' in window) {
+				const recognition = new webkitSpeechRecognition();
+				recognition.continuous = true;
+				recognition.interimResults = true;
+				recognition.lang = 'en-US';
+
+				const synth = window.speechSynthesis;
+				const startButton = document.getElementById('startButton');
+				const resultElement = document.getElementById('result');
+				const speechIcon = document.getElementById('speechIcon');
+				let timeout;
+
+				startButton.addEventListener('click', () => {
+					recognition.start();
+					resultElement.textContent = '';
+					speechIcon.style.display = 'block'; // Show icon
+				});
+
+				recognition.onresult = (event) => {
+					let interimTranscript = '';
+					let finalTranscript = '';
+
+					for (let i = event.resultIndex; i < event.results.length; ++i) {
+						if (event.results[i].isFinal) {
+							finalTranscript += event.results[i][0].transcript;
+						} else {
+							interimTranscript += event.results[i][0].transcript;
+						}
+					}
+
+					const spokenText = finalTranscript + interimTranscript;
+					resultElement.textContent = spokenText;
+
+					clearTimeout(timeout);
+					timeout = setTimeout(() => {
+						recognition.stop();
+						speakText(spokenText); // Speak the final text
+						speechIcon.style.display = 'none'; // Hide icon
+					}, 1500);
+				};
+
+				function speakText(text) {
+					const utterance = new SpeechSynthesisUtterance(text);
+					synth.speak(utterance);
+				}
+
+				recognition.onerror = (event) => {
+					resultElement.textContent = 'Error occurred: ' + event.error;
+					speechIcon.style.display = 'none'; // Hide icon on error
+				};
+
+				recognition.onend = () => {
+					speechIcon.style.display = 'none'; // Hide icon on end.
+				};
+			} else {
+				document.getElementById('result').textContent =
+					'Speech recognition not supported in this browser.';
+			}
+		</script>
+	</body>
+</html>
