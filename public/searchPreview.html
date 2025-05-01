@@ -17,6 +17,39 @@
 				></video>
 			</div>
 
+			<div class="mb-4 flex justify-center space-x-4">
+				<button
+					id="prev-video"
+					class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+				>
+					Previous
+				</button>
+				<button
+					id="skip-back"
+					class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+				>
+					<< 10s
+				</button>
+				<button
+					id="play-pause"
+					class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+				>
+					Play
+				</button>
+				<button
+					id="skip-forward"
+					class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+				>
+					10s >>
+				</button>
+				<button
+					id="next-video"
+					class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+				>
+					Next
+				</button>
+			</div>
+
 			<div class="mb-6">
 				<div class="relative">
 					<input
@@ -46,35 +79,44 @@
 			const searchResults = document.getElementById('search-results');
 			const videoBaseURL = '/videos/'; // Define your base URL here
 
+			// Get the new control elements
+			const prevButton = document.getElementById('prev-video');
+			const skipBackButton = document.getElementById('skip-back');
+			const playPauseButton = document.getElementById('play-pause');
+			const skipForwardButton = document.getElementById('skip-forward');
+			const nextButton = document.getElementById('next-video');
+
+			let currentVideoIndex = 0; // Keep track of the current video
+
+			let videoList = []; // Will store the list of videos from search results
+
 			async function searchVideos(query) {
 				try {
 					const response = await fetch(`/api/songs/search?query=${query}`);
 					const results = await response.json();
+					videoList = results; // Store the results in the videoList
+					currentVideoIndex = 0;
 
 					searchResults.innerHTML = '';
 					if (results && results.length > 0) {
-						results.forEach((result) => {
+						results.forEach((result, index) => {
 							const li = document.createElement('li');
 							li.className = 'py-2 cursor-pointer hover:bg-gray-100 rounded-md px-2';
 							li.textContent = `${result.Artist} - ${result.Title}`;
 							li.addEventListener('click', () => {
-								// Modify the video URL here
-								let videoPath = result.path;
-								const karaokeIndex = videoPath.indexOf('_Karaoke');
-								if (karaokeIndex !== -1) {
-									videoPath = videoPath.substring(karaokeIndex + '_Karaoke'.length + 1); // Remove "_Karaoke/"
-								}
-								const videoUrl = videoBaseURL + videoPath; // Construct the full URL
-								videoPlayer.src = videoUrl;
-								videoPlayer.play();
+								currentVideoIndex = index; // update currentVideoIndex
+								playVideo(currentVideoIndex);
 							});
 							searchResults.appendChild(li);
 						});
+						playVideo(0); // Play the first video
 					} else {
 						const li = document.createElement('li');
 						li.className = 'py-2 text-gray-500 rounded-md px-2';
 						li.textContent = 'No results found';
 						searchResults.appendChild(li);
+						videoPlayer.src = '';
+						playPauseButton.textContent = 'Play';
 					}
 				} catch (error) {
 					console.error('Error searching videos:', error);
@@ -83,6 +125,63 @@
 					li.textContent = 'Error searching videos';
 					searchResults.appendChild(li);
 				}
+			}
+
+			function playVideo(index) {
+				if (!videoList || videoList.length === 0) return;
+
+				if (index < 0) {
+					index = 0;
+				}
+				if (index >= videoList.length) {
+					index = videoList.length - 1;
+				}
+				currentVideoIndex = index;
+
+				const videoPath = videoList[index].path;
+				const karaokeIndex = videoPath.indexOf('_Karaoke');
+				let cleanedPath = videoPath;
+				if (karaokeIndex !== -1) {
+					cleanedPath = videoPath.substring(karaokeIndex + '_Karaoke'.length + 1);
+				}
+				const videoUrl = videoBaseURL + cleanedPath;
+				videoPlayer.src = videoUrl;
+				videoPlayer.play();
+				playPauseButton.textContent = 'Pause';
+			}
+
+			function togglePlayPause() {
+				if (videoPlayer.paused) {
+					videoPlayer.play();
+					playPauseButton.textContent = 'Pause';
+				} else {
+					videoPlayer.pause();
+					playPauseButton.textContent = 'Play';
+				}
+			}
+
+			function skipBack() {
+				videoPlayer.currentTime -= 10;
+			}
+
+			function skipForward() {
+				videoPlayer.currentTime += 10;
+			}
+
+			function playNextVideo() {
+				currentVideoIndex++;
+				if (currentVideoIndex >= videoList.length) {
+					currentVideoIndex = 0; // Loop to the first video
+				}
+				playVideo(currentVideoIndex);
+			}
+
+			function playPreviousVideo() {
+				currentVideoIndex--;
+				if (currentVideoIndex < 0) {
+					currentVideoIndex = videoList.length - 1; // Loop to the last video
+				}
+				playVideo(currentVideoIndex);
 			}
 
 			searchButton.addEventListener('click', () => {
@@ -96,6 +195,27 @@
 				if (event.key === 'Enter') {
 					searchButton.click();
 				}
+			});
+
+			// Event listeners for the new control buttons
+			playPauseButton.addEventListener('click', togglePlayPause);
+			skipBackButton.addEventListener('click', skipBack);
+			skipForwardButton.addEventListener('click', skipForward);
+			nextButton.addEventListener('click', playNextVideo);
+			prevButton.addEventListener('click', playPreviousVideo);
+
+			// Keyboard event listeners for left and right arrows
+			document.addEventListener('keydown', (event) => {
+				if (event.key === 'ArrowLeft') {
+					skipBack();
+				} else if (event.key === 'ArrowRight') {
+					skipForward();
+				}
+			});
+
+			//video player events
+			videoPlayer.addEventListener('ended', () => {
+				playNextVideo();
 			});
 		</script>
 	</body>
