@@ -9,6 +9,9 @@
 	</head>
 	<body class="bg-gray-100">
 		<div class="container mx-auto py-8">
+			<div class="mb-2 text-center">
+				<h2 id="video-title" class="text-xl font-semibold text-gray-800"></h2>
+			</div>
 			<div class="mb-4">
 				<video
 					id="video-player"
@@ -78,6 +81,7 @@
 			const searchButton = document.getElementById('search-button');
 			const searchResults = document.getElementById('search-results');
 			const videoBaseURL = '/videos/'; // Define your base URL here
+			const videoTitleElement = document.getElementById('video-title'); // Get the video title element
 
 			// Get the new control elements
 			const prevButton = document.getElementById('prev-video');
@@ -87,7 +91,6 @@
 			const nextButton = document.getElementById('next-video');
 
 			let currentVideoIndex = 0; // Keep track of the current video
-
 			let videoList = []; // Will store the list of videos from search results
 
 			async function searchVideos(query) {
@@ -117,6 +120,7 @@
 						searchResults.appendChild(li);
 						videoPlayer.src = '';
 						playPauseButton.textContent = 'Play';
+						videoTitleElement.textContent = ''; // Clear title
 					}
 				} catch (error) {
 					console.error('Error searching videos:', error);
@@ -148,6 +152,7 @@
 				videoPlayer.src = videoUrl;
 				videoPlayer.play();
 				playPauseButton.textContent = 'Pause';
+				videoTitleElement.textContent = `${videoList[index].Artist} - ${videoList[index].Title}`; // Set the title
 			}
 
 			function togglePlayPause() {
