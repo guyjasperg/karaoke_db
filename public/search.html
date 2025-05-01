@@ -380,7 +380,7 @@
 			};
 
 			recognition.onerror = (event) => {
-				console.error('Speech recognition error:', event.error);
+				console.error('Speech recognition error:', event);
 			};
 
 			recognition.onend = () => {
@@ -392,16 +392,26 @@
 			};
 
 			document.getElementById('btnMic').addEventListener('click', () => {
-				try {
-					document.getElementById('searchQuery').value = ''; // Clear the query string first
-					recognition.start();
-					console.log('Speech recognition started.');
-					const micButton = document.getElementById('btnMic');
-					//micButton.querySelector('svg').classList.replace('text-gray-500', 'text-red-500'); // Change icon color to green
-					micButton.querySelector('svg').style.fill = 'red'; // Change icon color to red
-					micButton.classList.add('animate-pulse');
-				} catch (error) {
-					console.error('Error starting speech recognition:', error);
+				if ((navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || true) {
+					// Safety check
+					try {
+						document.getElementById('searchQuery').value = ''; // Clear the query string first
+						recognition.start();
+						console.log('Speech recognition started.');
+						const micButton = document.getElementById('btnMic');
+						//micButton.querySelector('svg').classList.replace('text-gray-500', 'text-red-500'); // Change icon color to green
+						micButton.querySelector('svg').style.fill = 'red'; // Change icon color to red
+						micButton.classList.add('animate-pulse');
+					} catch (error) {
+						console.error('Error starting speech recognition:', error);
+					}
+				} else {
+					console.error('getUserMedia not supported in this browser.');
+					window.modal.open(
+						'Error',
+						'Speech recognition is not supported in this browser.',
+						'error'
+					);
 				}
 			});
 		} else {

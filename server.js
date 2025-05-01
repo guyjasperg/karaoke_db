@@ -254,8 +254,8 @@ app.get('/api/songqueue/session/:sessionId', (req, res) => {
 
 // Endpoint to add a song to the queue
 app.post('/api/songqueue', (req, res) => {
-	const { sessionId, Artist, Title, filePath, status } = req.body;
-	console.log(sessionId, Artist, Title, filePath);
+	const { sessionId, Artist, Title, filePath, status, startTime } = req.body;
+	console.log(sessionId, Artist, Title, filePath, startTime);
 	if (!sessionId || !Artist || !Title || !filePath) {
 		return res.status(400).json({ error: 'All fields are required!' });
 	}
@@ -279,6 +279,7 @@ app.post('/api/songqueue', (req, res) => {
 		Title,
 		filePath,
 		status,
+		startTime,
 	};
 
 	// Add the new song to the queue
@@ -809,6 +810,7 @@ console.log(`videoDir: ${videoDir}`);
 
 // Middleware to check if the requested file exists
 app.use('/videos', (req, res, next) => {
+	console.log('Video request...');
 	// Construct the full path to the requested file
 	const filePath = path.join(videoDir, decodeURIComponent(req.path));
 	// const filePath = '/Volumes/KINGSTONSSD/_Karaoke/_NEW_SONGS/ANG GAAN NG FEELING - GENEVA CRUZ.mp4'
@@ -880,7 +882,7 @@ app.get('/hls/:song', (req, res) => {
 	}
 });
 
-// app.get('/videos/:filename*', (req, res) => {
+// app.get('/videos/:filename', (req, res) => {
 // 	console.log('Serving video:', req.params.filename);
 // 	const filename = req.params.filename + (req.params[0] || ''); // Include subfolder if present
 // 	const filePath = path.join(__dirname, 'videos', filename); // Adjust path

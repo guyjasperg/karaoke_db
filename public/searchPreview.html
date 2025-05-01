@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Video Player with Search</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body class="bg-gray-100">
+		<div class="container mx-auto py-8">
+			<div class="mb-4">
+				<video
+					id="video-player"
+					class="w-full md:w-1/2 aspect-video rounded-lg mx-auto"
+					controls
+				></video>
+			</div>
+
+			<div class="mb-6">
+				<div class="relative">
+					<input
+						type="text"
+						id="search-input"
+						class="w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+						placeholder="Search for songs..."
+					/>
+					<button
+						id="search-button"
+						class="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+					>
+						Search
+					</button>
+				</div>
+			</div>
+
+			<div class="bg-white rounded-lg shadow-md p-4 max-h-96 overflow-y-auto">
+				<ul id="search-results" class="divide-y divide-gray-200"></ul>
+			</div>
+		</div>
+
+		<script>
+			const videoPlayer = document.getElementById('video-player');
+			const searchInput = document.getElementById('search-input');
+			const searchButton = document.getElementById('search-button');
+			const searchResults = document.getElementById('search-results');
+			const videoBaseURL = '/videos/'; // Define your base URL here
+
+			async function searchVideos(query) {
+				try {
+					const response = await fetch(`/api/songs/search?query=${query}`);
+					const results = await response.json();
+
+					searchResults.innerHTML = '';
+					if (results && results.length > 0) {
+						results.forEach((result) => {
+							const li = document.createElement('li');
+							li.className = 'py-2 cursor-pointer hover:bg-gray-100 rounded-md px-2';
+							li.textContent = `${result.Artist} - ${result.Title}`;
+							li.addEventListener('click', () => {
+								// Modify the video URL here
+								let videoPath = result.path;
+								const karaokeIndex = videoPath.indexOf('_Karaoke');
+								if (karaokeIndex !== -1) {
+									videoPath = videoPath.substring(karaokeIndex + '_Karaoke'.length + 1); // Remove "_Karaoke/"
+								}
+								const videoUrl = videoBaseURL + videoPath; // Construct the full URL
+								videoPlayer.src = videoUrl;
+								videoPlayer.play();
+							});
+							searchResults.appendChild(li);
+						});
+					} else {
+						const li = document.createElement('li');
+						li.className = 'py-2 text-gray-500 rounded-md px-2';
+						li.textContent = 'No results found';
+						searchResults.appendChild(li);
+					}
+				} catch (error) {
+					console.error('Error searching videos:', error);
+					const li = document.createElement('li');
+					li.className = 'py-2 text-red-500 rounded-md px-2';
+					li.textContent = 'Error searching videos';
+					searchResults.appendChild(li);
+				}
+			}
+
+			searchButton.addEventListener('click', () => {
+				const query = searchInput.value.trim();
+				if (query) {
+					searchVideos(query);
+				}
+			});
+
+			searchInput.addEventListener('keypress', (event) => {
+				if (event.key === 'Enter') {
+					searchButton.click();
+				}
+			});
+		</script>
+	</body>
+</html>
