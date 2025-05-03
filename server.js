@@ -519,12 +519,74 @@ app.post('/api/songs', (req, res) => {
 app.delete('/api/songs/:songid', (req, res) => {
 	const { songid } = req.params;
 	const sql = `DELETE FROM dbSongs WHERE songid = ?`;
-	db.run(sql, [songid], function (err) {
+
+	console.log(`Deleting song with ID ${songid}...`);
+	db.get(`SELECT path FROM dbSongs WHERE songid = ?`, [songid], (err, row) => {
 		if (err) {
-			res.status(500).json({ error: err.message });
-		} else {
-			res.json({ deleted: this.changes });
+			console.error('Error getting file path from database:', err.message);
+			return res.status(500).json({ error: 'Database error' });
 		}
+		if (!row) {
+			// No matching song found
+			return res.status(404).json({ error: 'Song not found in database' });
+		}
+		let filePathToDelete = row.path; // Get the file path
+		// Extract the last subfolder and filename
+		const pathParts = filePathToDelete.split(path.sep);
+		const filename = pathParts.pop();
+		const lastSubfolder = pathParts.pop();
+		filePathToDelete = path.join(videoDir, lastSubfolder, filename);
+		console.log(`File path to delete: ${filePathToDelete}`);
+
+		db.run(sql, [songid], function (err) {
+			if (err) {
+				console.error('Error deleting from database:', err.message);
+				return res.status(500).json({ error: err.message });
+			} else {
+				console.log(`Deleted song with ID ${songid} from the database.`);
+				// Delete the actual video file
+				fs.unlink(filePathToDelete, (err) => {
+					if (err) {
+						console.error('Error deleting video file:', err);
+						//  Don't block the response, but log the error
+						return res.json({
+							deleted: this.changes,
+							fileDeleted: false,
+							message: 'Song deleted from DB, but file deletion failed.',
+						});
+					} else {
+						console.log(`Deleted video file: ${filePathToDelete}`);
+						return res.json({
+							deleted: this.changes,
+							fileDeleted: true,
+							message: 'Song and file deleted.',
+						});
+					}
+				});
+			}
+		});
+	});
+});
+
+// Endpoint to delete a file
+app.delete('/api/delete-file', (req, res) => {
+	const filePath = req.query.filePath;
+	console.log('[/api/delete-file] Deleting file:', filePath);
+
+	if (!filePath) {
+		return res.status(400).json({ error: 'File path is required' });
+	}
+
+	const absolutePath = path.resolve(filePath);
+	console.log('Absolute path:', absolutePath);
+
+	fs.unlink(absolutePath, (err) => {
+		if (err) {
+			console.error('Error deleting file:', err);
+			return res.status(500).json({ error: 'Failed to delete file' }); //  Send error response
+		}
+		console.log(`File deleted: ${absolutePath}`);
+		res.status(200).json({ message: 'File deleted successfully' });
 	});
 });
 

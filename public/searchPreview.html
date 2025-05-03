@@ -6,6 +6,7 @@
 		<title>Video Player with Search</title>
 		<script src="https://cdn.tailwindcss.com"></script>
 		<link rel="stylesheet" href="style.css" />
+		<script src="https://unpkg.com/lucide-react@latest/umd/lucide-react.min.js"></script>
 	</head>
 	<body class="bg-gray-100">
 		<div class="container mx-auto py-8">
@@ -80,8 +81,8 @@
 			const searchInput = document.getElementById('search-input');
 			const searchButton = document.getElementById('search-button');
 			const searchResults = document.getElementById('search-results');
-			const videoBaseURL = '/videos/'; // Define your base URL here
-			const videoTitleElement = document.getElementById('video-title'); // Get the video title element
+			const videoBaseURL = '/videos/';
+			const videoTitleElement = document.getElementById('video-title');
 
 			// Get the new control elements
 			const prevButton = document.getElementById('prev-video');
@@ -90,29 +91,47 @@
 			const skipForwardButton = document.getElementById('skip-forward');
 			const nextButton = document.getElementById('next-video');
 
-			let currentVideoIndex = 0; // Keep track of the current video
-			let videoList = []; // Will store the list of videos from search results
+			let currentVideoIndex = 0;
+			let videoList = [];
 
 			async function searchVideos(query) {
 				try {
 					const response = await fetch(`/api/songs/search?query=${query}`);
 					const results = await response.json();
-					videoList = results; // Store the results in the videoList
+					videoList = results;
 					currentVideoIndex = 0;
 
 					searchResults.innerHTML = '';
 					if (results && results.length > 0) {
 						results.forEach((result, index) => {
 							const li = document.createElement('li');
-							li.className = 'py-2 cursor-pointer hover:bg-gray-100 rounded-md px-2';
+							li.className =
+								'py-2 cursor-pointer hover:bg-gray-100 rounded-md px-2 flex items-center justify-between'; // Added flex
 							li.textContent = `${result.Artist} - ${result.Title}`;
+
+							// Create delete button
+							const deleteButton = document.createElement('button');
+							deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle text-red-500 hover:text-red-700 transition-colors duration-200"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`; // Using Lucide Icon
+							deleteButton.className = 'ml-4'; // Add some left margin for spacing
+
+							deleteButton.addEventListener('click', (event) => {
+								event.stopPropagation(); // Prevent click from triggering the <li> click
+								showConfirmation(result.songid, result.path, () => {
+									// Pass the path to showConfirmation
+									deleteVideo(result.songid, result.path, index); // Pass index
+								});
+							});
+
+							// Append the delete button to the list item
+							li.appendChild(deleteButton);
+
 							li.addEventListener('click', () => {
-								currentVideoIndex = index; // update currentVideoIndex
+								currentVideoIndex = index;
 								playVideo(currentVideoIndex);
 							});
 							searchResults.appendChild(li);
 						});
-						playVideo(0); // Play the first video
+						playVideo(0);
 					} else {
 						const li = document.createElement('li');
 						li.className = 'py-2 text-gray-500 rounded-md px-2';
@@ -120,7 +139,7 @@
 						searchResults.appendChild(li);
 						videoPlayer.src = '';
 						playPauseButton.textContent = 'Play';
-						videoTitleElement.textContent = ''; // Clear title
+						videoTitleElement.textContent = '';
 					}
 				} catch (error) {
 					console.error('Error searching videos:', error);
@@ -152,7 +171,7 @@
 				videoPlayer.src = videoUrl;
 				videoPlayer.play();
 				playPauseButton.textContent = 'Pause';
-				videoTitleElement.textContent = `${videoList[index].Artist} - ${videoList[index].Title}`; // Set the title
+				videoTitleElement.textContent = `${videoList[index].Artist} - ${videoList[index].Title}`;
 			}
 
 			function togglePlayPause() {
@@ -176,7 +195,7 @@
 			function playNextVideo() {
 				currentVideoIndex++;
 				if (currentVideoIndex >= videoList.length) {
-					currentVideoIndex = 0; // Loop to the first video
+					currentVideoIndex = 0;
 				}
 				playVideo(currentVideoIndex);
 			}
@@ -184,7 +203,7 @@
 			function playPreviousVideo() {
 				currentVideoIndex--;
 				if (currentVideoIndex < 0) {
-					currentVideoIndex = videoList.length - 1; // Loop to the last video
+					currentVideoIndex = videoList.length - 1;
 				}
 				playVideo(currentVideoIndex);
 			}
@@ -222,6 +241,55 @@
 			videoPlayer.addEventListener('ended', () => {
 				playNextVideo();
 			});
+
+			function showConfirmation(songid, filePath, callback) {
+				// added filePath
+				const confirmation = confirm('Are you sure you want to delete this video?');
+				if (confirmation) {
+					callback(songid, filePath); // Pass songid and filePath to the callback
+				}
+			}
+
+			async function deleteVideo(songid, filePath, index) {
+				// Added filePath and index
+				try {
+					// Delete from the database
+					const dbResponse = await fetch(`/api/songs/${songid}`, {
+						method: 'DELETE',
+					});
+					if (!dbResponse.ok) {
+						throw new Error('Failed to delete from database');
+					}
+
+					const dbResult = await dbResponse.json();
+					console.log('Deleted from database:', dbResult);
+
+					// Remove the item from the search results list
+					videoList.splice(index, 1); // Remove from videoList
+					searchResults.removeChild(searchResults.children[index]); // Remove from the DOM
+
+					// If it was the currently playing video, stop the player and clear the title
+					if (currentVideoIndex === index) {
+						videoPlayer.src = '';
+						playPauseButton.textContent = 'Play';
+						videoTitleElement.textContent = '';
+					}
+					// Adjust currentVideoIndex if necessary
+					if (currentVideoIndex > index) {
+						currentVideoIndex--;
+					}
+
+					if (videoList.length === 0) {
+						searchResults.innerHTML = '';
+						videoPlayer.src = '';
+						playPauseButton.textContent = 'Play';
+						videoTitleElement.textContent = '';
+					}
+				} catch (error) {
+					console.error('Error deleting video:', error);
+					alert('Failed to delete video. Please check the console for details.');
+				}
+			}
 		</script>
 	</body>
 </html>
