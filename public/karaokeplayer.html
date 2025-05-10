@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Karaoke Player</title>
+		<script src="/socket.io/socket.io.js"></script>
+		<!-- Served by Socket.IO server -->
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+				font-family: 'Arial', sans-serif;
+			}
+
+			body {
+				width: 100vw;
+				height: 100vh;
+				overflow: hidden;
+				background-color: #121212;
+				color: white;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.header {
+				background-color: #000;
+				height: 60px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 0 20px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+				z-index: 10;
+			}
+
+			.logo {
+				font-size: 24px;
+				font-weight: bold;
+				color: #ff3366;
+			}
+
+			.main-container {
+				display: flex;
+				flex: 1;
+				height: calc(100vh - 60px);
+			}
+
+			.video-container {
+				flex: 2;
+				position: relative;
+				background-color: #000;
+				overflow: hidden;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			#videoPlayer {
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+				cursor: pointer;
+			}
+
+			.video-controls {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 60px;
+				background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+				display: flex;
+				align-items: center;
+				padding: 0 15px;
+				opacity: 0;
+				transition: opacity 0.3s;
+			}
+
+			.video-container:hover .video-controls {
+				opacity: 1;
+			}
+
+			.control-button {
+				background: none;
+				border: none;
+				color: white;
+				font-size: 24px;
+				margin: 0 10px;
+				cursor: pointer;
+				transition: transform 0.2s;
+			}
+
+			.control-button:hover {
+				transform: scale(1.2);
+				color: #ff3366;
+			}
+
+			.control-button:hover .svg-icon {
+				fill: #ff3366;
+			}
+
+			.progress-container {
+				flex: 1;
+				height: 8px;
+				background-color: rgba(255, 255, 255, 0.2);
+				margin: 0 15px;
+				border-radius: 4px;
+				cursor: pointer;
+				position: relative;
+			}
+
+			.progress-bar {
+				height: 100%;
+				background-color: #ff3366;
+				border-radius: 4px;
+				width: 0%;
+			}
+
+			.time-display {
+				color: white;
+				font-size: 14px;
+				margin-left: 10px;
+			}
+
+			.queue-container {
+				flex: 0.8;
+				background-color: #1e1e1e;
+				padding: 20px;
+				overflow-y: auto;
+				display: flex;
+				flex-direction: column;
+				position: relative;
+			}
+
+			.queue-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+			}
+
+			.queue-title {
+				font-size: 20px;
+				font-weight: bold;
+				color: #ff3366;
+			}
+
+			.session-id {
+				font-size: 14px;
+				color: #888;
+			}
+
+			.queue-list {
+				flex: 1;
+				overflow-y: auto;
+			}
+
+			.queue-item {
+				background-color: #2a2a2a;
+				border-radius: 8px;
+				padding: 15px;
+				margin-bottom: 10px;
+				border-left: 4px solid #ff3366;
+				transition: transform 0.2s;
+			}
+
+			.now-playing {
+				background-color: rgba(255, 51, 102, 0.2);
+				border-left: 4px solid #ff3366;
+			}
+
+			.queue-item:hover {
+				transform: translateX(5px);
+			}
+
+			.song-title {
+				font-size: 16px;
+				font-weight: bold;
+				margin-bottom: 5px;
+			}
+
+			.song-artist {
+				font-size: 14px;
+				color: #aaa;
+			}
+
+			.no-songs {
+				text-align: center;
+				color: #888;
+				margin-top: 50px;
+			}
+
+			.queue-footer {
+				background-color: #2a2a2a;
+				border-radius: 8px;
+				padding: 15px;
+				margin-top: 10px;
+				border-top: 2px solid #ff3366;
+			}
+
+			.now-playing-title {
+				font-size: 16px;
+				font-weight: bold;
+				margin-bottom: 5px;
+			}
+
+			.now-playing-artist {
+				font-size: 14px;
+				color: #aaa;
+			}
+
+			.skip-next-btn {
+				background-color: #ff3366;
+				border: none;
+				color: white;
+				padding: 8px 15px;
+				border-radius: 4px;
+				font-size: 14px;
+				cursor: pointer;
+				margin-top: 10px;
+				transition: background-color 0.2s;
+			}
+
+			.skip-next-btn:hover {
+				background-color: #e62e5c;
+			}
+
+			.skip-next-btn:disabled {
+				background-color: #666;
+				cursor: not-allowed;
+			}
+
+			.loading-spinner {
+				display: none;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+			}
+
+			.spinner {
+				width: 50px;
+				height: 50px;
+				border: 5px solid rgba(255, 51, 102, 0.3);
+				border-radius: 50%;
+				border-top-color: #ff3366;
+				animation: spin 1s ease-in-out infinite;
+			}
+
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+
+			.toast-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100vw;
+				height: 100vh;
+				background: rgba(0, 0, 0, 0.5);
+				display: flex;
+				justify-content: center;
+				align-items: flex-start;
+				z-index: 9999;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.3s ease;
+			}
+
+			.toast-overlay.show {
+				opacity: 1;
+			}
+
+			.toast {
+				background-color: #333;
+				color: white;
+				padding: 15px 20px;
+				border-radius: 5px;
+				box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+				display: flex;
+				align-items: center;
+				max-width: 80%;
+				text-align: center;
+				margin-top: 80px;
+			}
+
+			.toast-icon {
+				margin-right: 10px;
+				width: 20px;
+				height: 20px;
+			}
+
+			.success {
+				background-color: #4caf50;
+			}
+
+			.error {
+				background-color: #f44336;
+			}
+
+			.info {
+				background-color: #2196f3;
+			}
+
+			.svg-icon {
+				width: 100%;
+				height: 100%;
+				fill: white;
+				display: inline-block;
+				vertical-align: middle;
+			}
+
+			.control-button .svg-icon {
+				width: 24px;
+				height: 24px;
+			}
+
+			@media (max-width: 768px) {
+				.main-container {
+					flex-direction: column;
+				}
+
+				.video-container,
+				.queue-container {
+					flex: none;
+				}
+
+				.video-container {
+					height: 50%;
+				}
+
+				.queue-container {
+					height: 50%;
+				}
+
+				.queue-footer {
+					padding: 10px;
+				}
+
+				.skip-next-btn {
+					padding: 6px 10px;
+					font-size: 12px;
+				}
+
+				.toast {
+					padding: 12px 15px;
+					max-width: 90%;
+					font-size: 14px;
+					margin-top: 70px;
+				}
+
+				.toast-icon {
+					width: 18px;
+					height: 18px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="header">
+			<div class="logo">Karaoke Player</div>
+			<div class="session-id">Session ID: <span id="sessionIdDisplay">Loading...</span></div>
+		</div>
+
+		<div class="main-container">
+			<div class="video-container">
+				<video id="videoPlayer" autoplay></video>
+				<div class="loading-spinner" id="loadingSpinner">
+					<div class="spinner"></div>
+				</div>
+				<div class="video-controls">
+					<button class="control-button" id="playPauseBtn">
+						<svg class="svg-icon icon-play" viewBox="0 0 24 24">
+							<path d="M8 5v14l11-7z" />
+						</svg>
+					</button>
+					<button class="control-button" id="skipBtn">
+						<svg class="svg-icon icon-step-forward" viewBox="0 0 24 24">
+							<path d="M6 18V6h2v12H6zm4-2V8l7 4-7 4z" />
+						</svg>
+					</button>
+					<div class="progress-container" id="progressContainer">
+						<div class="progress-bar" id="progressBar"></div>
+					</div>
+					<div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+					<button class="control-button" id="volumeBtn">
+						<svg class="svg-icon icon-volume-up" viewBox="0 0 24 24">
+							<path
+								d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
+							/>
+						</svg>
+					</button>
+					<button class="control-button" id="fullscreenBtn">
+						<svg class="svg-icon icon-expand" viewBox="0 0 24 24">
+							<path
+								d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+							/>
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			<div class="queue-container">
+				<div class="queue-header">
+					<div class="queue-title">Song Queue</div>
+				</div>
+				<div class="queue-list" id="queueList">
+					<div class="no-songs" id="noSongs">No songs in queue</div>
+				</div>
+				<div class="queue-footer" id="queueFooter">
+					<div class="now-playing-title" id="nowPlayingTitle"></div>
+					<div class="now-playing-artist" id="nowPlayingArtist"></div>
+					<button class="skip-next-btn" id="skipNextBtn" disabled>Skip to Next</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="toast-overlay" id="toastOverlay">
+			<div class="toast" id="toast">
+				<span class="toast-icon">
+					<svg class="svg-icon icon-info-circle" viewBox="0 0 24 24">
+						<path
+							d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+						/>
+					</svg>
+				</span>
+				<span id="toastMessage"></span>
+			</div>
+		</div>
+
+		<script>
+			// DOM Elements
+			const videoPlayer = document.getElementById('videoPlayer');
+			const playPauseBtn = document.getElementById('playPauseBtn');
+			const skipBtn = document.getElementById('skipBtn');
+			const progressContainer = document.getElementById('progressContainer');
+			const progressBar = document.getElementById('progressBar');
+			const timeDisplay = document.getElementById('timeDisplay');
+			const volumeBtn = document.getElementById('volumeBtn');
+			const fullscreenBtn = document.getElementById('fullscreenBtn');
+			const queueList = document.getElementById('queueList');
+			const noSongs = document.getElementById('noSongs');
+			const loadingSpinner = document.getElementById('loadingSpinner');
+			const toastOverlay = document.getElementById('toastOverlay');
+			const toast = document.getElementById('toast');
+			const toastMessage = document.getElementById('toastMessage');
+			const sessionIdDisplay = document.getElementById('sessionIdDisplay');
+			const nowPlayingTitle = document.getElementById('nowPlayingTitle');
+			const nowPlayingArtist = document.getElementById('nowPlayingArtist');
+			const skipNextBtn = document.getElementById('skipNextBtn');
+			const videoBaseURL = '/videos/';
+
+			// Configuration
+			const API_URL = ''; // Base URL, empty for same domain
+			const DEFAULT_SESSION_ID = 'default'; // Default session ID if none provided
+
+			// State variables
+			let currentQueue = [];
+			let currentSongIndex = -1;
+			let sessionId = '';
+			let isPlaying = false;
+			let socket;
+			let lastRemovedSequenceID = null;
+			let toastTimeout = null;
+
+			// SVG icon definitions for dynamic updates
+			const svgIcons = {
+				'info-circle': `<svg class="svg-icon icon-info-circle" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
+				'check-circle': `<svg class="svg-icon icon-check-circle" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
+				'exclamation-circle': `<svg class="svg-icon icon-exclamation-circle" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
+				play: `<svg class="svg-icon icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
+				pause: `<svg class="svg-icon icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`,
+				'volume-mute': `<svg class="svg-icon icon-volume-mute" viewBox="0 0 24 24"><path d="M7 9v6h4l5 5V4l-5 5H7zm10.59 2L15 8.41 13.59 7 12 8.59 10.41 7 9 8.41 11.59 11 9 13.59 10.41 15 12 13.41 13.59 15 15 13.59 12.41 11z"/></svg>`,
+			};
+
+			// Initialize the application
+			async function init() {
+				// Get session ID from URL query parameter
+				const urlParams = new URLSearchParams(window.location.search);
+				sessionId = urlParams.get('session');
+				if (!sessionId) {
+					try {
+						const response = await fetch(`${API_URL}/api/getNewSessionID`);
+						if (response.ok) {
+							const data = await response.json();
+							sessionId = data.sessionId || DEFAULT_SESSION_ID;
+						} else {
+							console.error('Failed to fetch new session ID');
+							sessionId = DEFAULT_SESSION_ID;
+						}
+					} catch (error) {
+						console.error('Error fetching new session ID:', error);
+						sessionId = DEFAULT_SESSION_ID;
+					}
+				}
+				sessionIdDisplay.textContent = sessionId;
+
+				// Initialize Socket.IO
+				initializeSocket();
+
+				// Fetch and display queue
+				fetchQueue();
+
+				// Set up event listeners
+				setupEventListeners();
+
+				// Check for autoplay
+				const autoplay = urlParams.get('autoplay') !== 'false';
+				if (autoplay) {
+					setTimeout(() => {
+						if (currentQueue.length > 0) {
+							playSong(0);
+						}
+					}, 1000);
+				}
+			}
+
+			// Initialize Socket.IO connection
+			function initializeSocket() {
+				socket = io({
+					auth: {
+						token: 'karaoke-player-app', // Auth token for socket connection
+					},
+				});
+
+				socket.on('connect', () => {
+					showToast('Connected to server', 'info');
+				});
+
+				socket.on('disconnect', () => {
+					showToast('Disconnected from server', 'error');
+				});
+
+				socket.on('songQueueUpdated', (data) => {
+					console.log('Song queue updated:', data);
+					if (data.sessionID === sessionId && data.sequenceID !== lastRemovedSequenceID) {
+						showToast(`Queue updated: ${data.action} song`, 'info');
+						fetchQueue();
+					}
+					// Reset lastRemovedSequenceID after processing
+					lastRemovedSequenceID = null;
+				});
+			}
+
+			// Set up event listeners
+			function setupEventListeners() {
+				// Video player controls
+				playPauseBtn.addEventListener('click', togglePlayPause);
+				skipBtn.addEventListener('click', skipSong);
+				skipNextBtn.addEventListener('click', skipSong);
+				volumeBtn.addEventListener('click', toggleMute);
+				fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+				// Video interactions
+				videoPlayer.addEventListener('click', togglePlayPause);
+				videoPlayer.addEventListener('dblclick', toggleFullscreen);
+
+				// Keyboard support
+				document.addEventListener('keydown', (e) => {
+					if (e.key === ' ' && !e.target.matches('input, textarea, [contenteditable]')) {
+						e.preventDefault(); // Prevent scrolling
+						togglePlayPause();
+					}
+				});
+
+				// Progress bar
+				progressContainer.addEventListener('click', seek);
+
+				// Video player events
+				videoPlayer.addEventListener('timeupdate', updateProgress);
+				videoPlayer.addEventListener('ended', onVideoEnd);
+				videoPlayer.addEventListener('play', () => {
+					playPauseBtn.innerHTML = svgIcons['pause'];
+					isPlaying = true;
+				});
+				videoPlayer.addEventListener('pause', () => {
+					playPauseBtn.innerHTML = svgIcons['play'];
+					isPlaying = false;
+				});
+				videoPlayer.addEventListener('loadstart', () => {
+					loadingSpinner.style.display = 'block';
+				});
+				videoPlayer.addEventListener('canplay', () => {
+					loadingSpinner.style.display = 'none';
+				});
+				videoPlayer.addEventListener('error', (e) => {
+					loadingSpinner.style.display = 'none';
+					showToast('Error loading video', 'error');
+					console.error('Video error:', e);
+
+					// Try to play next song if there's an error with the current one
+					setTimeout(skipSong, 2000);
+				});
+			}
+
+			// Fetch song queue from API
+			async function fetchQueue() {
+				try {
+					const response = await fetch(`${API_URL}/api/songqueue/session/${sessionId}`);
+					if (!response.ok) {
+						throw new Error('Failed to fetch queue');
+					}
+
+					const data = await response.json();
+					currentQueue = Array.isArray(data) ? data : [];
+
+					renderQueue();
+
+					if (currentQueue.length === 0) {
+						noSongs.style.display = 'block';
+					} else {
+						noSongs.style.display = 'none';
+					}
+
+					// Update skip button state
+					updateSkipButtonState();
+				} catch (error) {
+					console.error('Error fetching queue:', error);
+					showToast('Failed to load song queue', 'error');
+				}
+			}
+
+			// Render the queue in the UI
+			function renderQueue() {
+				queueList.innerHTML = '';
+
+				if (currentQueue.length === 0) {
+					queueList.appendChild(noSongs);
+					return;
+				}
+
+				currentQueue.forEach((song, index) => {
+					const queueItem = document.createElement('div');
+					queueItem.className = `queue-item ${index === currentSongIndex ? 'now-playing' : ''}`;
+					queueItem.dataset.index = index;
+
+					const titleElement = document.createElement('div');
+					titleElement.className = 'song-title';
+					titleElement.textContent = song.Title || 'Unknown Title';
+
+					const artistElement = document.createElement('div');
+					artistElement.className = 'song-artist';
+					artistElement.textContent = song.Artist || 'Unknown Artist';
+
+					queueItem.appendChild(titleElement);
+					queueItem.appendChild(artistElement);
+
+					// Add click event to play the song
+					queueItem.addEventListener('click', () => {
+						playSong(index);
+					});
+
+					queueList.appendChild(queueItem);
+				});
+			}
+
+			// Play a song from the queue
+			function playSong(index) {
+				console.log('Playing song at index:', index);
+				if (index < 0 || index >= currentQueue.length) {
+					return;
+				}
+
+				currentSongIndex = index;
+				const song = currentQueue[index];
+
+				// Update video source
+				const videoPath = song.filePath;
+				const karaokeIndex = videoPath.indexOf('_Karaoke');
+				let cleanedPath = videoPath;
+				if (karaokeIndex !== -1) {
+					cleanedPath = videoPath.substring(karaokeIndex + '_Karaoke'.length + 1);
+				}
+				const videoUrl = videoBaseURL + cleanedPath;
+				console.log('Playing video:', videoUrl);
+				videoPlayer.src = videoUrl;
+
+				// Update now playing in footer
+				nowPlayingTitle.textContent = song.Title || 'Unknown Title';
+				nowPlayingArtist.textContent = song.Artist || 'Unknown Artist';
+
+				// Update queue highlighting
+				renderQueue();
+
+				// Scroll the current song into view
+				const currentSongElement = queueList.querySelector(`.queue-item[data-index="${index}"]`);
+				if (currentSongElement) {
+					currentSongElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
+
+				// Update skip button state
+				updateSkipButtonState();
+
+				// Play the video
+				videoPlayer.play().catch((error) => {
+					console.error('Error playing video:', error);
+					showToast('Could not play video automatically', 'error');
+				});
+			}
+
+			// Update skip button state
+			function updateSkipButtonState() {
+				skipNextBtn.disabled = currentSongIndex >= currentQueue.length - 1;
+			}
+
+			// Toggle play/pause
+			function togglePlayPause() {
+				if (videoPlayer.paused) {
+					videoPlayer.play();
+				} else {
+					videoPlayer.pause();
+				}
+			}
+
+			// Skip to next song
+			function skipSong() {
+				console.log('Skipping song...');
+				if (currentQueue.length === 0) {
+					console.log('No songs in queue to skip');
+					return;
+				}
+				const index = currentSongIndex;
+				if (currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
+					const song = currentQueue[currentSongIndex];
+					if (song.sequenceID) {
+						removeSongFromQueue(song.sequenceID, currentSongIndex); // Remove the current song
+					}
+				}
+				if (currentSongIndex < currentQueue.length - 1) {
+					playSong(currentSongIndex + 1);
+				} else {
+					showToast('No more songs in queue', 'info');
+					videoPlayer.src = ''; // Clear the video player
+					nowPlayingTitle.textContent = '';
+					nowPlayingArtist.textContent = '';
+					currentSongIndex = -1; // Reset index
+					renderQueue(); // Update queue UI
+					updateSkipButtonState();
+				}
+			}
+
+			// Handle video end
+			async function onVideoEnd() {
+				console.log('Video ended');
+				const index = currentSongIndex;
+				if (currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
+					const song = currentQueue[currentSongIndex];
+					if (song.sequenceID) {
+						await removeSongFromQueue(song.sequenceID, currentSongIndex); // Remove the current song
+					}
+				}
+				console.log('Playing next song...');
+				console.log(`Queue length: ${currentQueue.length}`);
+
+				//skipSong(); // Move to the next song
+				if (currentQueue.length > 0) {
+					playSong(0); // Play the next song
+				} else {
+					videoPlayer.src = '';
+					nowPlayingTitle.textContent = '';
+					nowPlayingArtist.textContent = '';
+					currentSongIndex = -1;
+					renderQueue();
+					updateSkipButtonState();
+				}
+			}
+
+			// Remove a song from the queue
+			async function removeSongFromQueue(sequenceID, index) {
+				console.log('Removing song from queue:', index);
+				try {
+					lastRemovedSequenceID = sequenceID; // Track the sequenceID being removed
+					const response = await fetch(
+						`${API_URL}/api/songqueue/${sequenceID}?sessionID=${sessionId}`,
+						{
+							method: 'DELETE',
+						}
+					);
+					if (!response.ok) {
+						throw new Error('Failed to remove song from queue');
+					}
+
+					// Remove song from local currentQueue
+					currentQueue.splice(index, 1);
+					console.log('Removed song from local queue.\nQueue count:', currentQueue.length);
+
+					// Adjust currentSongIndex if necessary
+					if (index <= currentSongIndex && currentSongIndex > 0) {
+						currentSongIndex--;
+					} else if (index === currentSongIndex) {
+						currentSongIndex = -1; // Reset if current song is removed
+						nowPlayingTitle.textContent = '';
+						nowPlayingArtist.textContent = '';
+					}
+
+					// Update queue UI
+					renderQueue();
+
+					// Update no songs display
+					if (currentQueue.length === 0) {
+						noSongs.style.display = 'block';
+						nowPlayingTitle.textContent = '';
+						nowPlayingArtist.textContent = '';
+					} else {
+						noSongs.style.display = 'none';
+					}
+
+					// Update skip button state
+					updateSkipButtonState();
+
+					showToast('Song removed from queue', 'success');
+				} catch (error) {
+					console.error('Error removing song from queue:', error);
+					showToast('Failed to remove song from queue', 'error');
+				}
+			}
+
+			// Update progress bar
+			function updateProgress() {
+				const currentTime = videoPlayer.currentTime;
+				const duration = videoPlayer.duration;
+
+				if (duration) {
+					// Update progress bar
+					const progressPercent = (currentTime / duration) * 100;
+					progressBar.style.width = `${progressPercent}%`;
+
+					// Update time display
+					const formattedCurrentTime = formatTime(currentTime);
+					const formattedDuration = formatTime(duration);
+					timeDisplay.textContent = `${formattedCurrentTime} / ${formattedDuration}`;
+				}
+			}
+
+			// Format time in MM:SS format
+			function formatTime(timeInSeconds) {
+				const minutes = Math.floor(timeInSeconds / 60);
+				const seconds = Math.floor(timeInSeconds % 60);
+				return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+			}
+
+			// Seek in the video
+			function seek(e) {
+				const progressContainerWidth = progressContainer.clientWidth;
+				const clickPosition = e.offsetX;
+				const seekTime = (clickPosition / progressContainerWidth) * videoPlayer.duration;
+				videoPlayer.currentTime = seekTime;
+			}
+
+			// Toggle mute
+			function toggleMute() {
+				videoPlayer.muted = !videoPlayer.muted;
+
+				if (videoPlayer.muted) {
+					volumeBtn.innerHTML = svgIcons['volume-mute'];
+				} else {
+					volumeBtn.innerHTML = svgIcons['volume-up'];
+				}
+			}
+
+			// Toggle fullscreen for video only
+			function toggleFullscreen() {
+				if (!document.fullscreenElement) {
+					if (videoPlayer.requestFullscreen) {
+						videoPlayer.requestFullscreen();
+					} else if (videoPlayer.webkitRequestFullscreen) {
+						videoPlayer.webkitRequestFullscreen();
+					} else if (videoPlayer.msRequestFullscreen) {
+						videoPlayer.msRequestFullscreen();
+					}
+					fullscreenBtn.innerHTML = `<svg class="svg-icon icon-compress" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`;
+				} else if (document.fullscreenElement === videoPlayer) {
+					if (document.exitFullscreen) {
+						document.exitFullscreen();
+					} else if (document.webkitExitFullscreen) {
+						document.webkitExitFullscreen();
+					} else if (document.msExitFullscreen) {
+						document.msExitFullscreen();
+					}
+					fullscreenBtn.innerHTML = svgIcons['expand'];
+				}
+			}
+
+			// Show toast notification
+			function showToast(message, type = 'info') {
+				try {
+					if (toastTimeout) {
+						clearTimeout(toastTimeout);
+						toastOverlay.classList.remove('show');
+					}
+					toastMessage.textContent = message;
+					toast.className = 'toast';
+					toast.classList.add(type);
+					const iconName =
+						type === 'success'
+							? 'check-circle'
+							: type === 'error'
+							? 'exclamation-circle'
+							: 'info-circle';
+					const iconElement = toast.querySelector('.toast-icon');
+					if (iconElement) {
+						iconElement.innerHTML = svgIcons[iconName];
+					} else {
+						console.warn('Toast icon element not found');
+					}
+					toastOverlay.classList.add('show');
+					toastTimeout = setTimeout(() => {
+						toastOverlay.classList.remove('show');
+						toastTimeout = null;
+					}, 3000);
+				} catch (error) {
+					console.error('Error in showToast:', error);
+				}
+			}
+
+			// Initialize the application
+			document.addEventListener('DOMContentLoaded', init);
+		</script>
+		<script>
+			(function () {
+				function c() {
+					var b = a.contentDocument || a.contentWindow.document;
+					if (b) {
+						var d = b.createElement('script');
+						d.innerHTML =
+							"window.__CF$cv$params={r:'93d83b2cafabbcbf',t:'MTc0Njg2NzQ2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+						b.getElementsByTagName('head')[0].appendChild(d);
+					}
+				}
+				if (document.body) {
+					var a = document.createElement('iframe');
+					a.height = 1;
+					a.width = 1;
+					a.style.position = 'absolute';
+					a.style.top = 0;
+					a.style.left = 0;
+					a.style.border = 'none';
+					a.style.visibility = 'hidden';
+					document.body.appendChild(a);
+					if ('loading' !== document.readyState) c();
+					else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c);
+					else {
+						var e = document.onreadystatechange || function () {};
+						document.onreadystatechange = function (b) {
+							e(b);
+							'loading' !== document.readyState && ((document.onreadystatechange = e), c());
+						};
+					}
+				}
+			})();
+		</script>
+	</body>
+</html>

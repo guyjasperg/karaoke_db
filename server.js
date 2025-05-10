@@ -236,6 +236,8 @@ app.get('/api/songqueue', (req, res) => {
 app.get('/api/songqueue/session/:sessionId', (req, res) => {
 	const { sessionId } = req.params;
 
+	console.log(`Fetching songs for sessionId: ${sessionId}`);
+
 	if (!songQueue[sessionId]) {
 		return res
 			.status(404)
@@ -296,7 +298,13 @@ app.post('/api/songqueue', (req, res) => {
 
 	//broadcast event
 	console.log('emitting songQueueUpdated event');
-	io.emit('songQueueUpdated', { action: 'add', song: newSong, sessionID: sessionId });
+	const queueCount = songQueue[sessionId].songs.length;
+	io.emit('songQueueUpdated', {
+		action: 'add',
+		song: newSong,
+		sessionID: sessionId,
+		count: queueCount,
+	});
 
 	// Return the new song
 	res.status(201).json(newSong);
@@ -786,6 +794,64 @@ app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
 	}
 });
 
+app.post('/api/batch-upload', (req, res) => {
+	const videoDataArray = req.body;
+
+	if (!videoDataArray || !Array.isArray(videoDataArray)) {
+		return res
+			.status(400)
+			.json({ error: 'Invalid data format.  Expected an array of video data.' });
+	}
+
+	if (videoDataArray.length === 0) {
+		return res.status(200).json({ success: true, message: 'No videos to upload.' });
+	}
+
+	// //for each item, append videoDir to path
+	// videoDataArray.forEach((video) => {
+	// 	video.Path = path.join(videoDir, video.Path);
+	// });
+
+	console.log('Batch uploading videos:', videoDataArray);
+	return res.status(200).json({ success: true, message: 'Videos uploaded successfully.' });
+
+	db.serialize(() => {
+		// Use a transaction for efficiency
+		db.run('BEGIN TRANSACTION;');
+
+		const stmt = db.prepare(
+			`INSERT INTO dbSongs (Artist, Title, StartTime, Duration, Path) VALUES (?, ?, ?, ?, ?)`
+		);
+
+		videoDataArray.forEach((video) => {
+			stmt.run(video.Artist, video.Title, video.StartTime, video.Duration, video.Path, (err) => {
+				if (err) {
+					//  Rollback the transaction on any error
+					db.run('ROLLBACK;');
+					console.error('Error inserting video:', err);
+					return res
+						.status(500)
+						.json({ error: 'Error inserting video data.', details: err.message });
+				}
+			});
+		});
+		stmt.finalize();
+
+		db.run('COMMIT;', (err) => {
+			if (err) {
+				db.run('ROLLBACK;');
+				console.error('Error committing transaction:', err);
+				return res
+					.status(500)
+					.json({ error: 'Error committing transaction.', details: err.message });
+			}
+			console.log('Successfully inserted video data.');
+			res.status(200).json({ success: true, message: 'Videos uploaded successfully.' });
+		});
+	});
+	db.close();
+});
+
 // Endpoint to download a file
 app.get('/api/download/:filename', (req, res) => {
 	console.log('Downloading file:', './mydatabase.sqlite');
@@ -801,6 +867,23 @@ app.get('/api/download/:filename', (req, res) => {
 			res.status(500).json({ error: 'Failed to download file.' });
 		}
 	});
+});
+
+// Helper function to generate random session ID
+function generateSessionId() {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	let result = '';
+	for (let i = 0; i < 4; i++) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	return result;
+}
+
+// Endpoint to get a new session ID
+app.get('/api/getNewSessionID', (req, res) => {
+	const sessionId = generateSessionId();
+	console.log(`Generated new session ID: ${sessionId}`);
+	res.json({ sessionId });
 });
 
 // API endpoint to list all video files

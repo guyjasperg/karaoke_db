@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Karaoke Master</title>
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+			rel="stylesheet"
+		/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+		<style>
+			.animate-pulse {
+				animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+			}
+			@keyframes pulse {
+				0%,
+				100% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0.5;
+				}
+			}
+			.message {
+				transition: opacity 0.5s ease-in-out;
+			}
+			.hidden {
+				display: none;
+			}
+			/* Custom scrollbar for dark theme */
+			::-webkit-scrollbar {
+				width: 8px;
+				height: 8px;
+			}
+			::-webkit-scrollbar-track {
+				background: #1f2937;
+			}
+			::-webkit-scrollbar-thumb {
+				background: #4c1d95;
+				border-radius: 4px;
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background: #5b21b6;
+			}
+			/* Ensure text visibility, override conflicting CSS */
+			@media (min-width: 640px) {
+				.add-to-queue-btn .text-full {
+					display: inline !important;
+				}
+				.add-to-queue-btn .text-short {
+					display: none !important;
+				}
+			}
+			@media (max-width: 639px) {
+				.add-to-queue-btn .text-full {
+					display: none !important;
+				}
+				.add-to-queue-btn .text-short {
+					display: inline !important;
+				}
+			}
+		</style>
+	</head>
+	<body class="flex flex-col h-screen bg-gray-900 text-gray-100">
+		<header class="bg-purple-900 text-white p-4 shadow-md">
+			<div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+				<h1 class="text-2xl font-bold flex items-center">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-6 w-6 mr-2"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+						/>
+					</svg>
+					Karaoke Master
+				</h1>
+
+				<!-- Always visible session info in header -->
+				<div class="flex items-center mt-2 md:mt-0">
+					<div class="mr-2 text-sm text-gray-300">Session:</div>
+					<div
+						id="session-id-header"
+						class="bg-gray-800 px-3 py-1 rounded text-purple-300 font-mono text-sm"
+					></div>
+					<button
+						id="session-panel-toggle"
+						class="ml-2 bg-purple-800 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs flex items-center"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
+						</svg>
+					</button>
+				</div>
+			</div>
+		</header>
+
+		<!-- Session Panel (collapsible) -->
+		<div id="session-panel" class="bg-gray-800 border-b border-gray-700 p-4 hidden">
+			<div class="container mx-auto">
+				<h2 class="text-lg font-semibold mb-3 text-purple-300">Session Management</h2>
+				<div class="bg-gray-700 p-4 rounded-lg">
+					<div class="flex items-center justify-between mb-2">
+						<p class="font-medium text-gray-300">Current Session ID:</p>
+						<span
+							id="session-id"
+							class="bg-gray-800 px-3 py-1 rounded text-purple-300 font-mono"
+						></span>
+					</div>
+					<div class="flex items-center justify-between">
+						<div class="flex-1 mr-2">
+							<input
+								type="text"
+								id="new-session-input"
+								class="w-full border border-gray-600 bg-gray-800 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500"
+								placeholder="Enter new session ID..."
+							/>
+						</div>
+						<button
+							id="change-session-btn"
+							class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5 mr-1"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+								/>
+							</svg>
+							Change Session
+						</button>
+					</div>
+					<p class="text-sm text-gray-400 mt-2">
+						This session ID is stored locally and used to manage your song queue.
+					</p>
+				</div>
+
+				<div class="mt-4">
+					<button
+						id="new-session-btn"
+						class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm"
+					>
+						Generate New Session ID
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Main Navigation Buttons -->
+		<div class="flex justify-center space-x-4 py-4">
+			<button
+				id="search-tab-btn"
+				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+			>
+				Search Songs
+			</button>
+			<button
+				id="queue-tab-btn"
+				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-600"
+			>
+				Queue (<span id="queue-count">0</span>)
+			</button>
+		</div>
+
+		<main class="flex-1 container mx-auto p-4 overflow-auto">
+			<!-- Search Section -->
+			<div
+				id="search-section"
+				class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 mb-4"
+			>
+				<div class="mb-4">
+					<div class="flex items-center">
+						<div class="relative flex-grow">
+							<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-5 w-5 text-gray-400"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+									/>
+								</svg>
+							</div>
+							<input
+								type="text"
+								id="search-input"
+								class="w-full bg-gray-800 border border-blue-500 rounded-l-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+								placeholder="Search songs..."
+							/>
+						</div>
+						<button
+							id="search-button"
+							class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+						>
+							Search
+						</button>
+					</div>
+				</div>
+
+				<div id="message-container" class="p-3 rounded mb-4 hidden"></div>
+
+				<!-- Search Results -->
+				<div id="search-results-container">
+					<h2 id="results-heading" class="text-2xl font-bold mb-4 text-white"></h2>
+					<div id="search-results" class="space-y-4"></div>
+					<div id="no-results" class="text-center py-8 text-gray-400 hidden">
+						No songs found matching your search. Try different keywords.
+					</div>
+				</div>
+			</div>
+
+			<!-- Queue Section -->
+			<div
+				id="queue-section"
+				class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 hidden"
+			>
+				<h2 class="text-2xl font-bold mb-4 text-white">Current Queue</h2>
+				<div id="queue-results" class="space-y-4">
+					<!-- Queue items will be inserted here -->
+				</div>
+				<div id="empty-queue" class="text-center py-8 text-gray-400">
+					Your queue is empty. Search for songs to add to your queue.
+				</div>
+			</div>
+		</main>
+
+		<footer class="bg-gray-900 text-gray-400 p-4 text-center text-sm border-t border-gray-800">
+			© <span id="current-year"></span> - Karaoke Master
+		</footer>
+
+		<script>
+			// Global variables
+			let sessionId = '';
+			let socket = null;
+			let searchResults = [];
+			let queueItems = [];
+			let isSearching = false;
+
+			// DOM elements
+			const searchInput = document.getElementById('search-input');
+			const searchButton = document.getElementById('search-button');
+			const messageContainer = document.getElementById('message-container');
+			const resultsHeading = document.getElementById('results-heading');
+			const searchResultsContainer = document.getElementById('search-results');
+			const noResults = document.getElementById('no-results');
+			const sessionIdElement = document.getElementById('session-id');
+			const sessionIdHeaderElement = document.getElementById('session-id-header');
+			const currentYearElement = document.getElementById('current-year');
+			const newSessionInput = document.getElementById('new-session-input');
+			const changeSessionBtn = document.getElementById('change-session-btn');
+			const newSessionBtn = document.getElementById('new-session-btn');
+			const sessionPanelToggle = document.getElementById('session-panel-toggle');
+			const sessionPanel = document.getElementById('session-panel');
+			const searchTabBtn = document.getElementById('search-tab-btn');
+			const queueTabBtn = document.getElementById('queue-tab-btn');
+			const searchSection = document.getElementById('search-section');
+			const queueSection = document.getElementById('queue-section');
+			const queueResults = document.getElementById('queue-results');
+			const emptyQueue = document.getElementById('empty-queue');
+			const queueCount = document.getElementById('queue-count');
+
+			// Set current year in footer
+			currentYearElement.textContent = new Date().getFullYear();
+
+			// Initialize the application
+			function init() {
+				// Get or create session ID
+				sessionId = localStorage.getItem('karaoke-session-id');
+				if (!sessionId) {
+					sessionId = generateSessionId();
+					localStorage.setItem('karaoke-session-id', sessionId);
+				}
+				// Update both session ID displays
+				sessionIdElement.textContent = sessionId;
+				sessionIdHeaderElement.textContent = sessionId;
+
+				// Initialize socket connection
+				initSocketConnection();
+
+				// Add event listeners
+				searchButton.addEventListener('click', handleSearch);
+				searchInput.addEventListener('keypress', (e) => {
+					if (e.key === 'Enter') {
+						handleSearch();
+					}
+				});
+
+				// Add event listeners for session management
+				changeSessionBtn.addEventListener('click', changeSession);
+				newSessionBtn.addEventListener('click', createNewSession);
+
+				// Toggle session panel
+				sessionPanelToggle.addEventListener('click', toggleSessionPanel);
+
+				// Tab navigation
+				searchTabBtn.addEventListener('click', showSearchTab);
+				queueTabBtn.addEventListener('click', showQueueTab);
+
+				// Check if session panel should be open (from local storage)
+				const sessionPanelOpen = localStorage.getItem('session-panel-open') === 'true';
+				if (sessionPanelOpen) {
+					sessionPanel.classList.remove('hidden');
+					updateToggleButton(true);
+				}
+			}
+
+			// Show search tab
+			function showSearchTab() {
+				searchSection.classList.remove('hidden');
+				queueSection.classList.add('hidden');
+				searchTabBtn.classList.replace('bg-gray-700', 'bg-blue-600');
+				searchTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
+				queueTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+				queueTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+			}
+
+			// Show queue tab
+			function showQueueTab() {
+				searchSection.classList.add('hidden');
+				queueSection.classList.remove('hidden');
+				searchTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+				searchTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+				queueTabBtn.classList.replace('bg-gray-700', 'bg-blue-600');
+				queueTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
+				fetchQueue();
+			}
+
+			// Toggle session panel visibility
+			function toggleSessionPanel() {
+				const isVisible = !sessionPanel.classList.contains('hidden');
+				if (isVisible) {
+					sessionPanel.classList.add('hidden');
+					localStorage.setItem('session-panel-open', 'false');
+				} else {
+					sessionPanel.classList.remove('hidden');
+					localStorage.setItem('session-panel-open', 'true');
+				}
+				updateToggleButton(!isVisible);
+			}
+
+			// Update toggle button icon
+			function updateToggleButton(isOpen) {
+				sessionPanelToggle.innerHTML = isOpen
+					? '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>'
+					: '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>';
+			}
+
+			// Generate a new session ID
+			function generateSessionId() {
+				return `session-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+			}
+
+			// Change the current session
+			function changeSession() {
+				const newSessionId = newSessionInput.value.trim();
+
+				if (!newSessionId) {
+					showMessage('Please enter a valid session ID', 'error');
+					return;
+				}
+
+				// Update session ID
+				sessionId = newSessionId;
+				localStorage.setItem('karaoke-session-id', sessionId);
+				sessionIdElement.textContent = sessionId;
+				sessionIdHeaderElement.textContent = sessionId;
+
+				// Clear the input
+				newSessionInput.value = '';
+
+				showMessage('Session changed successfully', 'success');
+
+				// Refresh queue if viewing queue tab
+				if (!queueSection.classList.contains('hidden')) {
+					fetchQueue();
+				}
+			}
+
+			// Create a new session ID
+			function createNewSession() {
+				sessionId = generateSessionId();
+				localStorage.setItem('karaoke-session-id', sessionId);
+				sessionIdElement.textContent = sessionId;
+				sessionIdHeaderElement.textContent = sessionId;
+
+				showMessage('New session created', 'success');
+
+				// Refresh queue if viewing queue tab
+				if (!queueSection.classList.contains('hidden')) {
+					fetchQueue();
+				}
+			}
+
+			// Initialize socket.io connection
+			function initSocketConnection() {
+				// Get the server URL (same origin by default)
+				const serverUrl = window.location.origin;
+
+				// Connect to socket.io server
+				socket = io(serverUrl, {
+					auth: { token: 'karaoke-player-app' },
+				});
+
+				socket.on('connect', () => {
+					console.log('Connected to socket server');
+				});
+
+				socket.on('error', (error) => {
+					console.error('Socket connection error:', error);
+					showMessage('Failed to connect to server. Some features may not work.', 'error');
+				});
+
+				socket.on('disconnect', () => {
+					console.log('Disconnected from socket server');
+				});
+
+				socket.on('songQueueUpdated', (data) => {
+					console.log('Song queue updated:', data);
+					if (data.sessionID === sessionId) {
+						updateQueueFromSocket(data);
+					}
+				});
+			}
+
+			// Update queue based on socket message
+			function updateQueueFromSocket(data) {
+				if (data.action === 'add') {
+					// Add the new song to queueItems
+					queueItems.push(data.song);
+					showMessage(`"${data.song.Title}" by ${data.song.Artist} added to queue!`, 'success');
+				} else if (data.action === 'remove') {
+					// Remove the song from queueItems
+					queueItems = queueItems.filter((song) => song.sequenceID !== data.song.sequenceID);
+					showMessage(`"${data.song.Title}" by ${data.song.Artist} removed from queue`, 'info');
+				}
+
+				// Update queue count
+				updateQueueCount(data.count || queueItems.length);
+
+				// Refresh display if on queue tab
+				if (!queueSection.classList.contains('hidden')) {
+					displayQueue();
+				}
+			}
+
+			// Search for songs
+			async function handleSearch() {
+				const query = searchInput.value.trim();
+
+				if (!query) {
+					clearResults();
+					return;
+				}
+
+				if (isSearching) return;
+				isSearching = true;
+
+				// Update search button
+				const originalButtonText = searchButton.innerHTML;
+				searchButton.innerHTML = `<span class="animate-pulse">Searching...</span>`;
+
+				try {
+					const response = await fetch(`/api/songs/search?query=${encodeURIComponent(query)}`);
+
+					if (!response.ok) {
+						throw new Error('Search failed');
+					}
+
+					const data = await response.json();
+					searchResults = data;
+
+					// Display results
+					displaySearchResults();
+				} catch (error) {
+					console.error('Error searching songs:', error);
+					showMessage('Failed to search songs. Please try again.', 'error');
+				} finally {
+					isSearching = false;
+					searchButton.innerHTML = originalButtonText;
+				}
+			}
+
+			// Display search results with the new UI
+			function displaySearchResults() {
+				if (searchResults.length > 0) {
+					resultsHeading.textContent = 'Search Results';
+					searchResultsContainer.innerHTML = '';
+					noResults.classList.add('hidden');
+
+					// Add new results with updated UI
+					searchResults.forEach((song) => {
+						const songElement = document.createElement('div');
+						songElement.className =
+							'border-b border-gray-700 py-4 flex justify-between items-center';
+
+						// Add song duration if not available
+						const duration =
+							song.duration ||
+							`${Math.floor(Math.random() * 5) + 2}:${Math.floor(Math.random() * 59)
+								.toString()
+								.padStart(2, '0')}`;
+
+						songElement.innerHTML = `
+							<div>
+								<h3 class="text-xl font-bold text-white">${escapeHtml(song.Title || '')}</h3>
+								<p class="text-gray-400">${escapeHtml(song.Artist || '')} • ${duration}</p>
+							</div>
+							<button
+								class="add-to-queue-btn bg-green-600 hover:bg-green-700 text-white h-10 w-12 sm:w-28 flex items-center justify-center rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"
+								data-song-id="${song.songid}"
+								title="Add to Queue"
+							>
+								<span class="text-full hidden sm:inline">Add to Queue</span>
+								<span class="text-short sm:hidden">+</span>
+							</button>
+						`;
+
+						// Debug: Log button HTML
+						console.log('Button HTML:', songElement.querySelector('.add-to-queue-btn').outerHTML);
+
+						const addButton = songElement.querySelector('.add-to-queue-btn');
+						addButton.addEventListener('click', () => addToQueue(song));
+
+						searchResultsContainer.appendChild(songElement);
+					});
+				} else if (searchInput.value.trim() && !isSearching) {
+					resultsHeading.textContent = '';
+					searchResultsContainer.innerHTML = '';
+					noResults.classList.remove('hidden');
+				} else {
+					clearResults();
+				}
+			}
+
+			// Clear search results
+			function clearResults() {
+				resultsHeading.textContent = '';
+				searchResultsContainer.innerHTML = '';
+				noResults.classList.add('hidden');
+			}
+
+			// Add a song to the queue
+			async function addToQueue(song) {
+				if (!sessionId) {
+					showMessage('Session ID not found. Please refresh the page.', 'error');
+					return;
+				}
+
+				try {
+					const response = await fetch('/api/songqueue', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							sessionId,
+							Artist: song.Artist,
+							Title: song.Title,
+							filePath: song.path,
+							status: 'pending', // Default status
+							startTime: 0, // Default start time
+						}),
+					});
+
+					if (!response.ok) {
+						throw new Error('Failed to add song to queue');
+					}
+
+					const data = await response.json();
+					// Update queue count
+					fetchQueueCount();
+				} catch (error) {
+					console.error('Error adding song to queue:', error);
+					showMessage('Failed to add song to queue. Please try again.', 'error');
+				}
+			}
+
+			// Fetch queue from server
+			async function fetchQueue() {
+				if (!sessionId) {
+					showMessage('Session ID not found. Please refresh the page.', 'error');
+					return;
+				}
+
+				try {
+					const response = await fetch(`/api/songqueue/session/${sessionId}`);
+
+					if (!response.ok) {
+						throw new Error('Failed to fetch queue');
+					}
+
+					const data = await response.json();
+					queueItems = data;
+					displayQueue();
+					updateQueueCount(queueItems.length);
+				} catch (error) {
+					console.error('Error fetching queue:', error);
+					showMessage('Failed to fetch queue. Please try again.', 'error');
+				}
+			}
+
+			// Just update the queue count
+			async function fetchQueueCount() {
+				if (!sessionId) return;
+
+				try {
+					const response = await fetch(`/api/songqueue/session/${sessionId}`);
+					if (!response.ok) throw new Error('Failed to fetch queue count');
+
+					const data = await response.json();
+					updateQueueCount(data.length);
+				} catch (error) {
+					console.error('Error fetching queue count:', error);
+				}
+			}
+
+			// Update queue count in UI
+			function updateQueueCount(count) {
+				queueCount.textContent = count;
+			}
+
+			// Display queue items
+			function displayQueue() {
+				queueResults.innerHTML = '';
+
+				if (queueItems.length > 0) {
+					emptyQueue.classList.add('hidden');
+
+					queueItems.forEach((song, index) => {
+						const queueItem = document.createElement('div');
+						queueItem.className = 'border-b border-gray-700 py-4 flex justify-between items-center';
+
+						queueItem.innerHTML = `
+                        <div>
+                            <h3 class="text-xl font-bold text-white">${escapeHtml(
+															song.Title || ''
+														)}</h3>
+                            <p class="text-gray-400">${escapeHtml(song.Artist || '')} • ${
+							song.status || 'pending'
+						}</p>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="bg-purple-800 text-white px-3 py-1 rounded-md">#${
+															index + 1
+														}</span>
+                        </div>
+                    `;
+
+						queueResults.appendChild(queueItem);
+					});
+				} else {
+					emptyQueue.classList.remove('hidden');
+				}
+			}
+
+			// Show message to user
+			function showMessage(text, type) {
+				messageContainer.textContent = text;
+				messageContainer.className = `p-3 rounded mb-4 message ${
+					type === 'success'
+						? 'bg-green-800 text-green-100'
+						: type === 'info'
+						? 'bg-blue-800 text-blue-100'
+						: 'bg-red-800 text-red-100'
+				}`;
+				messageContainer.classList.remove('hidden');
+
+				// Hide message after 3 seconds
+				setTimeout(() => {
+					messageContainer.classList.add('hidden');
+				}, 3000);
+			}
+
+			// Helper function to escape HTML (prevent XSS)
+			function escapeHtml(unsafe) {
+				if (!unsafe) return '';
+				return unsafe
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&#039;');
+			}
+
+			// Initialize the app when the DOM is fully loaded
+			document.addEventListener('DOMContentLoaded', init);
+
+			// Initial queue count fetch
+			document.addEventListener('DOMContentLoaded', fetchQueueCount);
+		</script>
+		<script>
+			(function () {
+				function c() {
+					var b = a.contentDocument || a.contentWindow.document;
+					if (b) {
+						var d = b.createElement('script');
+						d.innerHTML =
+							"window.__CF$cv$params={r:'93d9b30e7cf4bfd4',t:'MTc0Njg4Mjg2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+						b.getElementsByTagName('head')[0].appendChild(d);
+					}
+				}
+				if (document.body) {
+					var a = document.createElement('iframe');
+					a.height = 1;
+					a.width = 1;
+					a.style.position = 'absolute';
+					a.style.top = 0;
+					a.style.left = 0;
+					a.style.border = 'none';
+					a.style.visibility = 'hidden';
+					document.body.appendChild(a);
+					if ('loading' !== document.readyState) c();
+					else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c);
+					else {
+						var e = document.onreadystatechange || function () {};
+						document.onreadystatechange = function (b) {
+							e(b);
+							'loading' !== document.readyState && ((document.onreadystatechange = e), c());
+						};
+					}
+				}
+			})();
+		</script>
+	</body>
+</html>

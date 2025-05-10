@@ -1,22 +1,23 @@
 {
-  "name": "mykaraoke_db",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "multer": "^1.4.5-lts.1",
-    "socket.io": "^4.8.1",
-    "sqlite3": "^5.1.7",
-    "tailwindcss": "^3.4.17",
-    "title-case": "^4.3.2",
-    "to-title-case": "^1.0.0"
-  }
+	"name": "mykaraoke_db",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"build:css": "npx tailwindcss -i ./public/tailwind.css -o ./public/styles.css --watch",
+		"start": "node server.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"dotenv": "^16.4.7",
+		"express": "^4.21.2",
+		"multer": "^1.4.5-lts.1",
+		"socket.io": "^4.8.1",
+		"sqlite3": "^5.1.7",
+		"tailwindcss": "^3.4.17",
+		"title-case": "^4.3.2",
+		"to-title-case": "^1.0.0"
+	}
 }

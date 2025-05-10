@@ -1,97 +1,539 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
-		<title>Web Speech API Example (Active Icon)</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Raspberry Pi Dashboard</title>
 		<style>
-			#speechIcon {
-				display: none; /* Initially hidden */
-				width: 30px;
-				height: 30px;
-				background-color: red; /* Or use an icon image */
-				border-radius: 50%;
-				position: fixed;
-				top: 10px;
-				right: 10px;
+			/* Reset and Base Styles */
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu,
+					Cantarell, 'Helvetica Neue', sans-serif;
+				background-color: #f5f5f5;
+				color: #212121;
+				line-height: 1.5;
+			}
+
+			/* Material Design Variables */
+			:root {
+				--primary-color: #207fd8;
+				--primary-light: #30b3e8;
+				--primary-dark: #015d95;
+				--secondary-color: #8459ef;
+				--text-on-primary: #ffffff;
+				--text-primary: #212121;
+				--text-secondary: #757575;
+				--background-color: #f5f5f5;
+				--card-color: #ffffff;
+				--divider-color: rgba(0, 0, 0, 0.12);
+				--shadow-1: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+				--shadow-2: 0 8px 17px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+				--transition-speed: 0.3s;
+			}
+
+			/* Layout */
+			.container {
+				width: 100%;
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 0 20px;
+			}
+
+			.row {
+				display: flex;
+				flex-wrap: wrap;
+				margin: 0 -12px;
+			}
+
+			.col {
+				flex: 1;
+				padding: 0 12px;
+				margin-bottom: 24px;
+			}
+
+			/* Responsive columns */
+			@media (max-width: 1024px) {
+				.col {
+					flex: 0 0 33.333333%;
+				}
+			}
+
+			@media (max-width: 768px) {
+				.col {
+					flex: 0 0 50%;
+				}
+			}
+
+			@media (max-width: 480px) {
+				.col {
+					flex: 0 0 100%;
+				}
+			}
+
+			/* Material Design Components */
+
+			/* Header */
+			.header {
+				background-color: var(--primary-color);
+				color: var(--text-on-primary);
+				padding: 24px 0;
+				box-shadow: var(--shadow-1);
+				position: relative;
+				z-index: 2;
+			}
+
+			.header-content {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.header-title {
+				font-size: 28px;
+				font-weight: 400;
+				margin: 0;
+			}
+
+			.header-subtitle {
+				font-size: 16px;
+				font-weight: 300;
+				margin-top: 4px;
+				opacity: 0.87;
+			}
+
+			/* Cards */
+			.card {
+				background-color: var(--card-color);
+				border-radius: 4px;
+				box-shadow: var(--shadow-1);
+				overflow: hidden;
+				transition: box-shadow var(--transition-speed), transform var(--transition-speed);
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.card:hover {
+				box-shadow: var(--shadow-2);
+				transform: translateY(-4px);
+			}
+
+			.card-link {
+				text-decoration: none;
+				color: inherit;
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+			}
+
+			.card-icon {
+				background-color: #f5f5f5;
+				height: 120px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 48px;
+				color: var(--primary-color);
+			}
+
+			.card-content {
+				padding: 16px;
+				flex-grow: 1;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.card-title {
+				font-size: 20px;
+				font-weight: 500;
+				margin-bottom: 8px;
+				color: var(--primary-dark);
+			}
+
+			.card-description {
+				font-size: 14px;
+				color: var(--text-secondary);
+				margin-bottom: 16px;
+				flex-grow: 1;
+			}
+
+			.card-status {
+				display: inline-block;
+				padding: 2px 8px;
+				border-radius: 12px;
+				font-size: 12px;
+				text-transform: uppercase;
+				font-weight: 500;
+			}
+
+			.status-online {
+				background-color: #c8e6c9;
+				color: #2e7d32;
+			}
+
+			.status-offline {
+				background-color: #ffcdd2;
+				color: #c62828;
+			}
+
+			.status-maintenance {
+				background-color: #fff9c4;
+				color: #f57f17;
+			}
+
+			.card-action {
+				border-top: 1px solid var(--divider-color);
+				padding: 12px 16px;
+				text-align: right;
+			}
+
+			.button {
+				display: inline-block;
+				background-color: transparent;
+				color: var(--secondary-color);
+				text-transform: uppercase;
+				font-weight: 500;
+				font-size: 14px;
+				padding: 8px 16px;
+				border-radius: 4px;
+				cursor: pointer;
+				position: relative;
+				overflow: hidden;
+				transition: background-color 0.3s;
+				border: none;
+				text-decoration: none;
+				outline: none;
+			}
+
+			.button:hover {
+				background-color: rgba(33, 150, 243, 0.1);
+			}
+
+			/* Material icons - embedded as data URIs */
+			.material-icons {
+				font-family: 'Material Icons';
+				font-weight: normal;
+				font-style: normal;
+				font-size: 24px;
+				line-height: 1;
+				letter-spacing: normal;
+				text-transform: none;
+				display: inline-block;
+				white-space: nowrap;
+				word-wrap: normal;
+				direction: ltr;
+				-webkit-font-feature-settings: 'liga';
+				-webkit-font-smoothing: antialiased;
+			}
+
+			/* Footer */
+			.footer {
+				background-color: #424242;
+				color: rgba(255, 255, 255, 0.7);
+				padding: 16px 0;
+				margin-top: 32px;
+				text-align: center;
+				font-size: 14px;
+			}
+
+			/* Ripple effect */
+			.ripple {
+				position: relative;
+				overflow: hidden;
+				transform: translate3d(0, 0, 0);
+			}
+
+			.ripple:after {
+				content: '';
+				display: block;
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				top: 0;
+				left: 0;
+				pointer-events: none;
+				background-image: radial-gradient(circle, #000 10%, transparent 10.01%);
+				background-repeat: no-repeat;
+				background-position: 50%;
+				transform: scale(10, 10);
+				opacity: 0;
+				transition: transform 0.5s, opacity 1s;
+			}
+
+			.ripple:active:after {
+				transform: scale(0, 0);
+				opacity: 0.2;
+				transition: 0s;
 			}
 		</style>
 	</head>
 	<body>
-		<h1>Speech Recognition</h1>
-		<p>Speak into your microphone...</p>
-		<button id="startButton">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 384 512"
-				style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px"
-			>
-				<path
-					d="M192 0C139 0 96 43 96 96l0 160c0 53 43 96 96 96s96-43 96-96l0-160c0-53-43-96-96-96zM64 216c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 89.1 66.2 162.7 152 174.4l0 33.6-48 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l72 0 72 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0 0-33.6c85.8-11.7 152-85.3 152-174.4l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 70.7-57.3 128-128 128s-128-57.3-128-128l0-40z"
-				/>
-			</svg>
-			Start Recognition
-		</button>
-		<p id="result"></p>
-		<div id="speechIcon"></div>
+		<header class="header">
+			<div class="container">
+				<div class="header-content">
+					<div>
+						<h1 class="header-title">Raspberry Pi Dashboard</h1>
+						<p class="header-subtitle">Your self-hosted application hub</p>
+					</div>
+					<div class="header-icon">
+						<!-- Raspberry Pi Icon could go here -->
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<div class="container" style="margin-top: 24px">
+			<div class="row">
+				<!-- App Card 1 -->
+				<div class="col">
+					<div class="card">
+						<a href="http://192.168.1.15:3003" class="card-link">
+							<div class="card-icon">
+								<!-- Chart icon -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="48"
+									height="48"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<line x1="18" y1="20" x2="18" y2="10"></line>
+									<line x1="12" y1="20" x2="12" y2="4"></line>
+									<line x1="6" y1="20" x2="6" y2="14"></line>
+								</svg>
+							</div>
+							<div class="card-content">
+								<h3 class="card-title">Analytics Dashboard</h3>
+								<p class="card-description">
+									Monitor your system performance and resource usage in real-time.
+								</p>
+								<span class="card-status status-online">Online</span>
+							</div>
+							<div class="card-action">
+								<span class="button ripple">Launch App</span>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<!-- App Card 2 -->
+				<div class="col">
+					<div class="card">
+						<a href="http://your-pi-ip:port2/app2" class="card-link">
+							<div class="card-icon">
+								<!-- Video icon -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="48"
+									height="48"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<polygon points="23 7 16 12 23 17 23 7"></polygon>
+									<rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+								</svg>
+							</div>
+							<div class="card-content">
+								<h3 class="card-title">Media Server</h3>
+								<p class="card-description">
+									Stream your media collection to devices on your network.
+								</p>
+								<span class="card-status status-online">Online</span>
+							</div>
+							<div class="card-action">
+								<span class="button ripple">Launch App</span>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<!-- App Card 3 -->
+				<div class="col">
+					<div class="card">
+						<a href="http://your-pi-ip:port3/app3" class="card-link">
+							<div class="card-icon">
+								<!-- Folder icon -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="48"
+									height="48"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<path
+										d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+									></path>
+								</svg>
+							</div>
+							<div class="card-content">
+								<h3 class="card-title">File Manager</h3>
+								<p class="card-description">Browse and manage files stored on your Raspberry Pi.</p>
+								<span class="card-status status-maintenance">Maintenance</span>
+							</div>
+							<div class="card-action">
+								<span class="button ripple">Launch App</span>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<!-- App Card 4 -->
+				<div class="col">
+					<div class="card">
+						<a href="http://your-pi-ip:port4/app4" class="card-link">
+							<div class="card-icon">
+								<!-- Lock icon -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="48"
+									height="48"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+									<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+								</svg>
+							</div>
+							<div class="card-content">
+								<h3 class="card-title">Security System</h3>
+								<p class="card-description">Monitor and control your home security devices.</p>
+								<span class="card-status status-offline">Offline</span>
+							</div>
+							<div class="card-action">
+								<span class="button ripple">Launch App</span>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<!-- App Card 5 -->
+				<div class="col">
+					<div class="card">
+						<a href="http://your-pi-ip:port5/app5" class="card-link">
+							<div class="card-icon">
+								<!-- Settings icon -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="48"
+									height="48"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<circle cx="12" cy="12" r="3"></circle>
+									<path
+										d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+									></path>
+								</svg>
+							</div>
+							<div class="card-content">
+								<h3 class="card-title">System Settings</h3>
+								<p class="card-description">
+									Configure and manage your Raspberry Pi system settings.
+								</p>
+								<span class="card-status status-online">Online</span>
+							</div>
+							<div class="card-action">
+								<span class="button ripple">Launch App</span>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<!-- App Card 6 -->
+				<div class="col">
+					<div class="card">
+						<a href="http://your-pi-ip:port6/app6" class="card-link">
+							<div class="card-icon">
+								<!-- Home icon -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="48"
+									height="48"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+									<polyline points="9 22 9 12 15 12 15 22"></polyline>
+								</svg>
+							</div>
+							<div class="card-content">
+								<h3 class="card-title">Home Automation</h3>
+								<p class="card-description">
+									Control smart home devices and set up automation routines.
+								</p>
+								<span class="card-status status-online">Online</span>
+							</div>
+							<div class="card-action">
+								<span class="button ripple">Launch App</span>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<!-- Add more cards as needed -->
+			</div>
+		</div>
+
+		<footer class="footer">
+			<div class="container">
+				<p>Raspberry Pi 5 Dashboard • <span id="current-year"></span></p>
+			</div>
+		</footer>
 
 		<script>
-			if ('webkitSpeechRecognition' in window && 'speechSynthesis' in window) {
-				const recognition = new webkitSpeechRecognition();
-				recognition.continuous = true;
-				recognition.interimResults = true;
-				recognition.lang = 'en-US';
+			// Update the current year in the footer
+			document.getElementById('current-year').textContent = new Date().getFullYear();
 
-				const synth = window.speechSynthesis;
-				const startButton = document.getElementById('startButton');
-				const resultElement = document.getElementById('result');
-				const speechIcon = document.getElementById('speechIcon');
-				let timeout;
+			// Ripple effect for buttons
+			document.addEventListener('click', function (e) {
+				const target = e.target;
+				if (!target.classList.contains('ripple')) return;
 
-				startButton.addEventListener('click', () => {
-					recognition.start();
-					resultElement.textContent = '';
-					speechIcon.style.display = 'block'; // Show icon
-				});
+				const rect = target.getBoundingClientRect();
+				const x = e.clientX - rect.left;
+				const y = e.clientY - rect.top;
 
-				recognition.onresult = (event) => {
-					let interimTranscript = '';
-					let finalTranscript = '';
+				const ripple = document.createElement('span');
+				ripple.className = 'ripple-effect';
+				ripple.style.left = `${x}px`;
+				ripple.style.top = `${y}px`;
 
-					for (let i = event.resultIndex; i < event.results.length; ++i) {
-						if (event.results[i].isFinal) {
-							finalTranscript += event.results[i][0].transcript;
-						} else {
-							interimTranscript += event.results[i][0].transcript;
-						}
-					}
+				target.appendChild(ripple);
 
-					const spokenText = finalTranscript + interimTranscript;
-					resultElement.textContent = spokenText;
-
-					clearTimeout(timeout);
-					timeout = setTimeout(() => {
-						recognition.stop();
-						speakText(spokenText); // Speak the final text
-						speechIcon.style.display = 'none'; // Hide icon
-					}, 1500);
-				};
-
-				function speakText(text) {
-					const utterance = new SpeechSynthesisUtterance(text);
-					synth.speak(utterance);
-				}
-
-				recognition.onerror = (event) => {
-					resultElement.textContent = 'Error occurred: ' + event.error;
-					speechIcon.style.display = 'none'; // Hide icon on error
-				};
-
-				recognition.onend = () => {
-					speechIcon.style.display = 'none'; // Hide icon on end.
-				};
-			} else {
-				document.getElementById('result').textContent =
-					'Speech recognition not supported in this browser.';
-			}
+				setTimeout(() => {
+					ripple.remove();
+				}, 600);
+			});
 		</script>
 	</body>
 </html>

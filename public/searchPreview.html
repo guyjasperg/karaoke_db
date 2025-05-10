@@ -168,6 +168,7 @@
 					cleanedPath = videoPath.substring(karaokeIndex + '_Karaoke'.length + 1);
 				}
 				const videoUrl = videoBaseURL + cleanedPath;
+				console.log('Playing video:', videoUrl);
 				videoPlayer.src = videoUrl;
 				videoPlayer.play();
 				playPauseButton.textContent = 'Pause';

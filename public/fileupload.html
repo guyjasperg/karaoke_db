@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Add Videos to Collection</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="style.css" />
+		<script src="https://unpkg.com/lucide-react@latest/umd/lucide-react.min.js"></script>
+		<style>
+			body {
+				font-family: 'Inter', sans-serif;
+			}
+
+			.modern-table {
+				border-collapse: collapse;
+				width: 100%;
+				border-radius: 0.5rem;
+				overflow: hidden;
+				box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+			}
+
+			.modern-table thead tr {
+				background-color: #f7fafc;
+			}
+
+			.modern-table th,
+			.modern-table td {
+				padding: 1.25rem 1rem;
+				text-align: left;
+				border-bottom: 1px solid #edf2f7;
+			}
+
+			.modern-table th {
+				font-weight: 600;
+				color: #4a5568;
+				text-transform: uppercase;
+				font-size: 0.75rem;
+			}
+
+			.modern-table td {
+				color: #2d3748;
+				font-size: 0.875rem;
+			}
+
+			.modern-table tbody tr:hover {
+				background-color: #edf2f7;
+				transition: background-color 0.2s ease-in-out;
+			}
+
+			.editable-cell {
+				cursor: pointer;
+				position: relative;
+			}
+
+			.editable-cell:focus {
+				outline: none;
+			}
+
+			.editable-cell input {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				padding: 0.75rem 1rem;
+				border: 2px solid #4299e1;
+				font-size: 0.875rem;
+				font-family: 'Inter', sans-serif;
+				box-sizing: border-box;
+				border-radius: 0.375rem;
+				outline: none;
+				background-color: #fff;
+				color: #2d3748;
+			}
+
+			.editable-cell input:focus {
+				box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+			}
+
+			.save-button {
+				margin-left: 0.75rem;
+				padding: 0.5rem 1rem;
+				background-color: #48bb78;
+				color: #fff;
+				font-family: 'Inter', sans-serif;
+				border-radius: 0.375rem;
+				cursor: pointer;
+				transition: background-color 0.2s ease-in-out;
+				font-size: 0.875rem;
+				font-weight: 500;
+				border: none;
+				box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+			}
+
+			.save-button:hover {
+				background-color: #38a169;
+			}
+
+			.cancel-button {
+				margin-left: 0.75rem;
+				padding: 0.5rem 1rem;
+				background-color: #e53e3e;
+				color: #fff;
+				font-family: 'Inter', sans-serif;
+				border-radius: 0.375rem;
+				cursor: pointer;
+				transition: background-color 0.2s ease-in-out;
+				font-size: 0.875rem;
+				font-weight: 500;
+				border: none;
+				box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+			}
+
+			.cancel-button:hover {
+				background-color: #c53030;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-100 p-8">
+		<div class="container mx-auto bg-white rounded-lg shadow-md p-6">
+			<h1 class="text-2xl font-semibold mb-4 text-gray-800">Add Videos to Collection</h1>
+
+			<div class="mb-4 flex items-center gap-4">
+				<label
+					for="folder-input"
+					class="inline-flex items-center justify-center px-5 py-3 bg-blue-600 text-white font-medium rounded-md shadow-md cursor-pointer hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors"
+				>
+					<span>Select Folder</span>
+					<input type="file" id="folder-input" class="hidden" webkitdirectory directory multiple />
+				</label>
+				<p id="folder-path" class="mt-2 text-sm text-gray-500"></p>
+
+				<button
+					id="batch-upload-button"
+					class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+				>
+					Batch Upload
+				</button>
+			</div>
+
+			<div class="mb-4">
+				<h2 class="text-lg font-semibold mb-2 text-gray-700">Video Files:</h2>
+				<div id="file-list-container" class="max-h-[500px] overflow-y-auto">
+					<table id="file-list" class="modern-table hidden">
+						<thead class="bg-gray-200">
+							<tr>
+								<th class="px-4 py-2 text-left text-gray-600 font-semibold uppercase">Index</th>
+								<th class="px-4 py-2 text-left text-gray-600 font-semibold uppercase">Artist</th>
+								<th class="px-4 py-2 text-left text-gray-600 font-semibold uppercase">Title</th>
+								<th class="px-4 py-2 text-left text-gray-600 font-semibold uppercase">StartTime</th>
+								<th class="px-4 py-2 text-left text-gray-600 font-semibold uppercase">Duration</th>
+								<th class="px-4 py-2 text-left text-gray-600 font-semibold uppercase">Path</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-300"></tbody>
+					</table>
+					<p id="no-files-message" class="mt-4 text-gray-500 text-center">
+						No mp4 files found in the selected folder.
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			const folderInput = document.getElementById('folder-input');
+			const folderPathDisplay = document.getElementById('folder-path');
+			const fileListTable = document.getElementById('file-list');
+			const fileListBody = fileListTable.querySelector('tbody');
+			const noFilesMessage = document.getElementById('no-files-message');
+			const fileListContainer = document.getElementById('file-list-container');
+			const batchUploadButton = document.getElementById('batch-upload-button'); // Get the batch upload button
+
+			folderInput.addEventListener('change', async (event) => {
+				const files = event.target.files;
+				const mp4Files = [];
+
+				// Clear previous file list
+				fileListBody.innerHTML = '';
+				noFilesMessage.classList.remove('block');
+				noFilesMessage.classList.add('hidden');
+				fileListTable.classList.add('hidden');
+
+				if (!files || files.length === 0) {
+					folderPathDisplay.textContent = 'No folder selected.';
+					return;
+				}
+
+				let folderPath = files[0].webkitRelativePath;
+				folderPath = folderPath.substring(0, folderPath.lastIndexOf('/'));
+				folderPathDisplay.textContent = `Selected Folder: ${folderPath}`;
+
+				for (let i = 0; i < files.length; i++) {
+					const file = files[i];
+					if (file.type === 'video/mp4') {
+						mp4Files.push(file);
+					}
+				}
+
+				if (mp4Files.length === 0) {
+					noFilesMessage.classList.remove('hidden');
+					noFilesMessage.classList.add('block');
+					return;
+				}
+
+				fileListTable.classList.remove('hidden');
+				fileListContainer.classList.add('shadow-md');
+				for (let i = 0; i < mp4Files.length; i++) {
+					const file = mp4Files[i];
+					const filePath = file.webkitRelativePath;
+					// Extract artist and title from filename
+					const fileNameParts = file.name.replace('.mp4', '').split(' - ');
+					const artist = fileNameParts[0] || '';
+					const title = fileNameParts[1] || '';
+					const row = fileListBody.insertRow();
+					const indexCell = row.insertCell();
+					const artistCell = row.insertCell();
+					const titleCell = row.insertCell();
+					const startTimeCell = row.insertCell();
+					const durationCell = row.insertCell();
+					const pathCell = row.insertCell();
+
+					indexCell.textContent = i + 1;
+					artistCell.textContent = artist;
+					titleCell.textContent = title;
+					startTimeCell.textContent = '0';
+					durationCell.textContent = 'Loading...'; // Placeholder, will update async
+					pathCell.textContent = filePath;
+
+					// Make Artist, Title, and StartTime cells editable on double-click
+					artistCell.ondblclick = () => makeCellEditable(artistCell, artist);
+					titleCell.ondblclick = () => makeCellEditable(titleCell, title);
+					startTimeCell.ondblclick = () => makeCellEditable(startTimeCell, '0');
+
+					// Use createObjectURL to get the video duration
+					const video = document.createElement('video');
+					video.src = URL.createObjectURL(file);
+					video.onloadedmetadata = () => {
+						durationCell.textContent = formatDuration(video.duration);
+						URL.revokeObjectURL(video.src); // Clean up
+					};
+					video.onerror = () => {
+						durationCell.textContent = 'Error';
+						URL.revokeObjectURL(video.src);
+					};
+				}
+			});
+
+			function formatDuration(seconds) {
+				const h = Math.floor(seconds / 3600);
+				const m = Math.floor((seconds % 3600) / 60);
+				const s = Math.floor(seconds % 60);
+				return [h, m > 9 ? m : h ? '0' + m : m || '0', s > 9 ? s : '0' + s]
+					.filter(Boolean)
+					.join(':');
+			}
+
+			function makeCellEditable(cell, originalText) {
+				let currentText = originalText; // Track the current text
+				cell.textContent = ''; // Clear the cell content
+				const input = document.createElement('input');
+				input.type = 'text';
+				input.value = currentText;
+				cell.appendChild(input);
+				input.focus();
+
+				const saveButton = document.createElement('button');
+				saveButton.textContent = 'Save';
+				saveButton.className = 'save-button';
+				cell.appendChild(saveButton);
+
+				const cancelButton = document.createElement('button');
+				cancelButton.textContent = 'Cancel';
+				cancelButton.className = 'cancel-button';
+				cell.appendChild(cancelButton);
+
+				// Add event listener for when the user presses Enter or clicks away
+				const save = () => {
+					currentText = input.value.trim() || originalText; // Update currentText
+					cell.textContent = currentText; // Restore  text
+					cell.removeChild(input);
+					cell.removeChild(saveButton);
+					cell.removeChild(cancelButton);
+				};
+
+				input.addEventListener('blur', save);
+
+				input.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter') {
+						save();
+					} else if (event.key === 'Escape') {
+						cell.textContent = currentText;
+						cell.removeChild(input);
+						cell.removeChild(saveButton);
+						cell.removeChild(cancelButton);
+					}
+				});
+
+				saveButton.addEventListener('click', save);
+				cancelButton.addEventListener('click', () => {
+					cell.textContent = currentText;
+					cell.removeChild(input);
+					cell.removeChild(saveButton);
+					cell.removeChild(cancelButton);
+				});
+			}
+
+			// Batch upload button event listener
+			batchUploadButton.addEventListener('click', () => {
+				const files = folderInput.files; // Get the selected files from the input
+				if (!files || files.length === 0) {
+					alert('Please select a folder containing video files.');
+					return;
+				}
+
+				// Process the files and prepare data for upload
+				const videoDataArray = [];
+				for (let i = 0; i < files.length; i++) {
+					const file = files[i];
+					if (file.type === 'video/mp4') {
+						const filePath = file.webkitRelativePath;
+						const fileNameParts = file.name.replace('.mp4', '').split(' - ');
+						const artist = fileNameParts[0] || '';
+						const title = fileNameParts[1] || '';
+						const startTime = 0;
+						// Duration will be calculated on the server,  to avoid long processing here
+						const duration = 0;
+						videoDataArray.push({
+							Artist: artist,
+							Title: title,
+							StartTime: startTime,
+							Duration: duration,
+							Path: filePath,
+							file: file, // Include the file object for upload
+						});
+					}
+				}
+
+				if (videoDataArray.length === 0) {
+					alert('No mp4 files found in the selected folder.');
+					return;
+				}
+
+				const formData = new FormData();
+				videoDataArray.forEach((video, index) => {
+					formData.append(`files[${index}]`, video.file);
+					formData.append(`artist[${index}]`, video.Artist);
+					formData.append(`title[${index}]`, video.Title);
+					formData.append(`startTime[${index}]`, video.StartTime);
+				});
+
+				fetch('/api/batch-upload', {
+					method: 'POST',
+					body: formData,
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.success) {
+							alert('Videos uploaded successfully!');
+							// Optionally, clear the file list and display a message
+							fileListBody.innerHTML = '';
+							fileListTable.classList.add('hidden');
+							folderPathDisplay.textContent = '';
+							noFilesMessage.classList.remove('hidden');
+							noFilesMessage.classList.add('block');
+						} else {
+							alert('Failed to upload videos. Check the server logs for errors.');
+						}
+					})
+					.catch((error) => {
+						console.error('Error uploading videos:', error);
+						alert('An error occurred while uploading videos.');
+					});
+			});
+		</script>
+	</body>
+</html>
