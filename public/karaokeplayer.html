@@ -5,7 +5,6 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Karaoke Player</title>
 		<script src="/socket.io/socket.io.js"></script>
-		<!-- Served by Socket.IO server -->
 		<style>
 			* {
 				margin: 0;
@@ -18,14 +17,14 @@
 				width: 100vw;
 				height: 100vh;
 				overflow: hidden;
-				background-color: #121212;
-				color: white;
+				background-color: #1f2937;
+				color: #f3f4f6;
 				display: flex;
 				flex-direction: column;
 			}
 
 			.header {
-				background-color: #000;
+				background-color: #4c1d95;
 				height: 60px;
 				display: flex;
 				justify-content: space-between;
@@ -38,7 +37,7 @@
 			.logo {
 				font-size: 24px;
 				font-weight: bold;
-				color: #ff3366;
+				color: #c4b5fd;
 			}
 
 			.main-container {
@@ -70,7 +69,7 @@
 				left: 0;
 				right: 0;
 				height: 60px;
-				background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+				background: linear-gradient(transparent, rgba(31, 41, 55, 0.8));
 				display: flex;
 				align-items: center;
 				padding: 0 15px;
@@ -85,7 +84,7 @@
 			.control-button {
 				background: none;
 				border: none;
-				color: white;
+				color: #f3f4f6;
 				font-size: 24px;
 				margin: 0 10px;
 				cursor: pointer;
@@ -94,17 +93,17 @@
 
 			.control-button:hover {
 				transform: scale(1.2);
-				color: #ff3366;
+				color: #2563eb;
 			}
 
 			.control-button:hover .svg-icon {
-				fill: #ff3366;
+				fill: #2563eb;
 			}
 
 			.progress-container {
 				flex: 1;
 				height: 8px;
-				background-color: rgba(255, 255, 255, 0.2);
+				background-color: rgba(156, 163, 175, 0.2);
 				margin: 0 15px;
 				border-radius: 4px;
 				cursor: pointer;
@@ -113,20 +112,20 @@
 
 			.progress-bar {
 				height: 100%;
-				background-color: #ff3366;
+				background-color: #7c3aed;
 				border-radius: 4px;
 				width: 0%;
 			}
 
 			.time-display {
-				color: white;
+				color: #f3f4f6;
 				font-size: 14px;
 				margin-left: 10px;
 			}
 
 			.queue-container {
 				flex: 0.8;
-				background-color: #1e1e1e;
+				background-color: #2d3748;
 				padding: 20px;
 				overflow-y: auto;
 				display: flex;
@@ -144,12 +143,12 @@
 			.queue-title {
 				font-size: 20px;
 				font-weight: bold;
-				color: #ff3366;
+				color: #c4b5fd;
 			}
 
 			.session-id {
 				font-size: 14px;
-				color: #888;
+				color: #9ca3af;
 			}
 
 			.queue-list {
@@ -158,17 +157,17 @@
 			}
 
 			.queue-item {
-				background-color: #2a2a2a;
+				background-color: #374151;
 				border-radius: 8px;
 				padding: 15px;
 				margin-bottom: 10px;
-				border-left: 4px solid #ff3366;
+				border-left: 4px solid #7c3aed;
 				transition: transform 0.2s;
 			}
 
 			.now-playing {
-				background-color: rgba(255, 51, 102, 0.2);
-				border-left: 4px solid #ff3366;
+				background-color: rgba(124, 58, 237, 0.2);
+				border-left: 4px solid #7c3aed;
 			}
 
 			.queue-item:hover {
@@ -183,21 +182,21 @@
 
 			.song-artist {
 				font-size: 14px;
-				color: #aaa;
+				color: #9ca3af;
 			}
 
 			.no-songs {
 				text-align: center;
-				color: #888;
+				color: #9ca3af;
 				margin-top: 50px;
 			}
 
 			.queue-footer {
-				background-color: #2a2a2a;
+				background-color: #374151;
 				border-radius: 8px;
 				padding: 15px;
 				margin-top: 10px;
-				border-top: 2px solid #ff3366;
+				border-top: 2px solid #7c3aed;
 			}
 
 			.now-playing-title {
@@ -208,13 +207,13 @@
 
 			.now-playing-artist {
 				font-size: 14px;
-				color: #aaa;
+				color: #9ca3af;
 			}
 
 			.skip-next-btn {
-				background-color: #ff3366;
+				background-color: #7c3aed;
 				border: none;
-				color: white;
+				color: #f3f4f6;
 				padding: 8px 15px;
 				border-radius: 4px;
 				font-size: 14px;
@@ -224,11 +223,11 @@
 			}
 
 			.skip-next-btn:hover {
-				background-color: #e62e5c;
+				background-color: #6d28d9;
 			}
 
 			.skip-next-btn:disabled {
-				background-color: #666;
+				background-color: #4b5563;
 				cursor: not-allowed;
 			}
 
@@ -243,9 +242,9 @@
 			.spinner {
 				width: 50px;
 				height: 50px;
-				border: 5px solid rgba(255, 51, 102, 0.3);
+				border: 5px solid rgba(124, 58, 237, 0.3);
 				border-radius: 50%;
-				border-top-color: #ff3366;
+				border-top-color: #7c3aed;
 				animation: spin 1s ease-in-out infinite;
 			}
 
@@ -261,7 +260,7 @@
 				left: 0;
 				width: 100vw;
 				height: 100vh;
-				background: rgba(0, 0, 0, 0.5);
+				/* Removed background dimming */
 				display: flex;
 				justify-content: center;
 				align-items: flex-start;
@@ -276,11 +275,11 @@
 			}
 
 			.toast {
-				background-color: #333;
-				color: white;
-				padding: 15px 20px;
+				background-color: rgba(45, 55, 72, 0.7); /* Matches gray-800 with 70% opacity */
+				color: #f3f4f6;
+				padding: 12px 18px; /* Slightly reduced padding for less prominence */
 				border-radius: 5px;
-				box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+				box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 				display: flex;
 				align-items: center;
 				max-width: 80%;
@@ -289,27 +288,27 @@
 			}
 
 			.toast-icon {
-				margin-right: 10px;
-				width: 20px;
-				height: 20px;
+				margin-right: 8px; /* Slightly reduced margin */
+				width: 18px; /* Smaller icon for less visual weight */
+				height: 18px;
 			}
 
 			.success {
-				background-color: #4caf50;
+				background-color: rgba(22, 163, 74, 0.7); /* Matches green-600 with 70% opacity */
 			}
 
 			.error {
-				background-color: #f44336;
+				background-color: rgba(220, 38, 38, 0.7); /* Matches red-600 with 70% opacity */
 			}
 
 			.info {
-				background-color: #2196f3;
+				background-color: rgba(37, 99, 235, 0.7); /* Matches blue-600 with 70% opacity */
 			}
 
 			.svg-icon {
 				width: 100%;
 				height: 100%;
-				fill: white;
+				fill: #f3f4f6;
 				display: inline-block;
 				vertical-align: middle;
 			}
@@ -347,15 +346,15 @@
 				}
 
 				.toast {
-					padding: 12px 15px;
+					padding: 10px 14px;
 					max-width: 90%;
 					font-size: 14px;
 					margin-top: 70px;
 				}
 
 				.toast-icon {
-					width: 18px;
-					height: 18px;
+					width: 16px;
+					height: 16px;
 				}
 			}
 		</style>
@@ -475,28 +474,38 @@
 				play: `<svg class="svg-icon icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
 				pause: `<svg class="svg-icon icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`,
 				'volume-mute': `<svg class="svg-icon icon-volume-mute" viewBox="0 0 24 24"><path d="M7 9v6h4l5 5V4l-5 5H7zm10.59 2L15 8.41 13.59 7 12 8.59 10.41 7 9 8.41 11.59 11 9 13.59 10.41 15 12 13.41 13.59 15 15 13.59 12.41 11z"/></svg>`,
+				'volume-up': `<svg class="svg-icon icon-volume-up" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
+				expand: `<svg class="svg-icon icon-expand" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`,
+				compress: `<svg class="svg-icon icon-compress" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`,
 			};
 
 			// Initialize the application
 			async function init() {
-				// Get session ID from URL query parameter
-				const urlParams = new URLSearchParams(window.location.search);
-				sessionId = urlParams.get('session');
+				// Check localStorage for sessionId first
+				sessionId = localStorage.getItem('karaokeSessionId');
 				if (!sessionId) {
-					try {
-						const response = await fetch(`${API_URL}/api/getNewSessionID`);
-						if (response.ok) {
-							const data = await response.json();
-							sessionId = data.sessionId || DEFAULT_SESSION_ID;
-						} else {
-							console.error('Failed to fetch new session ID');
+					// If no sessionId in localStorage, check URL query parameter
+					const urlParams = new URLSearchParams(window.location.search);
+					sessionId = urlParams.get('session');
+					if (!sessionId) {
+						// If no sessionId in URL, generate a new one
+						try {
+							const response = await fetch(`${API_URL}/api/getNewSessionID`);
+							if (response.ok) {
+								const data = await response.json();
+								sessionId = data.sessionId || DEFAULT_SESSION_ID;
+							} else {
+								console.error('Failed to fetch new session ID');
+								sessionId = DEFAULT_SESSION_ID;
+							}
+						} catch (error) {
+							console.error('Error fetching new session ID:', error);
 							sessionId = DEFAULT_SESSION_ID;
 						}
-					} catch (error) {
-						console.error('Error fetching new session ID:', error);
-						sessionId = DEFAULT_SESSION_ID;
 					}
 				}
+				// Save sessionId to localStorage
+				localStorage.setItem('karaokeSessionId', sessionId);
 				sessionIdDisplay.textContent = sessionId;
 
 				// Initialize Socket.IO
@@ -509,6 +518,7 @@
 				setupEventListeners();
 
 				// Check for autoplay
+				const urlParams = new URLSearchParams(window.location.search);
 				const autoplay = urlParams.get('autoplay') !== 'false';
 				if (autoplay) {
 					setTimeout(() => {
@@ -541,7 +551,6 @@
 						showToast(`Queue updated: ${data.action} song`, 'info');
 						fetchQueue();
 					}
-					// Reset lastRemovedSequenceID after processing
 					lastRemovedSequenceID = null;
 				});
 			}
@@ -562,7 +571,7 @@
 				// Keyboard support
 				document.addEventListener('keydown', (e) => {
 					if (e.key === ' ' && !e.target.matches('input, textarea, [contenteditable]')) {
-						e.preventDefault(); // Prevent scrolling
+						e.preventDefault();
 						togglePlayPause();
 					}
 				});
@@ -591,8 +600,6 @@
 					loadingSpinner.style.display = 'none';
 					showToast('Error loading video', 'error');
 					console.error('Video error:', e);
-
-					// Try to play next song if there's an error with the current one
 					setTimeout(skipSong, 2000);
 				});
 			}
@@ -872,7 +879,7 @@
 					} else if (videoPlayer.msRequestFullscreen) {
 						videoPlayer.msRequestFullscreen();
 					}
-					fullscreenBtn.innerHTML = `<svg class="svg-icon icon-compress" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`;
+					fullscreenBtn.innerHTML = svgIcons['compress'];
 				} else if (document.fullscreenElement === videoPlayer) {
 					if (document.exitFullscreen) {
 						document.exitFullscreen();
@@ -887,34 +894,28 @@
 
 			// Show toast notification
 			function showToast(message, type = 'info') {
-				try {
-					if (toastTimeout) {
-						clearTimeout(toastTimeout);
-						toastOverlay.classList.remove('show');
-					}
-					toastMessage.textContent = message;
-					toast.className = 'toast';
-					toast.classList.add(type);
-					const iconName =
-						type === 'success'
-							? 'check-circle'
-							: type === 'error'
-							? 'exclamation-circle'
-							: 'info-circle';
-					const iconElement = toast.querySelector('.toast-icon');
-					if (iconElement) {
-						iconElement.innerHTML = svgIcons[iconName];
-					} else {
-						console.warn('Toast icon element not found');
-					}
-					toastOverlay.classList.add('show');
-					toastTimeout = setTimeout(() => {
-						toastOverlay.classList.remove('show');
-						toastTimeout = null;
-					}, 3000);
-				} catch (error) {
-					console.error('Error in showToast:', error);
+				if (toastTimeout) {
+					clearTimeout(toastTimeout);
+					toastOverlay.classList.remove('show');
 				}
+				toastMessage.textContent = message;
+				toast.className = 'toast';
+				toast.classList.add(type);
+				const iconName =
+					type === 'success'
+						? 'check-circle'
+						: type === 'error'
+						? 'exclamation-circle'
+						: 'info-circle';
+				const iconElement = toast.querySelector('.toast-icon');
+				if (iconElement) {
+					iconElement.innerHTML = svgIcons[iconName];
+				}
+				toastOverlay.classList.add('show');
+				toastTimeout = setTimeout(() => {
+					toastOverlay.classList.remove('show');
+					toastTimeout = null;
+				}, 3000);
 			}
 
 			// Initialize the application
