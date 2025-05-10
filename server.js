@@ -484,6 +484,40 @@ app.get('/api/songs', (req, res) => {
 	});
 });
 
+app.get('/api/songs/duplicates', (req, res) => {
+	const sql = `
+		SELECT *
+		FROM dbsongs
+		WHERE (Artist, Title) IN (
+			SELECT Artist, Title
+			FROM dbsongs
+			GROUP BY Artist, Title
+			HAVING COUNT(*) > 1
+		)
+		ORDER BY Artist, Title;
+    `;
+
+	db.all(sql, [], (err, rows) => {
+		if (err) {
+			console.error('Error finding duplicates:', err);
+			return res.status(500).json({ error: err.message });
+		}
+
+		const duplicates = rows.map((row) => ({
+			songId: row.songid,
+			artist: toTitleCase(row.Artist.trim()),
+			title: toTitleCase(row.Title.trim()),
+			path: row.path,
+			duplicateCount: row.duplicate_count,
+		}));
+
+		res.json({
+			totalRows: duplicates.length,
+			duplicates: duplicates,
+		});
+	});
+});
+
 // API to get all unique Artist - Title
 app.get('/api/uniquesongs', (req, res) => {
 	const sql = `SELECT   DISTINCT TRIM((coalesce(Artist,'') || ' - '  || coalesce( Title,''))) as song 

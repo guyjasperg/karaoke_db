@@ -71,6 +71,15 @@
 				</div>
 			</div>
 
+			<div class="flex justify-center mb-4">
+				<button
+					id="find-duplicates"
+					class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+				>
+					Find Duplicate Songs
+				</button>
+			</div>
+
 			<div class="bg-white rounded-lg shadow-md p-4 max-h-96 overflow-y-auto">
 				<ul id="search-results" class="divide-y divide-gray-200"></ul>
 			</div>
@@ -81,6 +90,7 @@
 			const searchInput = document.getElementById('search-input');
 			const searchButton = document.getElementById('search-button');
 			const searchResults = document.getElementById('search-results');
+			const findDuplicatesButton = document.getElementById('find-duplicates');
 			const videoBaseURL = '/videos/';
 			const videoTitleElement = document.getElementById('video-title');
 
@@ -101,52 +111,81 @@
 					videoList = results;
 					currentVideoIndex = 0;
 
-					searchResults.innerHTML = '';
-					if (results && results.length > 0) {
-						results.forEach((result, index) => {
-							const li = document.createElement('li');
-							li.className =
-								'py-2 cursor-pointer hover:bg-gray-100 rounded-md px-2 flex items-center justify-between'; // Added flex
-							li.textContent = `${result.Artist} - ${result.Title}`;
-
-							// Create delete button
-							const deleteButton = document.createElement('button');
-							deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle text-red-500 hover:text-red-700 transition-colors duration-200"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`; // Using Lucide Icon
-							deleteButton.className = 'ml-4'; // Add some left margin for spacing
-
-							deleteButton.addEventListener('click', (event) => {
-								event.stopPropagation(); // Prevent click from triggering the <li> click
-								showConfirmation(result.songid, result.path, () => {
-									// Pass the path to showConfirmation
-									deleteVideo(result.songid, result.path, index); // Pass index
-								});
-							});
-
-							// Append the delete button to the list item
-							li.appendChild(deleteButton);
-
-							li.addEventListener('click', () => {
-								currentVideoIndex = index;
-								playVideo(currentVideoIndex);
-							});
-							searchResults.appendChild(li);
-						});
-						playVideo(0);
-					} else {
-						const li = document.createElement('li');
-						li.className = 'py-2 text-gray-500 rounded-md px-2';
-						li.textContent = 'No results found';
-						searchResults.appendChild(li);
-						videoPlayer.src = '';
-						playPauseButton.textContent = 'Play';
-						videoTitleElement.textContent = '';
-					}
+					displayResults(results);
 				} catch (error) {
 					console.error('Error searching videos:', error);
 					const li = document.createElement('li');
 					li.className = 'py-2 text-red-500 rounded-md px-2';
 					li.textContent = 'Error searching videos';
+					searchResults.innerHTML = '';
 					searchResults.appendChild(li);
+				}
+			}
+
+			async function findDuplicates() {
+				try {
+					const response = await fetch('/api/songs/duplicates');
+					const results = await response.json();
+					videoList = results;
+					currentVideoIndex = 0;
+
+					displayResults(results, 'duplicates');
+				} catch (error) {
+					console.error('Error finding duplicate videos:', error);
+					const li = document.createElement('li');
+					li.className = 'py-2 text-red-500 rounded-md px-2';
+					li.textContent = 'Error finding duplicate videos';
+					searchResults.innerHTML = '';
+					searchResults.appendChild(li);
+				}
+			}
+
+			function displayResults(results, type = 'search') {
+				searchResults.innerHTML = '';
+				if (results && results.length > 0) {
+					if (type === 'duplicates') {
+						const headerLi = document.createElement('li');
+						headerLi.className = 'py-2 bg-yellow-100 rounded-md px-2 mb-2 font-semibold';
+						headerLi.textContent = `Found ${results.length} potential duplicate songs`;
+						searchResults.appendChild(headerLi);
+					}
+
+					results.forEach((result, index) => {
+						const li = document.createElement('li');
+						li.className =
+							'py-2 cursor-pointer hover:bg-gray-100 rounded-md px-2 flex items-center justify-between';
+						li.textContent = `${result.Artist} - ${result.Title}`;
+
+						// Create delete button
+						const deleteButton = document.createElement('button');
+						deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle text-red-500 hover:text-red-700 transition-colors duration-200"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`;
+						deleteButton.className = 'ml-4';
+
+						deleteButton.addEventListener('click', (event) => {
+							event.stopPropagation();
+							showConfirmation(result.songid, result.path, () => {
+								deleteVideo(result.songid, result.path, index);
+							});
+						});
+
+						// Append the delete button to the list item
+						li.appendChild(deleteButton);
+
+						li.addEventListener('click', () => {
+							currentVideoIndex = index;
+							playVideo(currentVideoIndex);
+						});
+						searchResults.appendChild(li);
+					});
+					playVideo(0);
+				} else {
+					const li = document.createElement('li');
+					li.className = 'py-2 text-gray-500 rounded-md px-2';
+					li.textContent = type === 'duplicates' ? 'No duplicate songs found' : 'No results found';
+					searchResults.appendChild(li);
+					videoPlayer.src = '';
+					playPauseButton.textContent = 'Play';
+					videoTitleElement.textContent = '';
 				}
 			}
 
@@ -222,6 +261,8 @@
 				}
 			});
 
+			findDuplicatesButton.addEventListener('click', findDuplicates);
+
 			// Event listeners for the new control buttons
 			playPauseButton.addEventListener('click', togglePlayPause);
 			skipBackButton.addEventListener('click', skipBack);
@@ -244,15 +285,13 @@
 			});
 
 			function showConfirmation(songid, filePath, callback) {
-				// added filePath
 				const confirmation = confirm('Are you sure you want to delete this video?');
 				if (confirmation) {
-					callback(songid, filePath); // Pass songid and filePath to the callback
+					callback(songid, filePath);
 				}
 			}
 
 			async function deleteVideo(songid, filePath, index) {
-				// Added filePath and index
 				try {
 					// Delete from the database
 					const dbResponse = await fetch(`/api/songs/${songid}`, {
