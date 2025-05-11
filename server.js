@@ -256,8 +256,8 @@ app.get('/api/songqueue/session/:sessionId', (req, res) => {
 
 // Endpoint to add a song to the queue
 app.post('/api/songqueue', (req, res) => {
-	const { sessionId, Artist, Title, filePath, status, startTime } = req.body;
-	console.log(sessionId, Artist, Title, filePath, startTime);
+	const { sessionId, Artist, Title, filePath, status, startTime, songid } = req.body;
+	console.log(sessionId, songid, Artist, Title, filePath, startTime);
 	if (!sessionId || !Artist || !Title || !filePath) {
 		return res.status(400).json({ error: 'All fields are required!' });
 	}
@@ -282,6 +282,7 @@ app.post('/api/songqueue', (req, res) => {
 		filePath,
 		status,
 		startTime,
+		songid,
 	};
 
 	// Add the new song to the queue

@@ -686,7 +686,26 @@
 				console.log('Playing video:', videoUrl);
 				videoPlayer.src = videoUrl;
 
-				// Update now playing in footer
+				// Handle startTime if it exists and is greater than 0
+				if (song.startTime && song.startTime > 0) {
+					const handleCanPlay = () => {
+						videoPlayer.currentTime = song.startTime;
+						videoPlayer.play().catch((error) => {
+							console.error('Error playing video:', error);
+							showToast('Could not play video automatically', 'error');
+						});
+						// Remove the event listener after it runs once
+						videoPlayer.removeEventListener('canplay', handleCanPlay);
+					};
+					videoPlayer.addEventListener('canplay', handleCanPlay);
+				} else {
+					// If no startTime, play normally
+					videoPlayer.play().catch((error) => {
+						console.error('Error playing video:', error);
+						showToast('Could not play video automatically', 'error');
+					});
+				}
+
 				nowPlayingTitle.textContent = song.Title || 'Unknown Title';
 				nowPlayingArtist.textContent = song.Artist || 'Unknown Artist';
 
@@ -701,12 +720,6 @@
 
 				// Update skip button state
 				updateSkipButtonState();
-
-				// Play the video
-				videoPlayer.play().catch((error) => {
-					console.error('Error playing video:', error);
-					showToast('Could not play video automatically', 'error');
-				});
 			}
 
 			// Update skip button state
