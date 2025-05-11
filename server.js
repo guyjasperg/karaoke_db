@@ -485,6 +485,7 @@ app.get('/api/songs', (req, res) => {
 });
 
 app.get('/api/songs/duplicates', (req, res) => {
+	console.log('Finding duplicate songs...');
 	const sql = `
 		SELECT *
 		FROM dbsongs
@@ -503,18 +504,15 @@ app.get('/api/songs/duplicates', (req, res) => {
 			return res.status(500).json({ error: err.message });
 		}
 
-		const duplicates = rows.map((row) => ({
-			songId: row.songid,
-			artist: toTitleCase(row.Artist.trim()),
-			title: toTitleCase(row.Title.trim()),
-			path: row.path,
-			duplicateCount: row.duplicate_count,
+		const formattedRows = rows.map((row) => ({
+			...row,
+			Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
+			Title: row.Title ? toTitleCase(row.Title.trim()) : '',
 		}));
+		res.json(formattedRows);
+		console.log(`Found ${formattedRows.length} duplicate songs.`);
 
-		res.json({
-			totalRows: duplicates.length,
-			duplicates: duplicates,
-		});
+		res.json(formattedRows);
 	});
 });
 

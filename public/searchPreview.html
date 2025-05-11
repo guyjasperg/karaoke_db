@@ -123,9 +123,11 @@
 			}
 
 			async function findDuplicates() {
+				console.log('Finding duplicates...');
 				try {
 					const response = await fetch('/api/songs/duplicates');
 					const results = await response.json();
+					console.log('Duplicate results:', results);
 					videoList = results;
 					currentVideoIndex = 0;
 
@@ -141,6 +143,7 @@
 			}
 
 			function displayResults(results, type = 'search') {
+				console.log('Displaying results', results);
 				searchResults.innerHTML = '';
 				if (results && results.length > 0) {
 					if (type === 'duplicates') {
