@@ -129,7 +129,7 @@
 			/* Queued badge */
 			.queued-badge {
 				display: inline-block;
-				background-color: #8f58b0; /* green-700 */
+				background-color: #8a60ac; /* green-700 */
 				color: #ffffff;
 				font-size: 0.75rem; /* text-xs */
 				padding: 0.25rem 0.5rem; /* px-2 py-1 */
@@ -557,6 +557,9 @@
 				// Clear the input
 				newSessionInput.value = '';
 				fetchQueue(); // Refresh queue for new session
+				if (!sessionPanel.classList.contains('hidden')) {
+					toggleSessionPanel(); // Collapse session panel
+				}
 				showMessage('Session changed successfully', 'success');
 			}
 
