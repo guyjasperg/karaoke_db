@@ -663,23 +663,42 @@ app.get('/api/songs/search', (req, res) => {
 			}
 		});
 	} else {
-		sql = `
-            SELECT * FROM dbSongs
-            WHERE Artist LIKE ? OR Title LIKE ? OR searchstring LIKE ?
-            ORDER BY Artist, Title
-        `;
-		db.all(sql, [searchTerm, searchTerm, searchTerm], (err, rows) => {
-			if (err) {
-				res.status(500).json({ error: err.message });
-			} else {
-				const formattedRows = rows.map((row) => ({
-					...row,
-					Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
-					Title: row.Title ? toTitleCase(row.Title.trim()) : '',
-				}));
-				res.json(formattedRows);
-			}
-		});
+		if (!query) {
+			sql = `
+				SELECT * FROM dbSongs
+				ORDER BY Artist, Title
+			`;
+			db.all(sql, [], (err, rows) => {
+				if (err) {
+					res.status(500).json({ error: err.message });
+				} else {
+					const formattedRows = rows.map((row) => ({
+						...row,
+						Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
+						Title: row.Title ? toTitleCase(row.Title.trim()) : '',
+					}));
+					res.json(formattedRows);
+				}
+			});
+		} else {
+			sql = `
+				SELECT * FROM dbSongs
+				WHERE Artist LIKE ? OR Title LIKE ? OR searchstring LIKE ?
+				ORDER BY Artist, Title
+			`;
+			db.all(sql, [searchTerm, searchTerm, searchTerm], (err, rows) => {
+				if (err) {
+					res.status(500).json({ error: err.message });
+				} else {
+					const formattedRows = rows.map((row) => ({
+						...row,
+						Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
+						Title: row.Title ? toTitleCase(row.Title.trim()) : '',
+					}));
+					res.json(formattedRows);
+				}
+			});
+		}
 	}
 });
 

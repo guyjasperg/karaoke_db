@@ -81,7 +81,7 @@
 			.disabled-btn {
 				opacity: 0.5;
 				cursor: not-allowed;
-				pointer-events: none; /* Prevent hover/click */
+				pointer-events: none;
 			}
 			/* Animation for song card when added to queue */
 			.animate-song-added {
@@ -89,15 +89,15 @@
 			}
 			@keyframes song-added {
 				0% {
-					border-color: #10b981; /* green-500 */
+					border-color: #10b981;
 					box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 				}
 				50% {
-					border-color: #34d399; /* green-400 */
+					border-color: #34d399;
 					box-shadow: 0 0 12px rgba(52, 211, 153, 0.7);
 				}
 				100% {
-					border-color: #4b5563; /* gray-600 */
+					border-color: #4b5563;
 					box-shadow: none;
 				}
 			}
@@ -109,8 +109,8 @@
 				transform: translateX(-50%);
 				z-index: 20;
 				max-width: 90%;
-				width: 320px; /* Fixed width for consistency */
-				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* shadow-md equivalent */
+				width: 320px;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 			}
 			/* Slide-in animation for toast */
 			.animate-slide-in {
@@ -136,8 +136,13 @@
 				border-radius: 0.375rem; /* rounded */
 				margin-top: 0.25rem; /* mt-1 */
 			}
+			/* Custom smaller font for Catalog queued badge */
+			.catalog-queued-badge {
+				font-size: 0.625rem; /* text-2xs, ~10px */
+			}
 			/* Focus style for song cards */
-			.song-card:focus {
+			.song-card:focus,
+			.catalog-song-card:focus {
 				outline: none;
 				background-color: #374151; /* bg-gray-700 */
 				box-shadow: 0 0 0 2px #3b82f6; /* ring-2 ring-blue-500 */
@@ -163,6 +168,46 @@
 			.add-to-queue-btn.loading .text-full,
 			.add-to-queue-btn.loading .text-short {
 				display: none;
+			}
+			/* Alphabet filter buttons */
+			.alpha-filter-btn {
+				width: 2rem;
+				height: 2rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 0.75rem; /* text-xs */
+				border-radius: 0.375rem; /* rounded */
+				margin: 0.125rem; /* m-0.5 */
+			}
+			.alpha-filter-btn.active {
+				background-color: #2563eb; /* bg-blue-600 */
+			}
+			/* Sticky alphabet filter container */
+			.alpha-filter-container {
+				position: sticky;
+				top: 0;
+				z-index: 9;
+				background: #1f2937; /* bg-gray-800 */
+				padding: 0.5rem 0; /* py-2 */
+			}
+			/* Artist group header */
+			.artist-group-header {
+				cursor: pointer;
+				transition: background-color 0.2s;
+			}
+			.artist-group-header:hover {
+				background-color: #374151; /* bg-gray-700 */
+			}
+			/* Catalog song card styles */
+			.catalog-song-card {
+				padding-left: 1rem; /* pl-4 for indentation */
+			}
+			.catalog-song-card .song-title {
+				font-size: 1.125rem; /* text-lg */
+			}
+			.catalog-song-card .song-details {
+				font-size: 0.875rem; /* text-sm */
 			}
 		</style>
 	</head>
@@ -278,15 +323,21 @@
 		<div class="flex justify-center space-x-4 py-4 bg-gray-900">
 			<button
 				id="search-tab-btn"
-				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 			>
-				Search Songs
+				Search
 			</button>
 			<button
 				id="queue-tab-btn"
-				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
 			>
 				Queue (<span id="queue-count">0</span>)
+			</button>
+			<button
+				id="catalog-tab-btn"
+				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+			>
+				Catalog
 			</button>
 		</div>
 
@@ -371,6 +422,64 @@
 					Your queue is empty. Search for songs to add to your queue.
 				</div>
 			</div>
+
+			<div
+				id="catalog-section"
+				class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 hidden"
+			>
+				<div class="flex items-center justify-between mb-4">
+					<h2 class="text-2xl font-bold text-white">Song Catalog</h2>
+					<div class="flex space-x-2">
+						<button
+							id="collapse-all-btn"
+							class="bg-gray-600 hover:bg-gray-700 text-white px-2 py-1 rounded text-sm flex items-center"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-4 w-4 mr-1"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M5 15l7-7 7 7"
+								/>
+							</svg>
+							Collapse All
+						</button>
+						<button
+							id="refresh-catalog-btn"
+							class="bg-gray-600 hover:bg-gray-700 text-white px-2 py-1 rounded text-sm flex items-center"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-4 w-4 mr-1"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+								/>
+							</svg>
+							Refresh
+						</button>
+					</div>
+				</div>
+				<div class="alpha-filter-container">
+					<div id="alpha-filters" class="flex flex-wrap justify-center"></div>
+				</div>
+				<div id="catalog-results" class="space-y-4 mt-4"></div>
+				<div id="no-catalog-results" class="text-center py-8 text-gray-400 hidden">
+					No artists found for this filter.
+				</div>
+			</div>
 		</main>
 
 		<footer class="bg-gray-900 text-gray-400 p-4 text-center text-sm border-t border-gray-800">
@@ -383,8 +492,11 @@
 			let socket = null;
 			let searchResults = [];
 			let queueItems = [];
+			let catalogSongs = [];
 			let isSearching = false;
+			let isFetchingCatalog = false;
 			let focusedSongIndex = -1;
+			let currentFilterLetter = 'A';
 
 			// DOM elements
 			const searchInput = document.getElementById('search-input');
@@ -403,11 +515,18 @@
 			const sessionPanel = document.getElementById('session-panel');
 			const searchTabBtn = document.getElementById('search-tab-btn');
 			const queueTabBtn = document.getElementById('queue-tab-btn');
+			const catalogTabBtn = document.getElementById('catalog-tab-btn');
 			const searchSection = document.getElementById('search-section');
 			const queueSection = document.getElementById('queue-section');
+			const catalogSection = document.getElementById('catalog-section');
 			const queueResults = document.getElementById('queue-results');
 			const emptyQueue = document.getElementById('empty-queue');
 			const queueCount = document.getElementById('queue-count');
+			const alphaFilters = document.getElementById('alpha-filters');
+			const catalogResults = document.getElementById('catalog-results');
+			const noCatalogResults = document.getElementById('no-catalog-results');
+			const refreshCatalogBtn = document.getElementById('refresh-catalog-btn');
+			const collapseAllBtn = document.getElementById('collapse-all-btn');
 
 			// Set current year in footer
 			currentYearElement.textContent = new Date().getFullYear();
@@ -455,6 +574,21 @@
 				// Tab navigation
 				searchTabBtn.addEventListener('click', showSearchTab);
 				queueTabBtn.addEventListener('click', showQueueTab);
+				catalogTabBtn.addEventListener('click', showCatalogTab);
+
+				// Refresh catalog
+				refreshCatalogBtn.addEventListener('click', () => {
+					localStorage.removeItem('karaoke-catalog');
+					fetchCatalog();
+				});
+
+				// Collapse all artist groups
+				collapseAllBtn.addEventListener('click', () => {
+					const artistSongs = catalogResults.querySelectorAll('.artist-songs');
+					const toggleIcons = catalogResults.querySelectorAll('.artist-group-header svg');
+					artistSongs.forEach((songsDiv) => songsDiv.classList.add('hidden'));
+					toggleIcons.forEach((icon) => icon.classList.remove('rotate-180'));
+				});
 
 				// Keyboard navigation for song cards
 				document.addEventListener('keydown', handleKeyboardNavigation);
@@ -468,26 +602,31 @@
 
 			// Keyboard navigation
 			function handleKeyboardNavigation(e) {
-				if (!searchSection.classList.contains('hidden')) {
-					const songCards = searchResultsContainer.querySelectorAll('.song-card');
-					if (songCards.length === 0) return;
+				const activeSection = !searchSection.classList.contains('hidden')
+					? searchResultsContainer
+					: !catalogSection.classList.contains('hidden')
+					? catalogResults
+					: null;
+				if (!activeSection) return;
 
-					if (e.key === 'ArrowDown') {
-						e.preventDefault();
-						focusedSongIndex = Math.min(focusedSongIndex + 1, songCards.length - 1);
-						songCards[focusedSongIndex].focus();
-						songCards[focusedSongIndex].scrollIntoView({ block: 'nearest' });
-					} else if (e.key === 'ArrowUp') {
-						e.preventDefault();
-						focusedSongIndex = Math.max(focusedSongIndex - 1, 0);
-						songCards[focusedSongIndex].focus();
-						songCards[focusedSongIndex].scrollIntoView({ block: 'nearest' });
-					} else if (e.key === 'Enter' && focusedSongIndex >= 0) {
-						e.preventDefault();
-						const addButton = songCards[focusedSongIndex].querySelector('.add-to-queue-btn');
-						if (addButton && !addButton.disabled) {
-							addButton.click();
-						}
+				const songCards = activeSection.querySelectorAll('.song-card, .catalog-song-card');
+				if (songCards.length === 0) return;
+
+				if (e.key === 'ArrowDown') {
+					e.preventDefault();
+					focusedSongIndex = Math.min(focusedSongIndex + 1, songCards.length - 1);
+					songCards[focusedSongIndex].focus();
+					songCards[focusedSongIndex].scrollIntoView({ block: 'nearest' });
+				} else if (e.key === 'ArrowUp') {
+					e.preventDefault();
+					focusedSongIndex = Math.max(focusedSongIndex - 1, 0);
+					songCards[focusedSongIndex].focus();
+					songCards[focusedSongIndex].scrollIntoView({ block: 'nearest' });
+				} else if (e.key === 'Enter' && focusedSongIndex >= 0) {
+					e.preventDefault();
+					const addButton = songCards[focusedSongIndex].querySelector('.add-to-queue-btn');
+					if (addButton && !addButton.disabled) {
+						addButton.click();
 					}
 				}
 			}
@@ -495,26 +634,58 @@
 			function showSearchTab() {
 				searchSection.classList.remove('hidden');
 				queueSection.classList.add('hidden');
+				catalogSection.classList.add('hidden');
 				searchTabBtn.classList.replace('bg-gray-700', 'bg-blue-600');
 				searchTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
 				queueTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
 				queueTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+				catalogTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+				catalogTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
 				focusedSongIndex = -1;
+				displaySearchResults(); // Restore search results if any
 			}
 
-			// Show queue tab
 			function showQueueTab() {
 				searchSection.classList.add('hidden');
 				queueSection.classList.remove('hidden');
+				catalogSection.classList.add('hidden');
 				searchTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
 				searchTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
 				queueTabBtn.classList.replace('bg-gray-700', 'bg-blue-600');
 				queueTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
+				catalogTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+				catalogTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
 				fetchQueue();
 				focusedSongIndex = -1;
 			}
 
-			// Toggle session panel visibility
+			function showCatalogTab() {
+				searchSection.classList.add('hidden');
+				queueSection.classList.add('hidden');
+				catalogSection.classList.remove('hidden');
+				searchTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+				searchTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+				queueTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+				queueTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+				catalogTabBtn.classList.replace('bg-gray-700', 'bg-blue-600');
+				catalogTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
+				const savedCatalog = localStorage.getItem('karaoke-catalog');
+				if (savedCatalog) {
+					try {
+						catalogSongs = JSON.parse(savedCatalog);
+						console.log('Loaded saved catalog');
+						displayCatalog();
+					} catch (error) {
+						console.error('Error parsing saved catalog:', error);
+						localStorage.removeItem('karaoke-catalog');
+						fetchCatalog();
+					}
+				} else {
+					fetchCatalog();
+				}
+				focusedSongIndex = -1;
+			}
+
 			function toggleSessionPanel() {
 				const isVisible = !sessionPanel.classList.contains('hidden');
 				if (isVisible) {
@@ -527,19 +698,16 @@
 				updateToggleButton(!isVisible);
 			}
 
-			// Update toggle button icon
 			function updateToggleButton(isOpen) {
 				sessionPanelToggle.innerHTML = isOpen
 					? '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>'
 					: '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>';
 			}
 
-			// Generate a new session ID
 			function generateSessionId() {
 				return `session-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 			}
 
-			// Change the current session
 			function changeSession() {
 				const newSessionId = newSessionInput.value.trim();
 
@@ -548,7 +716,6 @@
 					return;
 				}
 
-				// Update session ID
 				sessionId = newSessionId;
 				localStorage.setItem('karaoke-session-id', sessionId);
 				sessionIdElement.textContent = sessionId;
@@ -556,9 +723,9 @@
 
 				// Clear the input
 				newSessionInput.value = '';
-				fetchQueue(); // Refresh queue for new session
+				fetchQueue();
 				if (!sessionPanel.classList.contains('hidden')) {
-					toggleSessionPanel(); // Collapse session panel
+					toggleSessionPanel();
 				}
 				showMessage('Session changed successfully', 'success');
 			}
@@ -569,7 +736,7 @@
 				localStorage.setItem('karaoke-session-id', sessionId);
 				sessionIdElement.textContent = sessionId;
 				sessionIdHeaderElement.textContent = sessionId;
-				fetchQueue(); // Refresh queue for new session
+				fetchQueue();
 				showMessage('New session created', 'success');
 			}
 
@@ -589,7 +756,7 @@
 
 				socket.on('error', (error) => {
 					console.error('Socket connection error:', error);
-					showMessage('Failed to connect to server. Some features may not work.', 'error');
+					showMessage('Failed proceeds to connect to server. Some features may not work.', 'error');
 				});
 
 				socket.on('disconnect', () => {
@@ -626,14 +793,18 @@
 				if (!queueSection.classList.contains('hidden')) {
 					displayQueue();
 				}
-				// Re-render search results to update queued badges
+				// Re-render search and catalog results to update queued badges
 				if (searchResults.length > 0) {
 					displaySearchResults();
+				}
+				if (catalogSongs.length > 0) {
+					displayCatalog();
 				}
 			}
 
 			// Search for songs
 			async function handleSearch() {
+				console.log('Handling search...');
 				const query = searchInput.value.trim();
 
 				if (!query) {
@@ -653,8 +824,6 @@
 
 					const data = await response.json();
 					searchResults = data;
-
-					// Display results
 					displaySearchResults();
 				} catch (error) {
 					console.error('Error searching songs:', error);
@@ -667,6 +836,7 @@
 
 			// Display search results with the new UI
 			function displaySearchResults() {
+				console.log('Displaying search results...');
 				if (searchResults.length > 0) {
 					resultsHeading.innerHTML = `Search Results <span class="text-sm text-gray-400 ml-2">(${
 						searchResults.length
@@ -709,7 +879,6 @@
 						`;
 						const addButton = songElement.querySelector('.add-to-queue-btn');
 						addButton.addEventListener('click', () => addToQueue(song, songElement, addButton));
-
 						searchResultsContainer.appendChild(songElement);
 					});
 
@@ -735,7 +904,165 @@
 				focusedSongIndex = -1;
 			}
 
-			// Add a song to the queue
+			async function fetchCatalog() {
+				console.log('Fetching catalog...');
+				if (isFetchingCatalog) return;
+				isFetchingCatalog = true;
+				try {
+					const response = await fetch('/api/songs/search?query=');
+					if (!response.ok) {
+						throw new Error('Failed to fetch catalog');
+					}
+					const data = await response.json();
+					catalogSongs = data;
+					localStorage.setItem('karaoke-catalog', JSON.stringify(data));
+					console.log('Catalog fetched successfully', data);
+					displayCatalog();
+				} catch (error) {
+					console.error('Error fetching catalog:', error);
+					showMessage('Failed to fetch song catalog. Please check your network.', 'error');
+					catalogSongs = [];
+					displayCatalog();
+				} finally {
+					isFetchingCatalog = false;
+				}
+			}
+
+			function displayCatalog() {
+				console.log('Displaying catalog...');
+				catalogResults.innerHTML = '';
+				noCatalogResults.classList.add('hidden');
+
+				// Group songs by artist
+				const groupedByArtist = catalogSongs.reduce((acc, song) => {
+					const artist = song.Artist || 'Unknown Artist';
+					if (!acc[artist]) {
+						acc[artist] = [];
+					}
+					acc[artist].push(song);
+					return acc;
+				}, {});
+
+				// Sort artists alphabetically
+				const sortedArtists = Object.keys(groupedByArtist).sort((a, b) =>
+					a.toLowerCase().localeCompare(b.toLowerCase())
+				);
+
+				// Filter artists by current letter
+				const filteredArtists = sortedArtists.filter((artist) => {
+					if (currentFilterLetter === '#') {
+						return !/^[a-zA-Z]/.test(artist) || !artist || artist === 'Unknown Artist';
+					}
+					return artist.toLowerCase().startsWith(currentFilterLetter.toLowerCase());
+				});
+
+				if (filteredArtists.length === 0) {
+					noCatalogResults.classList.remove('hidden');
+					return;
+				}
+
+				// Render artist groups
+				filteredArtists.forEach((artist) => {
+					const artistGroup = document.createElement('div');
+					artistGroup.className = 'mb-2';
+					const songs = groupedByArtist[artist];
+					artistGroup.innerHTML = `
+						<div class="artist-group-header bg-gray-700 px-4 py-2 rounded flex justify-between items-center">
+							<h4 class="text-sm font-bold text-white">${escapeHtml(artist)}</h4>
+							<svg class="h-5 w-5 text-gray-400 transform transition-transform" data-artist="${escapeHtml(
+								artist
+							)}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							</svg>
+						</div>
+						<div class="artist-songs space-y-4 mt-2" data-artist="${escapeHtml(artist)}"></div>
+					`;
+
+					const songsContainer = artistGroup.querySelector('.artist-songs');
+					songs.forEach((song) => {
+						const songElement = document.createElement('div');
+						songElement.className =
+							'catalog-song-card border-b border-gray-700 py-1 flex justify-between items-center';
+						songElement.tabIndex = 0;
+						const duration = song.Duration
+							? `${Math.floor(song.Duration / 60000)}:${Math.floor((song.Duration % 60000) / 1000)
+									.toString()
+									.padStart(2, '0')}`
+							: `${Math.floor(Math.random() * 5) + 2}:${Math.floor(Math.random() * 59)
+									.toString()
+									.padStart(2, '0')}`;
+						const isQueued = queueItems.some((q) => q.songid === song.songid);
+						songElement.innerHTML = `
+							<div>
+								<h4 class="text-sm text-white">${escapeHtml(song.Title || '')}</h4>
+								<p class="song-details text-gray-400">${escapeHtml(song.Artist || '')} • ${duration}</p>
+								${isQueued ? '<span class="queued-badge catalog-queued-badge">Queued</span>' : ''}
+							</div>
+							<button
+								class="add-to-queue-btn bg-green-600 hover:bg-green-700 text-white h-8 w-12 sm:w-28 flex items-center justify-center rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200${
+									isQueued ? ' disabled-btn' : ''
+								}"
+								data-song-id="${song.songid}"
+								${isQueued ? 'disabled' : ''}
+								title="Add to Queue"
+							>
+								<span class="text-full text-sm hidden sm:inline">Add to Queue</span>
+								<span class="text-short sm:hidden">+</span>
+								<svg class="spinner animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+									<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+							</button>
+						`;
+						const addButton = songElement.querySelector('.add-to-queue-btn');
+						addButton.addEventListener('click', () => addToQueue(song, songElement, addButton));
+						songsContainer.appendChild(songElement);
+					});
+
+					// Toggle artist songs visibility
+					const header = artistGroup.querySelector('.artist-group-header');
+					const toggleIcon = header.querySelector('svg');
+					header.addEventListener('click', () => {
+						const songsDiv = artistGroup.querySelector('.artist-songs');
+						const isHidden = songsDiv.classList.contains('hidden');
+						songsDiv.classList.toggle('hidden', !isHidden);
+						toggleIcon.classList.toggle('rotate-180', isHidden);
+					});
+
+					catalogResults.appendChild(artistGroup);
+				});
+
+				const firstArtistGroup = catalogResults.querySelector('.mb-4');
+				if (firstArtistGroup) {
+					firstArtistGroup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+
+				//scroll to the top of the catalog section
+				catalogSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+				initializeAlphaFilters();
+			}
+
+			function initializeAlphaFilters() {
+				console.log('Initializing alpha filters...');
+				alphaFilters.innerHTML = '';
+				const letters = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+				letters.forEach((letter) => {
+					const btn = document.createElement('button');
+					btn.className = `alpha-filter-btn bg-gray-700 hover:bg-gray-600 text-white font-semibold ${
+						letter === currentFilterLetter ? 'active' : ''
+					}`;
+					btn.textContent = letter;
+					btn.addEventListener('click', () => filterCatalogByLetter(letter));
+					alphaFilters.appendChild(btn);
+				});
+			}
+
+			function filterCatalogByLetter(letter) {
+				currentFilterLetter = letter;
+				displayCatalog();
+			}
+
 			async function addToQueue(song, songElement, addButton) {
 				if (!sessionId) {
 					showMessage('Session ID not found. Please refresh the page.', 'error');
@@ -773,7 +1100,9 @@
 					fetchQueueCount();
 					if (sequenceID) {
 						showMessage(
-							`"${song.Title}" by ${song.Artist} added to queue! <a href="#" class="undo-link text-white underline" data-sequence-id="${sequenceID}">Undo</a>`,
+							`"${song.Title}" by ${
+								song.Artist || 'Unknown Artist'
+							} added to queue! <a href="#" class="undo-link text-white underline" data-sequence-id="${sequenceID}">Undo</a>`,
 							'success'
 						);
 					}
@@ -822,6 +1151,9 @@
 					if (searchResults.length > 0) {
 						displaySearchResults();
 					}
+					if (catalogSongs.length > 0) {
+						displayCatalog();
+					}
 				} catch (error) {
 					console.error('Error fetching queue:', error);
 					showMessage('Failed to fetch queue. Please check your network.', 'error');
@@ -859,8 +1191,8 @@
 
 					queueItems.forEach((song, index) => {
 						const queueItem = document.createElement('div');
-						queueItem.className = 'border-b border-gray-700 py-4 flex justify-between items-center';
-
+						queueItem.className =
+							'song-card border-b border-gray-700 py-4 flex justify-between items-center';
 						queueItem.innerHTML = `
 							<div>
 								<h3 class="text-xl font-bold text-white">${escapeHtml(song.Title || '')}</h3>
