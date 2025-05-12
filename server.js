@@ -1038,6 +1038,7 @@ app.get('/api/scan', (req, res) => {
 				console.log('No new files found');
 				return res.status(200).json([]);
 			}
+			console.log(`New files: ${newFiles}`);
 
 			const filePromises = newFiles.map((file) => {
 				const filePath = path.join(subfolderPath, file);
