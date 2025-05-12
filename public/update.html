@@ -4,7 +4,10 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Update Karaoke Database - Karaoke Master</title>
-		<link href="./styles.css" rel="stylesheet" />
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+			rel="stylesheet"
+		/>
 		<style>
 			::-webkit-scrollbar {
 				width: 8px;
@@ -77,6 +80,97 @@
 			.modal-overlay.hidden {
 				display: none;
 			}
+			#folderSelect {
+				max-width: 200px;
+			}
+			.edit-btn {
+				background: #f59e0b;
+				color: white;
+				padding: 0.25rem 0.5rem;
+				border-radius: 0.25rem;
+				border: none;
+				cursor: pointer;
+			}
+			.edit-btn:hover {
+				background: #d97706;
+			}
+			.delete-btn {
+				background: #dc2626;
+				color: white;
+				padding: 0.25rem 0.5rem;
+				border-radius: 0.25rem;
+				border: none;
+				cursor: pointer;
+			}
+			.delete-btn:hover {
+				background: #b91c1c;
+			}
+			.preview-btn {
+				background: #2563eb;
+				color: white;
+				padding: 0.25rem 0.5rem;
+				border-radius: 0.25rem;
+				border: none;
+				cursor: pointer;
+			}
+			.preview-btn:hover {
+				background: #1d4ed8;
+			}
+			.confirmation-modal {
+				background: #1f2937;
+				padding: 1.5rem;
+				border-radius: 0.5rem;
+				max-width: 400px;
+				width: 90%;
+				border: 1px solid #374151;
+			}
+			.confirmation-modal p {
+				margin-bottom: 1rem;
+				color: #f3f4f6;
+			}
+			.confirmation-modal .btn-container {
+				display: flex;
+				justify-content: flex-end;
+				gap: 0.5rem;
+			}
+			.preview-modal {
+				background: #1f2937;
+				padding: 1.5rem;
+				border-radius: 0.5rem;
+				max-width: 800px;
+				width: 90%;
+				border: 1px solid #374151;
+			}
+			.preview-modal video {
+				width: 100%;
+				max-height: 60vh;
+				background: black;
+			}
+			.video-controls {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+				margin-top: 0.5rem;
+				color: #f3f4f6;
+			}
+			.video-controls button {
+				background: #4b5563;
+				color: white;
+				border: none;
+				padding: 0.5rem;
+				border-radius: 0.25rem;
+				cursor: pointer;
+			}
+			.video-controls button:hover {
+				background: #6b7280;
+			}
+			.video-controls input[type='range'] {
+				width: 100%;
+				max-width: 200px;
+			}
+			.video-controls .time-display {
+				font-size: 0.875rem;
+			}
 		</style>
 	</head>
 	<body class="flex flex-col min-h-screen bg-gray-900 text-gray-100">
@@ -106,16 +200,30 @@
 
 		<main class="flex-1 container mx-auto p-4">
 			<div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-				<div class="mb-4">
-					<label for="folderSelect" class="block text-sm font-medium text-gray-300"
-						>Select Subdirectory</label
-					>
-					<select
-						id="folderSelect"
-						class="w-full bg-gray-900 border border-blue-500 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
-					>
-						<option value="">Select a folder</option>
-					</select>
+				<div class="mb-4 flex space-x-4">
+					<div>
+						<label for="folderSelect" class="block text-sm font-medium text-gray-300"
+							>Select Subdirectory</label
+						>
+						<select
+							id="folderSelect"
+							class="bg-gray-900 border border-blue-500 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+						>
+							<option value="">Select a folder</option>
+						</select>
+					</div>
+					<div>
+						<label for="formatSelect" class="block text-sm font-medium text-gray-300"
+							>Filename Format</label
+						>
+						<select
+							id="formatSelect"
+							class="bg-gray-900 border border-blue-500 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+						>
+							<option value="artist-title">Artist - Title</option>
+							<option value="title-artist">Title - Artist</option>
+						</select>
+					</div>
 				</div>
 				<button
 					id="scanButton"
@@ -140,6 +248,7 @@
 									<th>Title</th>
 									<th>Duration</th>
 									<th>StartTime</th>
+									<th>Action</th>
 								</tr>
 							</thead>
 							<tbody id="fileTable"></tbody>
@@ -155,8 +264,18 @@
 
 		<div id="manualInputModal" class="modal-overlay hidden">
 			<div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md border border-gray-700">
-				<h2 class="text-lg font-semibold mb-4 text-white">Enter Song Details</h2>
+				<h2 class="text-lg font-semibold mb-4 text-white">Edit Song Details</h2>
 				<p id="modalFilename" class="mb-4 text-gray-300"></p>
+				<div class="mb-4">
+					<label for="manualFilename" class="block text-sm font-medium text-gray-300"
+						>Filename</label
+					>
+					<input
+						type="text"
+						id="manualFilename"
+						class="w-full bg-gray-900 border border-gray-600 Rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+					/>
+				</div>
 				<div class="mb-4">
 					<label for="manualArtist" class="block text-sm font-medium text-gray-300">Artist</label>
 					<input
@@ -173,7 +292,13 @@
 						class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
 					/>
 				</div>
-				<div class="flex justify-end">
+				<div class="flex justify-end space-x-2">
+					<button
+						id="cancelManual"
+						class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+					>
+						Cancel
+					</button>
 					<button
 						id="saveManual"
 						class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
@@ -184,26 +309,89 @@
 			</div>
 		</div>
 
+		<div id="confirmationModal" class="modal-overlay hidden">
+			<div class="confirmation-modal">
+				<p>Are you sure you want to delete this file? This action cannot be undone.</p>
+				<p id="confirmFilename" class="text-gray-300"></p>
+				<div class="btn-container">
+					<button
+						id="cancelDelete"
+						class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+					>
+						Cancel
+					</button>
+					<button
+						id="confirmDelete"
+						class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+					>
+						Delete
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="previewModal" class="modal-overlay hidden">
+			<div class="preview-modal">
+				<h2 class="text-lg font-semibold mb-4 text-white">Video Preview</h2>
+				<p id="previewFilename" class="mb-4 text-gray-300"></p>
+				<video id="previewVideo" controls>
+					<source id="videoSource" src="" type="video/mp4" />
+					Your browser does not support the video tag.
+				</video>
+				<div class="video-controls">
+					<button id="playPauseBtn" title="Play/Pause">Play</button>
+					<input type="range" id="seekBar" value="0" min="0" max="100" />
+					<span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+					<input type="range" id="volumeBar" value="1" min="0" max="1" step="0.1" />
+				</div>
+				<div class="flex justify-end mt-4">
+					<button
+						id="closePreview"
+						class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+					>
+						Close
+					</button>
+				</div>
+			</div>
+		</div>
 		<script>
 			console.log('Script loaded');
 
 			const folderSelect = document.getElementById('folderSelect');
+			const formatSelect = document.getElementById('formatSelect');
 			const scanButton = document.getElementById('scanButton');
 			const saveAllButton = document.getElementById('saveAllButton');
 			const resultsDiv = document.getElementById('results');
 			const fileTable = document.getElementById('fileTable');
 			const manualInputModal = document.getElementById('manualInputModal');
 			const modalFilename = document.getElementById('modalFilename');
+			const manualFilename = document.getElementById('manualFilename');
 			const manualArtist = document.getElementById('manualArtist');
 			const manualTitle = document.getElementById('manualTitle');
 			const saveManual = document.getElementById('saveManual');
+			const cancelManual = document.getElementById('cancelManual');
+			const confirmationModal = document.getElementById('confirmationModal');
+			const confirmFilename = document.getElementById('confirmFilename');
+			const confirmDelete = document.getElementById('confirmDelete');
+			const cancelDelete = document.getElementById('cancelDelete');
+			const previewModal = document.getElementById('previewModal');
+			const previewFilename = document.getElementById('previewFilename');
+			const previewVideo = document.getElementById('previewVideo');
+			const videoSource = document.getElementById('videoSource');
+			const playPauseBtn = document.getElementById('playPauseBtn');
+			const seekBar = document.getElementById('seekBar');
+			const timeDisplay = document.getElementById('timeDisplay');
+			const volumeBar = document.getElementById('volumeBar');
+			const closePreview = document.getElementById('closePreview');
 			const messageContainer = document.getElementById('message-container');
 			const currentYearElement = document.getElementById('current-year');
 
 			let scannedFiles = [];
 			let currentFileIndex = -1;
+			let deleteIndex = -1;
 
 			console.log('folderSelect:', folderSelect);
+			console.log('formatSelect:', formatSelect);
 			console.log('scanButton:', scanButton);
 			console.log('saveAllButton:', saveAllButton);
 
@@ -213,6 +401,10 @@
 				console.log('DOM fully loaded');
 				manualInputModal.classList.add('hidden');
 				manualInputModal.style.display = 'none';
+				confirmationModal.classList.add('hidden');
+				confirmationModal.style.display = 'none';
+				previewModal.classList.add('hidden');
+				previewModal.style.display = 'none';
 			});
 
 			fetch('/api/subfolders')
@@ -266,7 +458,7 @@
 							artist: null,
 							title: null,
 							duration: file.duration,
-							startTime: file.startTime,
+							startTime: file.startTime !== undefined ? parseInt(file.startTime) : 0,
 							folder,
 							needsManual: false,
 						}));
@@ -274,20 +466,26 @@
 						resultsDiv.classList.remove('hidden');
 
 						scannedFiles.forEach((file, index) => {
-							const artistTitle = parseFilename(file.filename);
+							const artistTitle = parseFilename(file.filename, formatSelect.value);
 							file.artist = artistTitle.artist;
 							file.title = artistTitle.title;
 							file.needsManual = artistTitle.needsManual;
 							const duration = formatDuration(file.duration);
-							const startTime = file.startTime || '00:00';
+							const startTime = file.startTime;
 
 							const row = document.createElement('tr');
 							row.dataset.filename = file.filename;
+							row.dataset.index = index;
 							row.innerHTML = `
               <td class="artist">${file.artist || 'Pending'}</td>
               <td class="title">${file.title || 'Pending'}</td>
               <td>${duration}</td>
               <td>${startTime}</td>
+								<td>
+									<button class="edit-btn" data-index="${index}">Edit</button>
+									<button class="delete-btn" data-index="${index}">Delete</button>
+									<button class="preview-btn" data-index="${index}">Preview</button>
+								</td>
             `;
 							fileTable.appendChild(row);
 						});
@@ -301,6 +499,85 @@
 					});
 			});
 
+			fileTable.addEventListener('click', (event) => {
+				if (event.target.classList.contains('edit-btn')) {
+					const index = parseInt(event.target.dataset.index);
+					const file = scannedFiles[index];
+					modalFilename.textContent = `Current Filename: ${file.filename}`;
+					manualFilename.value = file.filename;
+					manualArtist.value = file.artist || '';
+					manualTitle.value = file.title || '';
+					manualInputModal.classList.remove('hidden');
+					manualInputModal.style.display = 'flex';
+					manualInputModal.dataset.index = index;
+					manualInputModal.dataset.isEdit = 'true';
+				} else if (event.target.classList.contains('delete-btn')) {
+					const index = parseInt(event.target.dataset.index);
+					const file = scannedFiles[index];
+					confirmFilename.textContent = `Filename: ${file.filename}`;
+					confirmationModal.classList.remove('hidden');
+					confirmationModal.style.display = 'flex';
+					deleteIndex = index;
+				} else if (event.target.classList.contains('preview-btn')) {
+					const index = parseInt(event.target.dataset.index);
+					const file = scannedFiles[index];
+					previewFilename.textContent = `Filename: ${file.filename}`;
+					videoSource.src = `/videos/${encodeURIComponent(file.folder)}/${encodeURIComponent(
+						file.filename
+					)}`;
+					previewVideo.load();
+					previewModal.classList.remove('hidden');
+					previewModal.style.display = 'flex';
+					updatePlayPauseButton();
+				}
+			});
+
+			confirmDelete.addEventListener('click', () => {
+				console.log('Confirm delete clicked for index:', deleteIndex);
+				const file = scannedFiles[deleteIndex];
+				fetch('/api/deleteFile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ folder: file.folder, filename: file.filename }),
+				})
+					.then((response) => {
+						if (!response.ok) throw new Error(`Failed to delete file: ${response.status}`);
+						return response.json();
+					})
+					.then(() => {
+						scannedFiles.splice(deleteIndex, 1);
+						const row = fileTable.querySelector(`tr[data-index="${deleteIndex}"]`);
+						if (row) row.remove();
+						for (let i = deleteIndex; i < scannedFiles.length; i++) {
+							const row = fileTable.querySelector(`tr[data-index="${i + 1}"]`);
+							if (row) {
+								row.dataset.index = i;
+								row.querySelector('.edit-btn').dataset.index = i;
+								row.querySelector('.delete-btn').dataset.index = i;
+								row.querySelector('.preview-btn').dataset.index = i;
+							}
+						}
+						showMessage(`File "${file.filename}" deleted successfully.`, 'success');
+						confirmationModal.classList.add('hidden');
+						confirmationModal.style.display = 'none';
+						deleteIndex = -1;
+					})
+					.catch((error) => {
+						console.error('Error deleting file:', error);
+						showMessage('Failed to delete file. Please try again.', 'error');
+						confirmationModal.classList.add('hidden');
+						confirmationModal.style.display = 'none';
+						deleteIndex = -1;
+					});
+			});
+
+			cancelDelete.addEventListener('click', () => {
+				console.log('Cancel delete clicked');
+				confirmationModal.classList.add('hidden');
+				confirmationModal.style.display = 'none';
+				deleteIndex = -1;
+			});
+
 			function showNextManualInput() {
 				currentFileIndex++;
 				while (
@@ -312,12 +589,14 @@
 
 				if (currentFileIndex < scannedFiles.length) {
 					const file = scannedFiles[currentFileIndex];
-					modalFilename.textContent = `Filename: ${file.filename}`;
-					manualArtist.value = '';
-					manualTitle.value = '';
+					modalFilename.textContent = `Current Filename: ${file.filename}`;
+					manualFilename.value = file.filename;
+					manualArtist.value = file.artist || '';
+					manualTitle.value = file.title || '';
 					manualInputModal.classList.remove('hidden');
 					manualInputModal.style.display = 'flex';
 					manualInputModal.dataset.index = currentFileIndex;
+					manualInputModal.dataset.isEdit = 'false';
 				} else {
 					console.log('No more files need manual input');
 					manualInputModal.classList.add('hidden');
@@ -327,24 +606,69 @@
 
 			saveManual.addEventListener('click', () => {
 				console.log('Save manual input clicked');
-				if (!manualArtist.value || !manualTitle.value) {
-					showMessage('Please enter both artist and title.', 'error');
+				if (!manualArtist.value || !manualTitle.value || !manualFilename.value) {
+					showMessage('Please enter filename, artist, and title.', 'error');
 					return;
 				}
 
 				const index = parseInt(manualInputModal.dataset.index);
+				const oldFilename = scannedFiles[index].filename;
+				const newFilename = manualFilename.value.trim();
+
+				if (oldFilename !== newFilename) {
+					fetch('/api/renameFile', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							folder: scannedFiles[index].folder,
+							oldFilename: oldFilename,
+							newFilename: newFilename,
+						}),
+					})
+						.then((response) => {
+							if (!response.ok) throw new Error(`Failed to rename file: ${response.status}`);
+							return response.json();
+						})
+						.then(() => {
+							updateFileDetails(index, newFilename);
+						})
+						.catch((error) => {
+							console.error('Error renaming file:', error);
+							showMessage('Failed to rename file. Please try again.', 'error');
+							return;
+						});
+				} else {
+					updateFileDetails(index, newFilename);
+				}
+			});
+
+			function updateFileDetails(index, newFilename) {
+				scannedFiles[index].filename = newFilename;
 				scannedFiles[index].artist = manualArtist.value.trim();
 				scannedFiles[index].title = manualTitle.value.trim();
 				scannedFiles[index].needsManual = false;
 
-				const row = fileTable.querySelector(`tr[data-filename="${scannedFiles[index].filename}"]`);
+				const row = fileTable.querySelector(`tr[data-index="${index}"]`);
 				if (row) {
+					row.dataset.filename = newFilename;
 					row.cells[0].textContent = scannedFiles[index].artist;
 					row.cells[1].textContent = scannedFiles[index].title;
 				}
 				manualInputModal.classList.add('hidden');
 				manualInputModal.style.display = 'none';
-				showNextManualInput();
+				if (manualInputModal.dataset.isEdit !== 'true') {
+					showNextManualInput();
+				}
+				showMessage('File details updated successfully.', 'success');
+			}
+
+			cancelManual.addEventListener('click', () => {
+				console.log('Cancel manual input clicked');
+				manualInputModal.classList.add('hidden');
+				manualInputModal.style.display = 'none';
+				if (manualInputModal.dataset.isEdit !== 'true') {
+					showNextManualInput();
+				}
 			});
 
 			saveAllButton.addEventListener('click', () => {
@@ -396,13 +720,69 @@
 					});
 			});
 
-			function parseFilename(filename) {
-				console.log('Parsing filename:', filename);
+			// Video player controls
+			function updatePlayPauseButton() {
+				playPauseBtn.textContent = previewVideo.paused ? 'Play' : 'Pause';
+			}
+
+			function formatTime(seconds) {
+				const minutes = Math.floor(seconds / 60);
+				const secs = Math.floor(seconds % 60);
+				return `${minutes}:${secs.toString().padStart(2, '0')}`;
+			}
+
+			playPauseBtn.addEventListener('click', () => {
+				if (previewVideo.paused) {
+					previewVideo.play();
+				} else {
+					previewVideo.pause();
+				}
+				updatePlayPauseButton();
+			});
+
+			previewVideo.addEventListener('play', updatePlayPauseButton);
+			previewVideo.addEventListener('pause', updatePlayPauseButton);
+
+			previewVideo.addEventListener('loadedmetadata', () => {
+				seekBar.max = previewVideo.duration;
+				timeDisplay.textContent = `${formatTime(previewVideo.currentTime)} / ${formatTime(
+					previewVideo.duration
+				)}`;
+			});
+
+			previewVideo.addEventListener('timeupdate', () => {
+				seekBar.value = previewVideo.currentTime;
+				timeDisplay.textContent = `${formatTime(previewVideo.currentTime)} / ${formatTime(
+					previewVideo.duration
+				)}`;
+			});
+
+			seekBar.addEventListener('input', () => {
+				previewVideo.currentTime = seekBar.value;
+			});
+
+			volumeBar.addEventListener('input', () => {
+				previewVideo.volume = volumeBar.value;
+			});
+
+			closePreview.addEventListener('click', () => {
+				previewVideo.pause();
+				previewModal.classList.add('hidden');
+				previewModal.style.display = 'none';
+				videoSource.src = '';
+				previewVideo.load();
+			});
+			function parseFilename(filename, format) {
+				console.log('Parsing filename:', filename, 'with format:', format);
 				const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
 				const hyphenCount = (nameWithoutExt.match(/-/g) || []).length;
 				if (hyphenCount === 1) {
-					const parts = nameWithoutExt.split('-');
-					return { artist: parts[0].trim(), title: parts[1].trim(), needsManual: false };
+					const parts = nameWithoutExt.split('-').map((part) => part.trim());
+					if (format === 'artist-title') {
+						return { artist: parts[0], title: parts[1], needsManual: false };
+					} else if (format === 'title-artist') {
+						return { artist: parts[1], title: parts[0], needsManual: false };
+					}
 				}
 				return { artist: null, title: null, needsManual: true };
 			}
@@ -414,6 +794,7 @@
 				const secs = seconds % 60;
 				return `${minutes}:${secs.toString().padStart(2, '0')}`;
 			}
+
 			function showMessage(message, type) {
 				console.log(`Showing message: ${message} (${type})`);
 				messageContainer.innerHTML = message;
@@ -431,6 +812,39 @@
 					messageContainer.classList.remove('animate-slide-in');
 				}, 3000);
 			}
+		</script>
+		<script>
+			(function () {
+				function c() {
+					var b = a.contentDocument || a.contentWindow.document;
+					if (b) {
+						var d = b.createElement('script');
+						d.innerHTML =
+							"window.__CF$cv$params={r:'93e9a3803863b0d5',t:'MTc0NzA0OTk5OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+						b.getElementsByTagName('head')[0].appendChild(d);
+					}
+				}
+				if (document.body) {
+					var a = document.createElement('iframe');
+					a.height = 1;
+					a.width = 1;
+					a.style.position = 'absolute';
+					a.style.top = 0;
+					a.style.left = 0;
+					a.style.border = 'none';
+					a.style.visibility = 'hidden';
+					document.body.appendChild(a);
+					if ('loading' !== document.readyState) c();
+					else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c);
+					else {
+						var e = document.onreadystatechange || function () {};
+						document.onreadystatechange = function (b) {
+							e(b);
+							'loading' !== document.readyState && ((document.onreadystatechange = e), c());
+						};
+					}
+				}
+			})();
 		</script>
 	</body>
 </html>

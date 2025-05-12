@@ -767,6 +767,85 @@ const storeTrieData = async () => {
 	}
 };
 
+// API endpoint to delete a file
+app.post('/api/deleteFile', (req, res) => {
+	console.log('Received request to delete file');
+	const { folder, filename } = req.body;
+
+	// Validate input
+	if (!folder || !filename) {
+		return res.status(400).json({ error: 'Folder and filename are required' });
+	}
+
+	// Construct file path
+	const filePath = path.join(videoDir, folder, filename);
+	console.log(`Attempting to delete file: ${filePath}`);
+
+	// Check if file exists
+	if (!fs.existsSync(filePath)) {
+		return res.status(404).json({ error: 'File not found' });
+	}
+
+	// Delete the file
+	fs.unlink(filePath, (err) => {
+		if (err) {
+			console.error('Error deleting file:', err);
+			return res.status(500).json({ error: 'Failed to delete file', details: err.message });
+		}
+
+		console.log(`Successfully deleted file: ${filePath}`);
+		res.json({ success: true, message: 'File deleted successfully' });
+	});
+});
+
+// API endpoint to rename a file
+app.post('/api/renameFile', (req, res) => {
+	console.log('Received request to rename file');
+	const { folder, oldFilename, newFilename } = req.body;
+
+	// Validate input
+	if (!folder || !oldFilename || !newFilename) {
+		return res.status(400).json({ error: 'Folder, oldFilename, and newFilename are required' });
+	}
+
+	// Validate new filename
+	if (!newFilename.endsWith('.mp4')) {
+		return res.status(400).json({ error: 'New filename must end with .mp4' });
+	}
+
+	// Construct file paths
+	const oldPath = path.join(videoDir, folder, oldFilename);
+	const newPath = path.join(videoDir, folder, newFilename);
+
+	console.log(`Attempting to rename file from ${oldPath} to ${newPath}`);
+
+	// Check if source file exists
+	if (!fs.existsSync(oldPath)) {
+		return res.status(404).json({ error: 'Source file not found' });
+	}
+
+	// Check if destination file already exists
+	if (fs.existsSync(newPath)) {
+		return res.status(409).json({ error: 'Destination file already exists' });
+	}
+
+	// Rename the file
+	fs.rename(oldPath, newPath, (err) => {
+		if (err) {
+			console.error('Error renaming file:', err);
+			return res.status(500).json({ error: 'Failed to rename file', details: err.message });
+		}
+
+		console.log(`Successfully renamed file from ${oldFilename} to ${newFilename}`);
+		res.json({
+			success: true,
+			message: 'File renamed successfully',
+			oldPath,
+			newPath,
+		});
+	});
+});
+
 // Modify the upload-db endpoint to store Trie data
 app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
 	console.log('Uploading database file...');
