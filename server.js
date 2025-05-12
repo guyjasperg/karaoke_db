@@ -994,7 +994,11 @@ app.get('/api/videos', (req, res) => {
 
 // API endpoint to scan a subfolder for new video files
 app.get('/api/scan', (req, res) => {
+	console.log('Scanning for new video files...');
 	const { folder } = req.query;
+
+	const pathToQuery = videoDir.split('/').pop();
+	console.log(`Path to query: ${pathToQuery}`);
 
 	if (!folder) {
 		return res.status(400).json({ error: 'Folder parameter is required' });
@@ -1016,6 +1020,9 @@ app.get('/api/scan', (req, res) => {
 
 		const videoFiles = files.filter((file) => file.endsWith('.mp4') && !file.startsWith('.'));
 		console.log(`Found ${videoFiles.length} .mp4 files in ${subfolderPath}`);
+
+		const pathToQuery = videoDir.split('/').pop();
+		console.log(`Path to query: ${pathToQuery}`);
 
 		const sql = `SELECT filename, path FROM dbSongs`;
 		db.all(sql, [], (err, rows) => {
