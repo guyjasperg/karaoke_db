@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Update Karaoke Database - Karaoke Master</title>
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+			rel="stylesheet"
+		/>
+		<style>
+			::-webkit-scrollbar {
+				width: 8px;
+				height: 8px;
+			}
+			::-webkit-scrollbar-track {
+				background: #1f2937;
+			}
+			::-webkit-scrollbar-thumb {
+				background: #4c1d95;
+				border-radius: 4px;
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background: #5b21b6;
+			}
+			.disabled-btn {
+				opacity: 0.5;
+				cursor: not-allowed;
+				pointer-events: none;
+			}
+			#message-container {
+				position: fixed;
+				top: 16px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 20;
+				max-width: 90%;
+				width: 320px;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+			}
+			.animate-slide-in {
+				animation: slide-in 0.5s ease-out;
+			}
+			@keyframes slide-in {
+				0% {
+					opacity: 0;
+					transform: translateY(-20px) translateX(-50%);
+				}
+				100% {
+					opacity: 1;
+					transform: translateY(0) translateX(-50%);
+				}
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+			th,
+			td {
+				border: 1px solid #374151;
+				padding: 0.5rem;
+				text-align: left;
+			}
+			th {
+				background-color: #1f2937;
+				font-weight: bold;
+			}
+			tr:nth-child(even) {
+				background-color: #1f2937;
+			}
+			.modal-overlay {
+				position: fixed;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.5);
+				z-index: 30;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.modal-overlay.hidden {
+				display: none;
+			}
+		</style>
+	</head>
+	<body class="flex flex-col min-h-screen bg-gray-900 text-gray-100">
+		<div id="message-container" class="p-3 rounded text-sm hidden" aria-live="polite"></div>
+
+		<header class="bg-purple-900 text-white p-4 shadow-md">
+			<div class="container mx-auto flex justify-between items-center">
+				<h1 class="text-2xl font-bold flex items-center">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-6 w-6 mr-2"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+						/>
+					</svg>
+					Karaoke Database Update
+				</h1>
+			</div>
+		</header>
+
+		<main class="flex-1 container mx-auto p-4">
+			<div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+				<div class="mb-4">
+					<label for="folderSelect" class="block text-sm font-medium text-gray-300"
+						>Select Subdirectory</label
+					>
+					<select
+						id="folderSelect"
+						class="w-full bg-gray-900 border border-blue-500 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+					>
+						<option value="">Select a folder</option>
+					</select>
+				</div>
+				<button
+					id="scanButton"
+					class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled-btn"
+					disabled
+				>
+					Scan Folder
+				</button>
+				<div id="results" class="mt-6 hidden">
+					<h2 class="text-2xl font-bold mb-4 text-white">New Files Found</h2>
+					<button
+						id="saveAllButton"
+						class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
+					>
+						Save All
+					</button>
+					<div class="overflow-x-auto">
+						<table>
+							<thead>
+								<tr>
+									<th>Artist</th>
+									<th>Title</th>
+									<th>Duration</th>
+									<th>StartTime</th>
+								</tr>
+							</thead>
+							<tbody id="fileTable"></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<footer class="bg-gray-900 text-gray-400 p-4 text-center text-sm border-t border-gray-800">
+			© <span id="current-year"></span> - Karaoke Master
+		</footer>
+
+		<div id="manualInputModal" class="modal-overlay hidden">
+			<div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md border border-gray-700">
+				<h2 class="text-lg font-semibold mb-4 text-white">Enter Song Details</h2>
+				<p id="modalFilename" class="mb-4 text-gray-300"></p>
+				<div class="mb-4">
+					<label for="manualArtist" class="block text-sm font-medium text-gray-300">Artist</label>
+					<input
+						type="text"
+						id="manualArtist"
+						class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+					/>
+				</div>
+				<div class="mb-4">
+					<label for="manualTitle" class="block text-sm font-medium text-gray-300">Title</label>
+					<input
+						type="text"
+						id="manualTitle"
+						class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+					/>
+				</div>
+				<div class="flex justify-end">
+					<button
+						id="saveManual"
+						class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+					>
+						Save
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			console.log('Script loaded');
+
+			const folderSelect = document.getElementById('folderSelect');
+			const scanButton = document.getElementById('scanButton');
+			const saveAllButton = document.getElementById('saveAllButton');
+			const resultsDiv = document.getElementById('results');
+			const fileTable = document.getElementById('fileTable');
+			const manualInputModal = document.getElementById('manualInputModal');
+			const modalFilename = document.getElementById('modalFilename');
+			const manualArtist = document.getElementById('manualArtist');
+			const manualTitle = document.getElementById('manualTitle');
+			const saveManual = document.getElementById('saveManual');
+			const messageContainer = document.getElementById('message-container');
+			const currentYearElement = document.getElementById('current-year');
+
+			let scannedFiles = [];
+			let currentFileIndex = -1;
+
+			console.log('folderSelect:', folderSelect);
+			console.log('scanButton:', scanButton);
+			console.log('saveAllButton:', saveAllButton);
+
+			currentYearElement.textContent = new Date().getFullYear();
+
+			document.addEventListener('DOMContentLoaded', () => {
+				console.log('DOM fully loaded');
+				manualInputModal.classList.add('hidden');
+				manualInputModal.style.display = 'none';
+			});
+
+			fetch('/api/subfolders')
+				.then((response) => {
+					console.log('Subfolders response:', response.status);
+					return response.json();
+				})
+				.then((data) => {
+					console.log('Subfolders data:', data);
+					data.subfolders.forEach((folder) => {
+						const option = document.createElement('option');
+						option.value = folder;
+						option.textContent = folder;
+						folderSelect.appendChild(option);
+					});
+					scanButton.classList.toggle('disabled-btn', folderSelect.value === '');
+					scanButton.disabled = folderSelect.value === '';
+					console.log('Scan button disabled:', scanButton.disabled);
+				})
+				.catch((error) => {
+					console.error('Error fetching subfolders:', error);
+					showMessage('Failed to load subfolders. Please check your network.', 'error');
+				});
+
+			folderSelect.addEventListener('change', () => {
+				console.log('Folder selected:', folderSelect.value);
+				scanButton.classList.toggle('disabled-btn', folderSelect.value === '');
+				scanButton.disabled = folderSelect.value === '';
+				console.log('Scan button disabled:', scanButton.disabled);
+			});
+
+			scanButton.addEventListener('click', () => {
+				console.log('Scan button clicked');
+				const folder = folderSelect.value;
+				console.log('Selected folder:', folder);
+				if (!folder) {
+					console.log('No folder selected');
+					showMessage('Please select a folder.', 'error');
+					return;
+				}
+
+				fetch(`/api/scan?folder=${encodeURIComponent(folder)}`)
+					.then((response) => {
+						console.log('Scan response:', response.status);
+						return response.json();
+					})
+					.then((files) => {
+						console.log('Scan results:', files);
+						scannedFiles = files.map((file) => ({
+							filename: file.name,
+							artist: null,
+							title: null,
+							duration: file.duration,
+							startTime: file.startTime,
+							folder,
+							needsManual: false,
+						}));
+						fileTable.innerHTML = '';
+						resultsDiv.classList.remove('hidden');
+
+						scannedFiles.forEach((file, index) => {
+							const artistTitle = parseFilename(file.filename);
+							file.artist = artistTitle.artist;
+							file.title = artistTitle.title;
+							file.needsManual = artistTitle.needsManual;
+							const duration = formatDuration(file.duration);
+							const startTime = file.startTime || '00:00';
+
+							const row = document.createElement('tr');
+							row.dataset.filename = file.filename;
+							row.innerHTML = `
+              <td class="artist">${file.artist || 'Pending'}</td>
+              <td class="title">${file.title || 'Pending'}</td>
+              <td>${duration}</td>
+              <td>${startTime}</td>
+            `;
+							fileTable.appendChild(row);
+						});
+
+						currentFileIndex = -1;
+						showNextManualInput();
+					})
+					.catch((error) => {
+						console.error('Error scanning folder:', error);
+						showMessage('Failed to scan folder. Please try again.', 'error');
+					});
+			});
+
+			function showNextManualInput() {
+				currentFileIndex++;
+				while (
+					currentFileIndex < scannedFiles.length &&
+					!scannedFiles[currentFileIndex].needsManual
+				) {
+					currentFileIndex++;
+				}
+
+				if (currentFileIndex < scannedFiles.length) {
+					const file = scannedFiles[currentFileIndex];
+					modalFilename.textContent = `Filename: ${file.filename}`;
+					manualArtist.value = '';
+					manualTitle.value = '';
+					manualInputModal.classList.remove('hidden');
+					manualInputModal.style.display = 'flex';
+					manualInputModal.dataset.index = currentFileIndex;
+				} else {
+					console.log('No more files need manual input');
+					manualInputModal.classList.add('hidden');
+					manualInputModal.style.display = 'none';
+				}
+			}
+
+			saveManual.addEventListener('click', () => {
+				console.log('Save manual input clicked');
+				if (!manualArtist.value || !manualTitle.value) {
+					showMessage('Please enter both artist and title.', 'error');
+					return;
+				}
+
+				const index = parseInt(manualInputModal.dataset.index);
+				scannedFiles[index].artist = manualArtist.value.trim();
+				scannedFiles[index].title = manualTitle.value.trim();
+				scannedFiles[index].needsManual = false;
+
+				const row = fileTable.querySelector(`tr[data-filename="${scannedFiles[index].filename}"]`);
+				if (row) {
+					row.cells[0].textContent = scannedFiles[index].artist;
+					row.cells[1].textContent = scannedFiles[index].title;
+				}
+				manualInputModal.classList.add('hidden');
+				manualInputModal.style.display = 'none';
+				showNextManualInput();
+			});
+
+			saveAllButton.addEventListener('click', () => {
+				console.log('Save All button clicked');
+				if (scannedFiles.length === 0) {
+					showMessage('No files to save.', 'info');
+					return;
+				}
+				const unsavedFiles = scannedFiles.filter((file) => !file.artist || !file.title);
+				if (unsavedFiles.length > 0) {
+					showMessage('Please provide artist and title for all files.', 'error');
+					return;
+				}
+
+				fetch('/api/updateSong', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(scannedFiles),
+				})
+					.then((response) => {
+						console.log('Update song response:', response.status);
+						if (!response.ok) throw new Error(`Failed to save songs: ${response.status}`);
+						return response.json();
+					})
+					.then((data) => {
+						data.results.forEach((result) => {
+							const row = fileTable.querySelector(`tr[data-filename="${result.filename}"]`);
+							if (row) {
+								if (result.songid) {
+									row.cells[0].classList.add('text-green-400');
+									row.cells[1].classList.add('text-green-400');
+								} else {
+									row.cells[0].classList.add('text-red-400');
+									row.cells[1].classList.add('text-red-400');
+								}
+							}
+						});
+						const savedCount = data.results.filter((r) => r.songid).length;
+						showMessage(`${savedCount} song(s) saved successfully.`, 'success');
+						scannedFiles = [];
+						resultsDiv.classList.add('hidden');
+						fileTable.innerHTML = '';
+					})
+					.catch((error) => {
+						console.error('Error saving songs:', error);
+						showMessage('Failed to save some songs. Please try again.', 'error');
+					});
+			});
+
+			function parseFilename(filename) {
+				console.log('Parsing filename:', filename);
+				const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+				const hyphenCount = (nameWithoutExt.match(/-/g) || []).length;
+				if (hyphenCount === 1) {
+					const parts = nameWithoutExt.split('-');
+					return { artist: parts[0].trim(), title: parts[1].trim(), needsManual: false };
+				}
+				return { artist: null, title: null, needsManual: true };
+			}
+
+			function formatDuration(milliseconds) {
+				console.log('Formatting duration:', milliseconds);
+				const seconds = Math.floor(milliseconds / 1000);
+				const minutes = Math.floor(seconds / 60);
+				const secs = seconds % 60;
+				return `${minutes}:${secs.toString().padStart(2, '0')}`;
+			}
+			function showMessage(message, type) {
+				console.log(`Showing message: ${message} (${type})`);
+				messageContainer.innerHTML = message;
+				messageContainer.className = `p-3 rounded text-sm message animate-slide-in ${
+					type === 'success'
+						? 'bg-green-800 text-green-100'
+						: type === 'info'
+						? 'bg-blue-800 text-blue-100'
+						: 'bg-red-800 text-red-100'
+				}`;
+				messageContainer.classList.remove('hidden');
+
+				setTimeout(() => {
+					messageContainer.classList.add('hidden');
+					messageContainer.classList.remove('animate-slide-in');
+				}, 3000);
+			}
+		</script>
+	</body>
+</html>

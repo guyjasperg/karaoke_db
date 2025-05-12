@@ -195,6 +195,9 @@
 			.artist-group-header {
 				cursor: pointer;
 				transition: background-color 0.2s;
+				display: flex;
+				justify-content: center;
+				align-items: center;
 			}
 			.artist-group-header:hover {
 				background-color: #374151; /* bg-gray-700 */
@@ -323,19 +326,19 @@
 		<div class="flex justify-center space-x-4 py-4 bg-gray-900">
 			<button
 				id="search-tab-btn"
-				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 			>
-				Search
+				Search Songs
 			</button>
 			<button
 				id="queue-tab-btn"
-				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
 			>
 				Queue (<span id="queue-count">0</span>)
 			</button>
 			<button
 				id="catalog-tab-btn"
-				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
 			>
 				Catalog
 			</button>
@@ -527,6 +530,8 @@
 			const noCatalogResults = document.getElementById('no-catalog-results');
 			const refreshCatalogBtn = document.getElementById('refresh-catalog-btn');
 			const collapseAllBtn = document.getElementById('collapse-all-btn');
+			// At the top of the script, add the search input container to the DOM elements
+			const searchInputContainer = document.querySelector('.search-input-container');
 
 			// Set current year in footer
 			currentYearElement.textContent = new Date().getFullYear();
@@ -641,6 +646,7 @@
 				queueTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
 				catalogTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
 				catalogTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+				searchInputContainer.classList.remove('hidden'); // Show search input
 				focusedSongIndex = -1;
 				displaySearchResults(); // Restore search results if any
 			}
@@ -655,6 +661,7 @@
 				queueTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
 				catalogTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
 				catalogTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+				searchInputContainer.classList.add('hidden'); // Show search input
 				fetchQueue();
 				focusedSongIndex = -1;
 			}
@@ -669,11 +676,11 @@
 				queueTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
 				catalogTabBtn.classList.replace('bg-gray-700', 'bg-blue-600');
 				catalogTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
+				searchInputContainer.classList.add('hidden'); // Show search input
 				const savedCatalog = localStorage.getItem('karaoke-catalog');
 				if (savedCatalog) {
 					try {
 						catalogSongs = JSON.parse(savedCatalog);
-						console.log('Loaded saved catalog');
 						displayCatalog();
 					} catch (error) {
 						console.error('Error parsing saved catalog:', error);
@@ -862,7 +869,7 @@
 								${isQueued ? '<span class="queued-badge">Queued</span>' : ''}
 							</div>
 							<button
-								class="add-to-queue-btn bg-green-600 hover:bg-green-700 text-white h-10 w-12 sm:w-28 flex items-center justify-center rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200${
+								class="add-to-queue-btn bg-green-600 hover:bg-green-700 text-white h-10 w-12 mr-4 sm:w-28 flex items-center justify-center rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200${
 									isQueued ? ' disabled-btn' : ''
 								}"
 								data-song-id="${song.songid}"
@@ -905,7 +912,6 @@
 			}
 
 			async function fetchCatalog() {
-				console.log('Fetching catalog...');
 				if (isFetchingCatalog) return;
 				isFetchingCatalog = true;
 				try {
@@ -916,7 +922,6 @@
 					const data = await response.json();
 					catalogSongs = data;
 					localStorage.setItem('karaoke-catalog', JSON.stringify(data));
-					console.log('Catalog fetched successfully', data);
 					displayCatalog();
 				} catch (error) {
 					console.error('Error fetching catalog:', error);
@@ -929,7 +934,6 @@
 			}
 
 			function displayCatalog() {
-				console.log('Displaying catalog...');
 				catalogResults.innerHTML = '';
 				noCatalogResults.classList.add('hidden');
 
@@ -968,34 +972,34 @@
 					const songs = groupedByArtist[artist];
 					artistGroup.innerHTML = `
 						<div class="artist-group-header bg-gray-700 px-4 py-2 rounded flex justify-between items-center">
-							<h4 class="text-sm font-bold text-white">${escapeHtml(artist)}</h4>
+							<span class="text-sm font-bold text-white">${escapeHtml(artist)}</span>
 							<svg class="h-5 w-5 text-gray-400 transform transition-transform" data-artist="${escapeHtml(
 								artist
 							)}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 							</svg>
 						</div>
-						<div class="artist-songs space-y-4 mt-2" data-artist="${escapeHtml(artist)}"></div>
+						<div class="artist-songs mt-2" data-artist="${escapeHtml(artist)}"></div>
 					`;
 
 					const songsContainer = artistGroup.querySelector('.artist-songs');
-					songs.forEach((song) => {
+					songs.forEach((song, index) => {
+						const isLastSong = index === songs.length - 1;
 						const songElement = document.createElement('div');
-						songElement.className =
-							'catalog-song-card border-b border-gray-700 py-1 flex justify-between items-center';
+						songElement.className = `catalog-song-card ${
+							isLastSong ? '' : 'border-b border-gray-700'
+						} py-2 flex justify-between items-center`;
 						songElement.tabIndex = 0;
-						const duration = song.Duration
-							? `${Math.floor(song.Duration / 60000)}:${Math.floor((song.Duration % 60000) / 1000)
-									.toString()
-									.padStart(2, '0')}`
-							: `${Math.floor(Math.random() * 5) + 2}:${Math.floor(Math.random() * 59)
-									.toString()
-									.padStart(2, '0')}`;
+						const duration =
+							song.duration ||
+							`${Math.floor(Math.random() * 5) + 2}:${Math.floor(Math.random() * 59)
+								.toString()
+								.padStart(2, '0')}`;
 						const isQueued = queueItems.some((q) => q.songid === song.songid);
 						songElement.innerHTML = `
 							<div>
 								<h4 class="text-sm text-white">${escapeHtml(song.Title || '')}</h4>
-								<p class="song-details text-gray-400">${escapeHtml(song.Artist || '')} • ${duration}</p>
+								<p class="song-details text-gray-400">${duration}</p>
 								${isQueued ? '<span class="queued-badge catalog-queued-badge">Queued</span>' : ''}
 							</div>
 							<button
@@ -1032,19 +1036,16 @@
 					catalogResults.appendChild(artistGroup);
 				});
 
-				const firstArtistGroup = catalogResults.querySelector('.mb-4');
-				if (firstArtistGroup) {
-					firstArtistGroup.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				}
-
-				//scroll to the top of the catalog section
-				catalogSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				// Scroll to top
+				window.scrollTo({
+					top: 0,
+					behavior: 'smooth',
+				});
 
 				initializeAlphaFilters();
 			}
 
 			function initializeAlphaFilters() {
-				console.log('Initializing alpha filters...');
 				alphaFilters.innerHTML = '';
 				const letters = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 				letters.forEach((letter) => {

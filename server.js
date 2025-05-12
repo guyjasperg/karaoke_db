@@ -1,29 +1,20 @@
 require('dotenv').config();
 
 const express = require('express');
-// const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const os = require('os');
-// const Trie = require('./public/Trie');
 const http = require('http');
 const { Server } = require('socket.io');
 const ini = require('ini');
 const { toTitleCase } = require('./utils');
 const { url } = require('inspector');
+const ffmpeg = require('fluent-ffmpeg');
 
 const app = express();
 app.use(express.json());
-
-// Use cors middleware with specific origin allowed
-// const corsOptions = {
-// 	origin: 'chrome-extension://YOUR_EXTENSION_ID', // Replace with your extension ID
-// 	methods: 'GET,POST,OPTIONS', // Include OPTIONS
-// 	allowedHeaders: 'Content-Type',
-// };
-// app.use(cors(corsOptions));
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, './mydatabase.sqlite');
 const PORT = process.env.PORT || 3000;
@@ -40,15 +31,6 @@ const SONGQUEUE_LIST_FILE = path.join(__dirname, 'songQueue.json'); // Path to t
 // Global variable to store a list of songs
 let songRequests = [];
 const songQueue = {};
-
-// let songList = [
-//     { SequenceID: 1, Title: "Song Title 1", Artist: "Artist 1", url: "",Status: "Pending" }
-//     // Add more songs as needed
-// ];
-
-// const trie = new Trie();
-// trie.insert('apple');
-// trie.insert('banana');
 
 // Helper function to save json data to file
 const saveToFile = (jsonFile, filename) => {
@@ -400,7 +382,7 @@ app.use(express.json());
 // Open SQLite database connection
 console.log('DB Path: ', DB_PATH);
 
-db = new sqlite3.Database(DB_PATH, (err) => {
+let db = new sqlite3.Database(DB_PATH, (err) => {
 	console.log('Initializing DB...');
 	if (err) {
 		console.error('Error opening database:', err.message);
@@ -512,13 +494,12 @@ app.get('/api/songs/duplicates', (req, res) => {
 		}));
 		res.json(formattedRows);
 		console.log(`Found ${formattedRows.length} duplicate songs.`);
-
-		res.json(formattedRows);
 	});
 });
 
 // API to get all unique Artist - Title
 app.get('/api/uniquesongs', (req, res) => {
+	console.log('Fetching unique songs...');
 	const sql = `SELECT   DISTINCT TRIM((coalesce(Artist,'') || ' - '  || coalesce( Title,''))) as song 
                 FROM dbSongs 
                 WHERE song IS NOT NULL
@@ -530,10 +511,9 @@ app.get('/api/uniquesongs', (req, res) => {
 			return res.status(500).json({ error: err.message });
 		} else {
 			console.log(`Get Unique Songs: returned ${rows.length} songs.`);
-
-			// Send the list to the client
 			const songs = rows.map((row) => ({
-				song: toTitleCase(row.song.trim()),
+				//song: toTitleCase(row.song.trim()),
+				song: row.song.trim(),
 			}));
 			res.json({ songs });
 		}
@@ -654,12 +634,7 @@ app.get('/api/songs/search', (req, res) => {
 			if (err) {
 				res.status(500).json({ error: err.message });
 			} else {
-				const formattedRows = rows.map((row) => ({
-					...row,
-					Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
-					Title: row.Title ? toTitleCase(row.Title.trim()) : '',
-				}));
-				res.json(formattedRows);
+				res.json(rows);
 			}
 		});
 	} else {
@@ -692,8 +667,8 @@ app.get('/api/songs/search', (req, res) => {
 				} else {
 					const formattedRows = rows.map((row) => ({
 						...row,
-						Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
-						Title: row.Title ? toTitleCase(row.Title.trim()) : '',
+						//Artist: row.Artist ? toTitleCase(row.Artist.trim()) : '',
+						//Title: row.Title ? toTitleCase(row.Title.trim()) : '',
 					}));
 					res.json(formattedRows);
 				}
@@ -846,6 +821,81 @@ app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
 	}
 });
 
+// API endpoint to save one or more songs to dbSongs
+app.post('/api/updateSong', (req, res) => {
+	const songs = Array.isArray(req.body) ? req.body : [req.body];
+	const results = [];
+	let errorOccurred = false;
+
+	// Validate all songs
+	for (const song of songs) {
+		const { filename, artist, title, duration, startTime, folder } = song;
+		if (!filename || !artist || !title || !folder) {
+			results.push({ filename, error: 'Filename, artist, title, and folder are required' });
+			errorOccurred = true;
+			continue;
+		}
+		if (artist.length > 255 || title.length > 255 || filename.length > 255 || folder.length > 100) {
+			results.push({ filename, error: 'Input fields exceed maximum length' });
+			errorOccurred = true;
+			continue;
+		}
+		if (folder.includes('..') || filename.includes('..') || !filename.endsWith('.mp4')) {
+			results.push({ filename, error: 'Invalid folder or filename' });
+			errorOccurred = true;
+			continue;
+		}
+	}
+
+	if (errorOccurred) {
+		return res.status(400).json({ results });
+	}
+
+	// Use a transaction
+	db.serialize(() => {
+		songs.forEach((song) => {
+			const { filename, artist, title, duration, folder } = song;
+			const filePath = path.join(videoDir, folder, filename);
+			if (filePath.length > 700) {
+				results.push({ filename, error: 'File path exceeds maximum length' });
+				return;
+			}
+			const searchstring = `${artist} ${title}`.trim();
+			const sql = `
+                INSERT INTO dbSongs (Artist, Title, Duration, path, filename, searchstring, plays, lastplay)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+			db.run(
+				sql,
+				[artist, title, duration || 0, filePath, filename, searchstring, 0, null],
+				function (err) {
+					if (err) {
+						console.error(`Error inserting song ${filename}:`, err.message);
+						results.push({
+							filename,
+							error: err.message.includes('UNIQUE constraint failed')
+								? 'Song with this path already exists'
+								: 'Failed to save song',
+						});
+					} else {
+						console.log(`Song ${filename} saved with ID: ${this.lastID}`);
+						results.push({ filename, songid: this.lastID });
+					}
+				}
+			);
+		});
+	});
+
+	// Wait for all queries to complete
+	db.wait(() => {
+		const errors = results.filter((r) => r.error);
+		if (errors.length > 0) {
+			return res.status(207).json({ results }); // Multi-status
+		}
+		res.status(201).json({ results });
+	});
+});
+
 app.post('/api/batch-upload', (req, res) => {
 	const videoDataArray = req.body;
 
@@ -859,13 +909,7 @@ app.post('/api/batch-upload', (req, res) => {
 		return res.status(200).json({ success: true, message: 'No videos to upload.' });
 	}
 
-	// //for each item, append videoDir to path
-	// videoDataArray.forEach((video) => {
-	// 	video.Path = path.join(videoDir, video.Path);
-	// });
-
 	console.log('Batch uploading videos:', videoDataArray);
-	return res.status(200).json({ success: true, message: 'Videos uploaded successfully.' });
 
 	db.serialize(() => {
 		// Use a transaction for efficiency
@@ -901,7 +945,6 @@ app.post('/api/batch-upload', (req, res) => {
 			res.status(200).json({ success: true, message: 'Videos uploaded successfully.' });
 		});
 	});
-	db.close();
 });
 
 // Endpoint to download a file
@@ -949,39 +992,99 @@ app.get('/api/videos', (req, res) => {
 	});
 });
 
+// API endpoint to scan a subfolder for new video files
+app.get('/api/scan', (req, res) => {
+	const { folder } = req.query;
+
+	if (!folder) {
+		return res.status(400).json({ error: 'Folder parameter is required' });
+	}
+
+	const subfolderPath = path.join(videoDir, folder);
+	console.log(`Scanning subfolder: ${subfolderPath}`);
+
+	if (!fs.existsSync(subfolderPath)) {
+		console.log(`Subfolder does not exist: ${subfolderPath}`);
+		return res.status(404).json({ error: `Subfolder '${folder}' not found` });
+	}
+
+	fs.readdir(subfolderPath, (err, files) => {
+		if (err) {
+			console.error('Error reading subfolder:', err);
+			return res.status(500).json({ error: 'Unable to read subfolder' });
+		}
+
+		const videoFiles = files.filter((file) => file.endsWith('.mp4') && !file.startsWith('.'));
+		console.log(`Found ${videoFiles.length} .mp4 files in ${subfolderPath}`);
+
+		const sql = `SELECT filename, path FROM dbSongs`;
+		db.all(sql, [], (err, rows) => {
+			if (err) {
+				console.error('Error querying database:', err);
+				return res.status(500).json({ error: 'Database error' });
+			}
+
+			const existingFiles = new Set(rows.map((row) => row.filename));
+			const existingPaths = new Set(rows.map((row) => row.path));
+			const newFiles = videoFiles.filter(
+				(file) => !existingFiles.has(file) && !existingPaths.has(path.join(subfolderPath, file))
+			);
+
+			if (newFiles.length === 0) {
+				console.log('No new files found');
+				return res.status(200).json([]);
+			}
+
+			const filePromises = newFiles.map((file) => {
+				const filePath = path.join(subfolderPath, file);
+				return new Promise((resolve) => {
+					if (!ffmpeg) {
+						console.warn(`fluent-ffmpeg not available for ${file}; skipping metadata extraction`);
+						resolve({ name: file, duration: 0, startTime: '00:00' });
+						return;
+					}
+					ffmpeg.ffprobe(filePath, (err, metadata) => {
+						if (err) {
+							console.error(`Error probing file ${file}:`, err.message);
+							resolve({ name: file, duration: 0, startTime: '00:00' });
+						} else {
+							const duration = Math.floor((metadata.format.duration || 0) * 1000); // Convert seconds to milliseconds
+							const startTime = '00:00';
+							resolve({ name: file, duration, startTime });
+						}
+					});
+				});
+			});
+
+			Promise.all(filePromises)
+				.then((results) => {
+					console.log(`Returning ${results.length} new files`);
+					res.status(200).json(results);
+				})
+				.catch((err) => {
+					console.error('Error processing files:', err.message);
+					res.status(200).json(
+						newFiles.map((file) => ({
+							name: file,
+							duration: 0,
+							startTime: '00:00',
+						}))
+					);
+				});
+		});
+	});
+});
+
 // Create an HTTP server
-server = http.createServer(app);
+const server = http.createServer(app);
 
 // Initialize socket.io
-// const io = new Server(server, {
-// 	cors: {
-// 		origin: (origin, callback) => {
-// 			const allowedOrigins = [
-// 				'http://192.168.1.6:5173', // Development frontend
-// 				'https://your-production-domain.com', // Production frontend
-// 			];
-// 			if (!origin || allowedOrigins.includes(origin)) {
-// 				callback(null, true); // Allow the request
-// 			} else {
-// 				callback(new Error('Not allowed by CORS')); // Block the request
-// 			}
-// 		},
-// 		methods: ['GET', 'POST'],
-// 	},
-// });
 const io = new Server(server, {
 	cors: {
 		origin: '*', // Allow all origins (replace with trusted domains in production)
 		methods: ['GET', 'POST'], // Allowed HTTP methods
 	},
 });
-
-// // Middleware to extract the token from headers
-// app.use((req, res, next) => {
-// 	const token = req.headers['x-api-token'] || req.headers['authorization'];
-// 	app.locals.requestToken = token; // Store the token for later use
-// 	next();
-// });
 
 io.use((socket, next) => {
 	console.log('Socket:', socket.handshake.auth);
@@ -1045,62 +1148,37 @@ app.get('/api/file-exists', (req, res) => {
 	});
 });
 
-// Serve HLS files based on song name
-app.get('/hls/:song', (req, res) => {
-	console.log(`Request received for /hls/${req.params.song}/${req.params.file}`);
-	const songName = req.params.song;
-	const fileName = req.params.file;
-	const filePath = path.join(__dirname, 'hls', songName, fileName);
+// API endpoint to get distinct subfolders
+app.get('/api/subfolders', (req, res) => {
+	const sql = `
+        SELECT DISTINCT
+            SUBSTR(
+                path,
+                INSTR(path, '_Karaoke/') + LENGTH('_Karaoke/'),
+                INSTR(
+                    SUBSTR(path, INSTR(path, '_Karaoke/') + LENGTH('_Karaoke/')),
+                    '/'
+                ) - 1
+            ) AS parent_folder
+        FROM dbsongs
+        ORDER BY parent_folder;
+    `;
 
-	if (!fs.existsSync(filePath)) {
-		console.log(`File not found: ${filePath}`);
-		return res.status(404).send('File not found');
-	}
+	db.all(sql, [], (err, rows) => {
+		if (err) {
+			console.error('Error fetching subfolders:', err);
+			return res.status(500).json({ error: err.message });
+		}
 
-	const stat = fs.statSync(filePath);
-	const fileSize = stat.size;
-	const range = req.headers.range;
+		// Map the results to a simpler format
+		const subfolders = rows
+			.map((row) => row.parent_folder)
+			.filter((folder) => folder && folder.trim() !== ''); // Remove empty or null values
 
-	if (range) {
-		const parts = range.replace(/bytes=/, '').split('-');
-		const start = parseInt(parts[0], 10);
-		const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-		const chunksize = end - start + 1;
-		const file = fs.createReadStream(filePath, { start, end });
-		res.writeHead(206, {
-			'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-			'Accept-Ranges': 'bytes',
-			'Content-Length': chunksize,
-			'Content-Type': fileName.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t',
-		});
-		file.pipe(res);
-	} else {
-		res.sendFile(filePath);
-	}
+		console.log(`Found ${subfolders.length} subfolders\n${subfolders}`);
+		res.json({ subfolders });
+	});
 });
-
-// app.get('/videos/:filename', (req, res) => {
-// 	console.log('Serving video:', req.params.filename);
-// 	const filename = req.params.filename + (req.params[0] || ''); // Include subfolder if present
-// 	const filePath = path.join(__dirname, 'videos', filename); // Adjust path
-
-// 	if (filename.endsWith('.mp4')) {
-// 		res.setHeader('Content-Type', 'video/mp4');
-// 	}
-
-// 	res.sendFile(filePath, (err) => {
-// 		if (err) {
-// 			console.error('Error serving video:', err);
-// 			res.status(404).json({ error: 'Video not found' });
-// 		}
-// 	});
-// });
-
-// // Catch-all for debugging
-// app.use((req, res) => {
-// 	console.log(`Unhandled request: ${req.method} ${req.url}`);
-// 	res.status(404).send('Not found');
-// });
 
 app.use('/videos', express.static(videoDir));
 
@@ -1135,9 +1213,6 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-// server = app.listen(PORT, () => {
-// 	console.log(`Server running at http://${getLocalIpAddress()}:${PORT}`);
-// });
 server.listen(PORT, (err) => {
 	if (err) {
 		if (err.code === 'EADDRINUSE') {
