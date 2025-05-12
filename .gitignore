@@ -4,3 +4,4 @@ uploads/
 songrequests.json
 songQueue.json
 config.ini
+mydatabase.sqlite
