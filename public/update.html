@@ -352,6 +352,8 @@
 
 			saveAllButton.addEventListener('click', () => {
 				console.log('Save All button clicked');
+				console.log('Scanned files:', scannedFiles);
+				return;
 				if (scannedFiles.length === 0) {
 					showMessage('No files to save.', 'info');
 					return;

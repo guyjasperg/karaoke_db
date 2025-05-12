@@ -823,6 +823,7 @@ app.post('/api/upload-db', uploadDb.single('dbFile'), (req, res) => {
 
 // API endpoint to save one or more songs to dbSongs
 app.post('/api/updateSong', (req, res) => {
+	console.log('Received POST request to save songs');
 	const songs = Array.isArray(req.body) ? req.body : [req.body];
 	const results = [];
 	let errorOccurred = false;
@@ -997,7 +998,7 @@ app.get('/api/scan', (req, res) => {
 	console.log('Scanning for new video files...');
 	const { folder } = req.query;
 
-	const pathToQuery = videoDir.split('/').pop();
+	const pathToQuery = `${videoDir.split('/').pop()}/${folder}`;
 	console.log(`Path to query: ${pathToQuery}`);
 
 	if (!folder) {
@@ -1021,22 +1022,18 @@ app.get('/api/scan', (req, res) => {
 		const videoFiles = files.filter((file) => file.endsWith('.mp4') && !file.startsWith('.'));
 		console.log(`Found ${videoFiles.length} .mp4 files in ${subfolderPath}`);
 
-		const pathToQuery = videoDir.split('/').pop();
-		console.log(`Path to query: ${pathToQuery}`);
-
-		const sql = `SELECT filename, path FROM dbSongs`;
-		db.all(sql, [], (err, rows) => {
+		const sql = `SELECT path FROM dbSongs WHERE path LIKE ?`;
+		db.all(sql, [`%${pathToQuery}%`], (err, rows) => {
 			if (err) {
 				console.error('Error querying database:', err);
 				return res.status(500).json({ error: 'Database error' });
 			}
 
-			const existingFiles = new Set(rows.map((row) => row.filename));
-			const existingPaths = new Set(rows.map((row) => row.path));
-			const newFiles = videoFiles.filter(
-				(file) => !existingFiles.has(file) && !existingPaths.has(path.join(subfolderPath, file))
-			);
+			const existingFiles = new Set(rows.map((row) => path.basename(row.path)));
+			console.log(`Found ${existingFiles.size} existing files in the database`);
 
+			const newFiles = videoFiles.filter((file) => !existingFiles.has(file));
+			console.log(`Found ${newFiles.length} new files`);
 			if (newFiles.length === 0) {
 				console.log('No new files found');
 				return res.status(200).json([]);
