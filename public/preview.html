@@ -6,6 +6,28 @@
 		<title>Search & Preview Songs - Karaoke Master</title>
 		<link href="./styles.css" rel="stylesheet" />
 		<style>
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				height: 100%;
+				margin: 0;
+				overflow: hidden;
+			}
+			main {
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+				padding: 0;
+			}
+			.bg-gray-800 {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				padding: 1rem;
+				overflow: hidden;
+			}
 			::-webkit-scrollbar {
 				width: 8px;
 				height: 8px;
@@ -51,12 +73,17 @@
 			table {
 				width: 100%;
 				border-collapse: collapse;
+				height: auto;
+				table-layout: fixed;
+				max-height: 100%;
 			}
 			th,
 			td {
 				border: 1px solid #374151;
 				padding: 0.25rem;
 				text-align: left;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 			th {
 				background-color: #1f2937;
@@ -191,10 +218,22 @@
 				margin-bottom: 1rem;
 			}
 			.bottom-section {
+				flex: 1;
+				overflow-y: auto;
+				overflow-x: hidden;
+				max-height: calc(100vh - 44vh - 48px - 2rem - 40px);
 				margin-top: 0;
 			}
 			.results-container {
-				margin-top: 1rem;
+				height: auto;
+				margin-top: 0;
+			}
+			.table-container {
+				overflow-x: auto;
+				overflow-y: hidden;
+				height: auto;
+				max-height: 100%;
+				padding-bottom: 40px; /* Your fix for last row visibility */
 			}
 			.modal {
 				display: none;
@@ -289,6 +328,10 @@
 			.modal-content .cancel-btn:hover {
 				background: #6b7280;
 			}
+			footer {
+				height: 48px;
+				padding: 0.5rem;
+			}
 			@media (min-width: 640px) {
 				.video-container {
 					padding-bottom: 0.5rem;
@@ -309,6 +352,25 @@
 				td {
 					padding: 0.5rem;
 				}
+				.bottom-section {
+					flex: 1;
+					max-height: none;
+					overflow: hidden;
+					margin-bottom: 0;
+				}
+				.results-container {
+					overflow-y: auto;
+					overflow-x: hidden;
+					max-height: calc(100vh - 40vh - 60px - 48px - 2rem - 40px - 10px);
+					margin-top: 0.5rem;
+					margin-bottom: 0;
+				}
+				.table-container {
+					overflow-y: hidden;
+					overflow-x: auto;
+					max-height: 100%;
+					padding-bottom: 40px; /* Your fix for last row visibility */
+				}
 			}
 			@media (max-width: 640px) {
 				.song-details div:not(.font-bold) {
@@ -326,22 +388,14 @@
 					display: inline-flex;
 					gap: 0.5rem;
 				}
-				.bottom-section {
-					height: calc(100vh - 44vh);
-					overflow-y: auto;
-				}
-				.results-container {
-					max-height: none;
-					margin-top: 0;
-				}
 			}
 		</style>
 	</head>
 	<body class="flex flex-col min-h-screen bg-gray-900 text-gray-100">
 		<div id="message-container" class="p-3 rounded text-sm hidden" aria-live="polite"></div>
 
-		<main class="flex-1 container mx-auto p-2 sm:p-4">
-			<div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+		<main class="flex-1 container mx-auto">
+			<div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700">
 				<div class="top-section">
 					<div class="video-container">
 						<div id="videoTitle" class="video-title">No song selected</div>
@@ -436,7 +490,7 @@
 				<div class="bottom-section">
 					<div id="results" class="results-container hidden">
 						<h2 class="text-2xl font-bold mb-4 text-white">Search Results</h2>
-						<div class="overflow-x-auto">
+						<div class="table-container">
 							<table>
 								<thead>
 									<tr>
@@ -489,7 +543,7 @@
 			</div>
 		</main>
 
-		<footer class="bg-gray-900 text-gray-400 p-4 text-center text-sm border-t border-gray-800">
+		<footer class="bg-gray-900 text-gray-400 text-center text-sm border-t border-gray-800">
 			© <span id="current-year"></span> - Karaoke Master
 		</footer>
 
@@ -725,14 +779,26 @@
 					const scrollContainer = isMobile
 						? document.querySelector('.bottom-section')
 						: document.querySelector('.results-container');
-					const rowRect = currentRow.getBoundingClientRect();
 					const containerRect = scrollContainer.getBoundingClientRect();
-					if (rowRect.top < containerRect.top || rowRect.bottom > containerRect.bottom) {
+					const rowRect = currentRow.getBoundingClientRect();
+					const offset = rowRect.top - containerRect.top + scrollContainer.scrollTop - 40;
+					const containerHeight = containerRect.height;
+					const rowHeight = rowRect.height;
+					const maxScroll = scrollContainer.scrollHeight - containerHeight;
+					let scrollPosition = offset - (containerHeight - rowHeight) / 2;
+					const isLastRow = index === searchResults.length - 1;
+					if (isLastRow) {
+						scrollPosition = maxScroll;
+					} else if (offset + rowHeight > containerHeight - 40) {
+						scrollPosition = offset - 40 + rowHeight;
+					}
+					scrollPosition = Math.min(maxScroll, Math.max(0, scrollPosition));
+					requestAnimationFrame(() => {
 						scrollContainer.scrollTo({
-							top: currentRow.offsetTop - scrollContainer.offsetTop,
+							top: scrollPosition,
 							behavior: 'smooth',
 						});
-					}
+					});
 				}
 			}
 
