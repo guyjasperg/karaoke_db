@@ -156,6 +156,65 @@ app.put('/api/songrequest/:sequenceID', (req, res) => {
 	res.status(200).json(songRequests[songIndex]);
 });
 
+// API endpoint to update song details
+app.put('/api/songs/:songid', (req, res) => {
+	const { songid } = req.params;
+	const { Artist, Title, startTime } = req.body;
+
+	console.log(`Updating song ${songid} with:`, { Artist, Title, startTime });
+
+	// Validate input
+	if (!Artist && !Title && startTime === undefined) {
+		return res
+			.status(400)
+			.json({ error: 'At least one field (Artist, Title, or startTime) must be provided' });
+	}
+
+	// Build the SQL query dynamically based on provided fields
+	let updateFields = [];
+	let params = [];
+
+	if (Artist !== undefined) {
+		updateFields.push('Artist = ?');
+		params.push(Artist);
+	}
+	if (Title !== undefined) {
+		updateFields.push('Title = ?');
+		params.push(Title);
+	}
+	if (startTime !== undefined) {
+		updateFields.push('startTime = ?');
+		params.push(startTime);
+	}
+
+	// Add songid to params
+	params.push(songid);
+
+	const sql = `
+        UPDATE dbSongs 
+        SET ${updateFields.join(', ')}
+        WHERE songid = ?
+    `;
+
+	db.run(sql, params, function (err) {
+		if (err) {
+			console.error('Error updating song:', err);
+			return res.status(500).json({ error: err.message });
+		}
+
+		if (this.changes === 0) {
+			return res.status(404).json({ error: 'Song not found' });
+		}
+
+		console.log(`Successfully updated song ${songid}`);
+		res.json({
+			message: 'Song updated successfully',
+			songid,
+			changes: this.changes,
+		});
+	});
+});
+
 // Endpoint to delete a song from songsList
 app.delete('/api/songrequest/:sequenceID', (req, res) => {
 	const { sequenceID } = req.params;

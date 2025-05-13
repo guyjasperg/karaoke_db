@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Search & Preview Songs - Karaoke Master</title>
+		<link href="./styles.css" rel="stylesheet" />
+		<style>
+			::-webkit-scrollbar {
+				width: 8px;
+				height: 8px;
+			}
+			::-webkit-scrollbar-track {
+				background: #1f2937;
+			}
+			::-webkit-scrollbar-thumb {
+				background: #4c1d95;
+				border-radius: 4px;
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background: #5b21b6;
+			}
+			.disabled-btn {
+				opacity: 0.5;
+				cursor: not-allowed;
+				pointer-events: none;
+			}
+			#message-container {
+				position: fixed;
+				top: 16px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 20;
+				max-width: 90%;
+				width: 320px;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+			}
+			.animate-slide-in {
+				animation: slide-in 0.5s ease-out;
+			}
+			@keyframes slide-in {
+				0% {
+					opacity: 0;
+					transform: translateY(-20px) translateX(-50%);
+				}
+				100% {
+					opacity: 1;
+					transform: translateY(0) translateX(-50%);
+				}
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+			th,
+			td {
+				border: 1px solid #374151;
+				padding: 0.25rem;
+				text-align: left;
+			}
+			th {
+				background-color: #1f2937;
+				font-weight: bold;
+			}
+			tr {
+				cursor: pointer;
+			}
+			tr:nth-child(even) {
+				background-color: #1f2937;
+			}
+			tr.highlighted {
+				background-color: #4c1d95;
+				border: 1px solid #6b21a8;
+			}
+			.preview-btn,
+			.edit-btn,
+			.delete-btn {
+				padding: 0.25rem;
+				border-radius: 0.25rem;
+				border: none;
+				cursor: pointer;
+				color: white;
+				margin-right: 0.5rem;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 32px;
+				height: 32px;
+			}
+			.preview-btn {
+				background: #2563eb;
+			}
+			.preview-btn:hover {
+				background: #1d4ed8;
+			}
+			.edit-btn {
+				background: #6b21a8;
+			}
+			.edit-btn:hover {
+				background: #5b21b6;
+			}
+			.delete-btn {
+				background: #dc2626;
+			}
+			.delete-btn:hover {
+				background: #b91c1c;
+			}
+			.preview-btn svg,
+			.edit-btn svg,
+			.delete-btn svg {
+				width: 16px;
+				height: 16px;
+				fill: white;
+			}
+			.top-section {
+				position: sticky;
+				top: 0;
+				z-index: 10;
+				background: #1f2937;
+			}
+			.video-container {
+				position: relative;
+				z-index: 10;
+				background: #1f2937;
+				padding-bottom: 0.25rem;
+			}
+			.video-title {
+				font-size: 0.875rem;
+				color: #f3f4f6;
+				padding: 0.25rem 0;
+				text-align: center;
+			}
+			.video-controls {
+				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
+				margin-top: 0.5rem;
+				color: #f3f4f6;
+			}
+			.video-controls .control-buttons,
+			.video-controls .time-controls {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.video-controls button {
+				background: #4b5563;
+				color: white;
+				border: none;
+				padding: 0.5rem;
+				border-radius: 0.25rem;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 36px;
+				height: 36px;
+			}
+			.video-controls button:hover {
+				background: #6b7280;
+			}
+			.video-controls svg {
+				width: 16px;
+				height: 16px;
+				fill: white;
+			}
+			.video-controls input[type='range'] {
+				width: 100%;
+			}
+			.video-controls .seek-bar {
+				flex: 1;
+			}
+			.video-controls .time-display {
+				width: 80px;
+				font-size: 0.875rem;
+				text-align: right;
+			}
+			video {
+				width: 100%;
+				aspect-ratio: 16 / 9;
+				max-height: 40vh;
+				height: auto;
+				background: black;
+				display: block;
+			}
+			.search-container {
+				position: relative;
+				z-index: 12;
+				background: #1f2937;
+				padding: 0.25rem 0;
+				margin-bottom: 1rem;
+			}
+			.bottom-section {
+				margin-top: 0;
+			}
+			.results-container {
+				margin-top: 1rem;
+			}
+			.modal {
+				display: none;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.7);
+				z-index: 30;
+				align-items: center;
+				justify-content: center;
+			}
+			.modal-content {
+				background: #1f2937;
+				padding: 1.5rem;
+				border-radius: 0.5rem;
+				width: 100%;
+				max-width: 400px;
+				color: #f3f4f6;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+				animation: modal-open 0.3s ease-out;
+			}
+			@keyframes modal-open {
+				from {
+					transform: scale(0.8);
+					opacity: 0;
+				}
+				to {
+					transform: scale(1);
+					opacity: 1;
+				}
+			}
+			.modal-content h2 {
+				font-size: 1.25rem;
+				margin-bottom: 1rem;
+			}
+			.modal-content p {
+				font-size: 0.875rem;
+				margin-bottom: 0.5rem;
+			}
+			.modal-content label {
+				display: block;
+				margin-bottom: 0.5rem;
+				font-size: 0.875rem;
+			}
+			.modal-content input {
+				width: 100%;
+				padding: 0.5rem;
+				border: 1px solid #374151;
+				background: #111827;
+				color: #f3f4f6;
+				border-radius: 0.25rem;
+				margin-bottom: 1rem;
+			}
+			.modal-content input:focus {
+				outline: none;
+				border-color: #2563eb;
+				box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+			}
+			.modal-content .button-group {
+				display: flex;
+				gap: 1rem;
+				justify-content: flex-end;
+				margin-top: 1rem;
+			}
+			.modal-content button {
+				padding: 0.5rem 1rem;
+				border-radius: 0.25rem;
+				border: none;
+				cursor: pointer;
+				font-weight: 500;
+			}
+			.modal-content .save-btn {
+				background: #2563eb;
+				color: white;
+			}
+			.modal-content .save-btn:hover {
+				background: #1d4ed8;
+			}
+			.modal-content .delete-confirm-btn {
+				background: #dc2626;
+				color: white;
+			}
+			.modal-content .delete-confirm-btn:hover {
+				background: #b91c1c;
+			}
+			.modal-content .cancel-btn {
+				background: #4b5563;
+				color: white;
+			}
+			.modal-content .cancel-btn:hover {
+				background: #6b7280;
+			}
+			@media (min-width: 640px) {
+				.video-container {
+					padding-bottom: 0.5rem;
+				}
+				.search-container {
+					padding: 0.5rem 0;
+				}
+				.video-controls {
+					flex-direction: row;
+					align-items: center;
+					gap: 1rem;
+				}
+				.video-controls .control-buttons,
+				.video-controls .time-controls {
+					gap: 1rem;
+				}
+				.th,
+				td {
+					padding: 0.5rem;
+				}
+			}
+			@media (max-width: 640px) {
+				.song-details div:not(.font-bold) {
+					font-size: 0.75rem;
+				}
+				.song-details > div {
+					margin-bottom: 0.25rem;
+				}
+				th:last-child,
+				td:last-child {
+					min-width: 110px;
+					white-space: nowrap;
+				}
+				.action-buttons {
+					display: inline-flex;
+					gap: 0.5rem;
+				}
+				.bottom-section {
+					height: calc(100vh - 44vh);
+					overflow-y: auto;
+				}
+				.results-container {
+					max-height: none;
+					margin-top: 0;
+				}
+			}
+		</style>
+	</head>
+	<body class="flex flex-col min-h-screen bg-gray-900 text-gray-100">
+		<div id="message-container" class="p-3 rounded text-sm hidden" aria-live="polite"></div>
+
+		<main class="flex-1 container mx-auto p-2 sm:p-4">
+			<div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+				<div class="top-section">
+					<div class="video-container">
+						<div id="videoTitle" class="video-title">No song selected</div>
+						<video id="previewVideo">
+							<source id="videoSource" src="" type="video/mp4" />
+							Your browser does not support the video tag.
+						</video>
+						<div class="video-controls">
+							<div class="control-buttons">
+								<button id="prevSongBtn" title="Previous Song">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
+									</svg>
+								</button>
+								<button id="seekBackwardBtn" title="Seek Backward 10s">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M6.025 12 13 6v12l-6.975-6zm7.975 6h2V6h-2z" />
+									</svg>
+								</button>
+								<button id="playPauseBtn" title="Play/Pause">
+									<svg id="playIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M8 5v14l11-7z" />
+									</svg>
+									<svg
+										id="pauseIcon"
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										class="hidden"
+									>
+										<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+									</svg>
+								</button>
+								<button id="seekForwardBtn" title="Seek Forward 10s">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M18.975 12 12 6v12l6.975-6zm-7.975-6h-2v12h2z" />
+									</svg>
+								</button>
+								<button id="nextSongBtn" title="Next Song">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M18 6h-2v12h2zm-3.5 6-8.5 6V6z" />
+									</svg>
+								</button>
+								<input
+									type="range"
+									id="volumeBar"
+									class="sm:inline-block hidden"
+									value="1"
+									min="0"
+									max="1"
+									step="0.1"
+								/>
+							</div>
+							<div class="time-controls">
+								<input type="range" id="seekBar" class="seek-bar" value="0" min="0" max="100" />
+								<span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="search-container">
+						<div class="flex flex-col sm:flex-row sm:space-x-4 sm:items-end">
+							<div class="flex-1">
+								<label for="searchInput" class="sm:block hidden text-sm font-medium text-gray-300"
+									>Search Songs</label
+								>
+								<input
+									type="text"
+									id="searchInput"
+									aria-label="Search Songs"
+									class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+									placeholder="Enter artist or title..."
+								/>
+							</div>
+							<div class="sm:inline-block hidden">
+								<button
+									id="searchButton"
+									class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+								>
+									Search
+								</button>
+							</div>
+							<button
+								id="findDuplicatesButton"
+								class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mt-2 sm:mt-0"
+							>
+								Find Duplicate Songs
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="bottom-section">
+					<div id="results" class="results-container hidden">
+						<h2 class="text-2xl font-bold mb-4 text-white">Search Results</h2>
+						<div class="overflow-x-auto">
+							<table>
+								<thead>
+									<tr>
+										<th class="sm:hidden">Song</th>
+										<th class="hidden sm:table-cell">Artist</th>
+										<th class="hidden sm:table-cell">Title</th>
+										<th class="hidden sm:table-cell">Start Time</th>
+										<th class="hidden sm:table-cell">Time</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody id="songTable"></tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+				<div id="editModal" class="modal">
+					<div class="modal-content">
+						<h2>Edit Song</h2>
+						<form id="editForm">
+							<label for="editArtist">Artist</label>
+							<input type="text" id="editArtist" name="Artist" />
+							<label for="editTitle">Title</label>
+							<input type="text" id="editTitle" name="Title" />
+							<label for="editStartTime">Start Time (seconds)</label>
+							<input type="number" id="editStartTime" name="startTime" step="0.1" min="0" />
+							<div class="button-group">
+								<button type="button" class="cancel-btn" id="cancelEditBtn">Cancel</button>
+								<button type="submit" class="save-btn">Save</button>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<div id="deleteModal" class="modal">
+					<div class="modal-content">
+						<h2>Confirm Delete</h2>
+						<p id="deleteArtist"></p>
+						<p id="deleteTitle"></p>
+						<p id="deleteStartTime"></p>
+						<div class="button-group">
+							<button type="button" class="cancel-btn" id="cancelDeleteBtn">Cancel</button>
+							<button type="button" class="delete-confirm-btn" id="confirmDeleteBtn">
+								Yes, Delete
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<footer class="bg-gray-900 text-gray-400 p-4 text-center text-sm border-t border-gray-800">
+			© <span id="current-year"></span> - Karaoke Master
+		</footer>
+
+		<script>
+			console.log('Script loaded');
+
+			const videoDir = '/videos';
+			const searchInput = document.getElementById('searchInput');
+			const searchButton = document.getElementById('searchButton');
+			const findDuplicatesButton = document.getElementById('findDuplicatesButton');
+			const resultsDiv = document.getElementById('results');
+			const songTable = document.getElementById('songTable');
+			const previewVideo = document.getElementById('previewVideo');
+			const videoSource = document.getElementById('videoSource');
+			const videoTitle = document.getElementById('videoTitle');
+			const prevSongBtn = document.getElementById('prevSongBtn');
+			const seekBackwardBtn = document.getElementById('seekBackwardBtn');
+			const playPauseBtn = document.getElementById('playPauseBtn');
+			const seekForwardBtn = document.getElementById('seekForwardBtn');
+			const nextSongBtn = document.getElementById('nextSongBtn');
+			const playIcon = document.getElementById('playIcon');
+			const pauseIcon = document.getElementById('pauseIcon');
+			const seekBar = document.getElementById('seekBar');
+			const timeDisplay = document.getElementById('timeDisplay');
+			const volumeBar = document.getElementById('volumeBar');
+			const messageContainer = document.getElementById('message-container');
+			const currentYearElement = document.getElementById('current-year');
+			const editModal = document.getElementById('editModal');
+			const editForm = document.getElementById('editForm');
+			const editArtist = document.getElementById('editArtist');
+			const editTitle = document.getElementById('editTitle');
+			const editStartTime = document.getElementById('editStartTime');
+			const cancelEditBtn = document.getElementById('cancelEditBtn');
+			const deleteModal = document.getElementById('deleteModal');
+			const deleteArtist = document.getElementById('deleteArtist');
+			const deleteTitle = document.getElementById('deleteTitle');
+			const deleteStartTime = document.getElementById('deleteStartTime');
+			const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+			const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+			let searchResults = [];
+			let currentSongIndex = -1;
+			let editingSongIndex = -1;
+			let deletingSongIndex = -1;
+
+			currentYearElement.textContent = new Date().getFullYear();
+
+			document.addEventListener('DOMContentLoaded', () => {
+				console.log('DOM fully loaded');
+				resultsDiv.classList.add('hidden');
+			});
+
+			function extractFolderFromPath(path) {
+				const parts = path.split('/');
+				if (parts.length < 2) return { folder: '', filename: path };
+				const filename = parts.pop();
+				const folder = parts.pop();
+				return { folder, filename };
+			}
+
+			function performSearch() {
+				const query = searchInput.value.trim();
+				if (!query) {
+					showMessage('Please enter a search query.', 'error');
+					return;
+				}
+				fetch(`/api/songs/search?query=${encodeURIComponent(query)}`)
+					.then((response) => {
+						if (!response.ok) throw new Error(`Search failed: ${response.status}`);
+						return response.json();
+					})
+					.then((data) => {
+						searchResults = data.map((song) => {
+							const { folder, filename } = extractFolderFromPath(song.path);
+							return {
+								songid: song.songid,
+								artist: song.Artist,
+								title: song.Title,
+								filename: filename,
+								folder: folder,
+								duration: song.Duration,
+								startTime: song.startTime,
+							};
+						});
+						currentSongIndex = -1;
+						videoTitle.textContent = 'No song selected';
+						displayResults();
+					})
+					.catch((error) => {
+						console.error('Error searching songs:', error);
+						showMessage('Failed to search songs. Please try again.', 'error');
+					});
+			}
+
+			searchButton.addEventListener('click', performSearch);
+
+			searchInput.addEventListener('keypress', (event) => {
+				if (event.key === 'Enter') {
+					performSearch();
+				}
+			});
+
+			findDuplicatesButton.addEventListener('click', () => {
+				fetch('/api/songs/duplicates')
+					.then((response) => {
+						if (!response.ok) throw new Error(`Failed to find duplicates: ${response.status}`);
+						return response.json();
+					})
+					.then((data) => {
+						searchResults = data.map((song) => {
+							const { folder, filename } = extractFolderFromPath(song.path);
+							return {
+								songid: song.songid,
+								artist: song.Artist,
+								title: song.Title,
+								filename: filename,
+								folder: folder,
+								duration: song.Duration,
+								startTime: song.startTime,
+							};
+						});
+						currentSongIndex = -1;
+						videoTitle.textContent = 'No song selected';
+						displayResults();
+						if (searchResults.length === 0) {
+							showMessage('No duplicate songs found.', 'info');
+						} else {
+							showMessage(`${searchResults.length} duplicate song(s) found.`, 'success');
+						}
+					})
+					.catch((error) => {
+						console.error('Error finding duplicates:', error);
+						showMessage('Failed to find duplicates. Please try again.', 'error');
+					});
+			});
+
+			function formatTime(milliseconds) {
+				const seconds = Math.floor(milliseconds / 1000);
+				const minutes = Math.floor(seconds / 60);
+				const secs = seconds % 60;
+				return `${minutes}:${secs.toString().padStart(2, '0')}`;
+			}
+
+			function displayResults() {
+				songTable.innerHTML = '';
+				const isMobile = window.matchMedia('(max-width: 640px)').matches;
+				if (searchResults.length === 0) {
+					resultsDiv.classList.remove('hidden');
+					songTable.innerHTML = `<tr><td colspan="${
+						isMobile ? 2 : 5
+					}" class="text-center">No results found.</td></tr>`;
+					videoSource.src = '';
+					previewVideo.load();
+					videoTitle.textContent = 'No song selected';
+					currentSongIndex = -1;
+					return;
+				}
+
+				searchResults.forEach((song, index) => {
+					const row = document.createElement('tr');
+					row.dataset.index = index;
+					if (index === currentSongIndex) {
+						row.classList.add('highlighted');
+					}
+					if (isMobile) {
+						row.innerHTML = `
+							<td class="song-details">
+								<div class="font-bold">${song.title || 'Unknown'}</div>
+								<div class="text-sm">${song.artist || 'Unknown'}</div>
+								<div class="text-sm">Start: ${song.startTime != null ? song.startTime : '0'}s | Time: ${formatTime(
+							song.duration || 0
+						)}</div>
+							</td>
+							<td>
+								<div class="action-buttons">
+								<button class="preview-btn" data-index="${index}">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M8 5v14l11-7z"/>
+									</svg>
+								</button>
+								<button class="edit-btn" data-index="${index}">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+									</svg>
+								</button>
+								<button class="delete-btn" data-index="${index}">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+									</svg>
+								</button>
+								</div>
+							</td>
+						`;
+					} else {
+						row.innerHTML = `
+							<td>${song.artist || 'Unknown'}</td>
+							<td>${song.title || 'Unknown'}</td>
+							<td>${song.startTime != null ? song.startTime : '0'}</td>
+							<td>${formatTime(song.duration || 0)}</td>
+							<td>
+								<button class="preview-btn" data-index="${index}">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M8 5v14l11-7z"/>
+									</svg>
+								</button>
+								<button class="edit-btn" data-index="${index}">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+									</svg>
+								</button>
+								<button class="delete-btn" data-index="${index}">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+										<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+									</svg>
+								</button>
+							</td>
+						`;
+					}
+					songTable.appendChild(row);
+				});
+				resultsDiv.classList.remove('hidden');
+			}
+
+			function highlightRow(index) {
+				if (index < 0 || index >= searchResults.length) return;
+				currentSongIndex = index;
+				const rows = songTable.querySelectorAll('tr');
+				rows.forEach((row) => row.classList.remove('highlighted'));
+				const currentRow = songTable.querySelector(`tr[data-index="${index}"]`);
+				if (currentRow) {
+					currentRow.classList.add('highlighted');
+					const isMobile = window.matchMedia('(max-width: 640px)').matches;
+					const scrollContainer = isMobile
+						? document.querySelector('.bottom-section')
+						: document.querySelector('.results-container');
+					const rowRect = currentRow.getBoundingClientRect();
+					const containerRect = scrollContainer.getBoundingClientRect();
+					if (rowRect.top < containerRect.top || rowRect.bottom > containerRect.bottom) {
+						scrollContainer.scrollTo({
+							top: currentRow.offsetTop - scrollContainer.offsetTop,
+							behavior: 'smooth',
+						});
+					}
+				}
+			}
+
+			songTable.addEventListener('click', (event) => {
+				const row = event.target.closest('tr');
+				if (!row || !row.dataset.index) return;
+				const index = parseInt(row.dataset.index);
+				if (event.target.closest('.preview-btn')) {
+					currentSongIndex = index;
+					loadSong(currentSongIndex);
+				} else if (event.target.closest('.edit-btn')) {
+					editingSongIndex = index;
+					openEditModal();
+				} else if (event.target.closest('.delete-btn')) {
+					deletingSongIndex = index;
+					openDeleteModal();
+				} else {
+					highlightRow(index);
+				}
+			});
+
+			songTable.addEventListener('dblclick', (event) => {
+				const row = event.target.closest('tr');
+				if (
+					row &&
+					row.dataset.index &&
+					!event.target.closest('.preview-btn') &&
+					!event.target.closest('.edit-btn') &&
+					!event.target.closest('.delete-btn')
+				) {
+					editingSongIndex = parseInt(row.dataset.index);
+					openEditModal();
+				}
+			});
+
+			function openEditModal() {
+				if (editingSongIndex < 0 || editingSongIndex >= searchResults.length) return;
+				const song = searchResults[editingSongIndex];
+				editArtist.value = song.artist || '';
+				editTitle.value = song.title || '';
+				editStartTime.value = song.startTime != null ? song.startTime : '0';
+				editModal.style.display = 'flex';
+				editArtist.focus();
+			}
+
+			function closeEditModal() {
+				editModal.style.display = 'none';
+				editingSongIndex = -1;
+			}
+
+			function openDeleteModal() {
+				if (deletingSongIndex < 0 || deletingSongIndex >= searchResults.length) return;
+				const song = searchResults[deletingSongIndex];
+				deleteArtist.textContent = `Artist: ${song.artist || 'Unknown'}`;
+				deleteTitle.textContent = `Title: ${song.title || 'Unknown'}`;
+				deleteStartTime.textContent = `Start Time: ${
+					song.startTime != null ? song.startTime : '0'
+				} seconds`;
+				deleteModal.style.display = 'flex';
+				confirmDeleteBtn.focus();
+			}
+
+			function closeDeleteModal() {
+				deleteModal.style.display = 'none';
+				deletingSongIndex = -1;
+			}
+
+			editForm.addEventListener('submit', (event) => {
+				event.preventDefault();
+				const song = searchResults[editingSongIndex];
+				const updatedData = {};
+				if (editArtist.value.trim()) updatedData.Artist = editArtist.value.trim();
+				if (editTitle.value.trim()) updatedData.Title = editTitle.value.trim();
+				if (editStartTime.value !== '') updatedData.startTime = parseFloat(editStartTime.value);
+
+				if (Object.keys(updatedData).length === 0) {
+					showMessage('Please provide at least one field to update.', 'error');
+					return;
+				}
+
+				fetch(`/api/songs/${song.songid}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(updatedData),
+				})
+					.then((response) => {
+						if (!response.ok) {
+							return response.json().then((err) => {
+								throw new Error(err.error);
+							});
+						}
+						return response.json();
+					})
+					.then((data) => {
+						if (updatedData.Artist) song.artist = updatedData.Artist;
+						if (updatedData.Title) {
+							song.title = updatedData.Title;
+							if (editingSongIndex === currentSongIndex) {
+								videoTitle.textContent = song.title;
+							}
+						}
+						if (updatedData.startTime !== undefined) song.startTime = updatedData.startTime;
+						displayResults();
+						closeEditModal();
+						showMessage('Song updated successfully!', 'success');
+					})
+					.catch((error) => {
+						console.error('Error updating song:', error);
+						showMessage(`Failed to update song: ${error.message}`, 'error');
+					});
+			});
+
+			cancelEditBtn.addEventListener('click', closeEditModal);
+
+			confirmDeleteBtn.addEventListener('click', () => {
+				const song = searchResults[deletingSongIndex];
+				fetch(`/api/songs/${song.songid}`, {
+					method: 'DELETE',
+				})
+					.then((response) => {
+						if (!response.ok) {
+							return response.json().then((err) => {
+								throw new Error(err.error || 'Failed to delete song');
+							});
+						}
+						return response.json();
+					})
+					.then((data) => {
+						const wasPlaying = deletingSongIndex === currentSongIndex;
+						searchResults.splice(deletingSongIndex, 1);
+						if (deletingSongIndex <= currentSongIndex && currentSongIndex > 0) {
+							currentSongIndex--;
+						}
+						if (wasPlaying) {
+							previewVideo.pause();
+							videoSource.src = '';
+							previewVideo.load();
+							videoTitle.textContent = 'No song selected';
+							currentSongIndex =
+								searchResults.length > 0
+									? Math.min(currentSongIndex, searchResults.length - 1)
+									: -1;
+						}
+						displayResults();
+						closeDeleteModal();
+						showMessage('Song deleted successfully!', 'success');
+					})
+					.catch((error) => {
+						console.error('Error deleting song:', error);
+						showMessage(`Failed to delete song: ${error.message}`, 'error');
+						closeDeleteModal();
+					});
+			});
+
+			cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+			document.addEventListener('keydown', (event) => {
+				if (event.key === 'Escape') {
+					if (editModal.style.display === 'flex') {
+						closeEditModal();
+					} else if (deleteModal.style.display === 'flex') {
+						closeDeleteModal();
+					}
+				} else if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+					switch (event.key) {
+						case 'Enter':
+							event.preventDefault();
+							if (currentSongIndex >= 0 && currentSongIndex < searchResults.length) {
+								loadSong(currentSongIndex);
+							}
+							break;
+						case ' ':
+							event.preventDefault();
+							if (currentSongIndex >= 0 && currentSongIndex < searchResults.length) {
+								const currentSrc = videoSource.src;
+								const song = searchResults[currentSongIndex];
+								const newSrc = `${videoDir}/${encodeURIComponent(song.folder)}/${encodeURIComponent(
+									song.filename
+								)}`;
+								if (currentSrc !== newSrc) {
+									loadSong(currentSongIndex);
+								} else {
+									if (previewVideo.paused) {
+										previewVideo.play();
+									} else {
+										previewVideo.pause();
+									}
+									updatePlayPauseButton();
+								}
+							}
+							break;
+						case 'ArrowUp':
+							event.preventDefault();
+							if (searchResults.length > 0) {
+								const newIndex =
+									currentSongIndex <= 0 ? searchResults.length - 1 : currentSongIndex - 1;
+								highlightRow(newIndex);
+							}
+							break;
+						case 'ArrowDown':
+							event.preventDefault();
+							if (searchResults.length > 0) {
+								const newIndex =
+									currentSongIndex >= searchResults.length - 1 ? 0 : currentSongIndex + 1;
+								highlightRow(newIndex);
+							}
+							break;
+						case 'ArrowLeft':
+							seekBackwardBtn.click();
+							break;
+						case 'ArrowRight':
+							seekForwardBtn.click();
+							break;
+					}
+				}
+			});
+
+			function loadSong(index) {
+				if (index < 0 || index >= searchResults.length) return;
+				const song = searchResults[index];
+				const newSrc = `${videoDir}/${encodeURIComponent(song.folder)}/${encodeURIComponent(
+					song.filename
+				)}`;
+				if (videoSource.src !== newSrc) {
+					videoSource.src = newSrc;
+					previewVideo.load();
+					previewVideo.currentTime = song.startTime != null ? song.startTime : 0;
+					previewVideo.volume = 1.0;
+				}
+				videoTitle.textContent = song.title || 'Unknown';
+				updatePlayPauseButton();
+				previewVideo.play().catch(() => {
+					showMessage('Failed to play video. Please try again.', 'error');
+				});
+				highlightRow(index);
+			}
+
+			function updatePlayPauseButton() {
+				if (previewVideo.paused) {
+					playIcon.classList.remove('hidden');
+					pauseIcon.classList.add('hidden');
+				} else {
+					playIcon.classList.add('hidden');
+					pauseIcon.classList.remove('hidden');
+				}
+			}
+
+			function updateTimeDisplay() {
+				const currentTime = previewVideo.currentTime;
+				const duration = previewVideo.duration || 0;
+				timeDisplay.textContent = `${formatTime(currentTime * 1000)} / ${formatTime(
+					duration * 1000
+				)}`;
+			}
+
+			playPauseBtn.addEventListener('click', () => {
+				if (previewVideo.paused) {
+					previewVideo.play();
+				} else {
+					previewVideo.pause();
+				}
+				updatePlayPauseButton();
+			});
+
+			seekBackwardBtn.addEventListener('click', () => {
+				previewVideo.currentTime = Math.max(0, previewVideo.currentTime - 10);
+			});
+
+			seekForwardBtn.addEventListener('click', () => {
+				previewVideo.currentTime = Math.min(previewVideo.duration, previewVideo.currentTime + 10);
+			});
+
+			prevSongBtn.addEventListener('click', () => {
+				if (currentSongIndex > 0) {
+					currentSongIndex--;
+					loadSong(currentSongIndex);
+				}
+			});
+
+			nextSongBtn.addEventListener('click', () => {
+				if (currentSongIndex < searchResults.length - 1) {
+					currentSongIndex++;
+					loadSong(currentSongIndex);
+				}
+			});
+
+			previewVideo.addEventListener('play', updatePlayPauseButton);
+			previewVideo.addEventListener('pause', updatePlayPauseButton);
+
+			previewVideo.addEventListener('loadedmetadata', () => {
+				seekBar.max = previewVideo.duration;
+				updateTimeDisplay();
+			});
+
+			previewVideo.addEventListener('timeupdate', () => {
+				seekBar.value = previewVideo.currentTime;
+				updateTimeDisplay();
+			});
+
+			seekBar.addEventListener('input', () => {
+				previewVideo.currentTime = seekBar.value;
+			});
+
+			volumeBar.addEventListener('input', () => {
+				previewVideo.volume = volumeBar.value;
+			});
+
+			function showMessage(message, type) {
+				console.log(`Showing message: ${message} (${type})`);
+				messageContainer.innerHTML = message;
+				messageContainer.className = `p-3 rounded text-sm message animate-slide-in ${
+					type === 'success'
+						? 'bg-green-800 text-green-100'
+						: type === 'info'
+						? 'bg-blue-800 text-blue-100'
+						: 'bg-red-800 text-red-100'
+				}`;
+				messageContainer.classList.remove('hidden');
+
+				setTimeout(() => {
+					messageContainer.classList.add('hidden');
+					messageContainer.classList.remove('animate-slide-in');
+				}, 3000);
+			}
+		</script>
+	</body>
+</html>
