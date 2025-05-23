@@ -3,12 +3,9 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Karaoke Master</title>
-		<link
-			href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
-			rel="stylesheet"
-		/>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+		<title>Queue</title>
+		<link href="./styles.css" rel="stylesheet" />
+		<script src="/socket.io/socket.io.js"></script>
 		<style>
 			.animate-pulse {
 				animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -235,7 +232,7 @@
 							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
 						/>
 					</svg>
-					Karaoke Master
+					Select a song
 				</h1>
 				<div class="flex items-center mt-2 md:mt-0">
 					<div class="mr-2 text-sm text-gray-300">Session:</div>

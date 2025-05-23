@@ -1293,7 +1293,11 @@ app.get('/api/file-exists', (req, res) => {
 
 // API endpoint to get distinct subfolders
 app.get('/api/subfolders', (req, res) => {
-	const sql = `
+    // Set to store unique folder names
+    const uniqueFolders = new Set();
+
+    // SQL query to get folders from database
+    const sql = `
         SELECT DISTINCT
             SUBSTR(
                 path,
@@ -1307,20 +1311,50 @@ app.get('/api/subfolders', (req, res) => {
         ORDER BY parent_folder;
     `;
 
-	db.all(sql, [], (err, rows) => {
-		if (err) {
-			console.error('Error fetching subfolders:', err);
-			return res.status(500).json({ error: err.message });
-		}
+    // Get folders from database
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Error fetching subfolders from database:', err);
+            return res.status(500).json({ error: err.message });
+        }
 
-		// Map the results to a simpler format
-		const subfolders = rows
-			.map((row) => row.parent_folder)
-			.filter((folder) => folder && folder.trim() !== ''); // Remove empty or null values
+        // Add database folders to Set
+        rows.forEach(row => {
+            if (row.parent_folder && row.parent_folder.trim() !== '') {
+                uniqueFolders.add(row.parent_folder.trim());
+            }
+        });
 
-		console.log(`Found ${subfolders.length} subfolders\n${subfolders}`);
-		res.json({ subfolders });
-	});
+        // Get folders from filesystem
+        fs.readdir(videoDir, { withFileTypes: true }, (err, files) => {
+            if (err) {
+                console.error('Error reading video directory:', err);
+                return res.status(500).json({ error: 'Failed to read video directory' });
+            }
+
+            // Add filesystem folders to Set
+            files.forEach(file => {
+                if (file.isDirectory() && !file.name.startsWith('.')) {
+                    uniqueFolders.add(file.name);
+                }
+            });
+
+            // Convert Set to sorted array
+            const subfolders = Array.from(uniqueFolders).sort();
+
+            console.log(`Found ${subfolders.length} total subfolders:`);
+            console.log(subfolders);
+
+            res.json({ 
+                subfolders,
+                total: subfolders.length,
+                source: {
+                    path: videoDir,
+                    database: DB_PATH
+                }
+            });
+        });
+    });
 });
 
 app.use('/videos', express.static(videoDir));
