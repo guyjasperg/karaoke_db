@@ -6,6 +6,8 @@
 		<title>Queue</title>
 		<link href="./styles.css" rel="stylesheet" />
 		<script src="/socket.io/socket.io.js"></script>
+		<link rel="icon" type="image/svg+xml" href="/public/karaoke-sing-svgrepo-com.svg" />
+		\
 		<style>
 			.animate-pulse {
 				animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -372,23 +374,22 @@
 			</div>
 		</div>
 
-		<div class="flex justify-center space-x-4 py-4 bg-gray-900">
+		<div class="flex justify-center space-x-4 py-4 bg-gray-900 mx-2">
 			<button
 				id="search-tab-btn"
-				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+				class="bg-blue-600 w-36 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 			>
-				<span class="sm:inline hidden">Search Songs</span>
-				<span class="sm:hidden">Search</span>
+				<span>Search</span>
 			</button>
 			<button
 				id="queue-tab-btn"
-				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+				class="bg-gray-700 w-36 hover:bg-gray-600 text-white font-semibold py-2 px-2 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
 			>
 				Queue (<span id="queue-count">0</span>)
 			</button>
 			<button
 				id="catalog-tab-btn"
-				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+				class="bg-gray-700 w-36 hover:bg-gray-600 text-white font-semibold py-2 px-2 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
 			>
 				Catalog
 			</button>
@@ -482,18 +483,31 @@
 					>
 						<span class="btn-text">Play/Pause</span>
 						<svg
-							class="btn-icon hidden h-5 w-5"
-							xmlns="http://www.w3.org/2000/svg"
+							class="btn-icon hidden h-8 w-8"
+							width="124px"
+							height="124px"
+							viewBox="-2.4 -2.4 28.80 28.80"
 							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
+							xmlns="http://www.w3.org/2000/svg"
+							stroke="#af6e6e"
 						>
-							<path
+							<g id="SVGRepo_bgCarrier" stroke-width="0" transform="translate(0,0), scale(1)"></g>
+							<g
+								id="SVGRepo_tracerCarrier"
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
-								d="M10 9v6m4-6v6m-7 3h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v9a2 2 0 002 2z"
-							/>
+								stroke="#CCCCCC"
+								stroke-width="0.096"
+							></g>
+							<g id="SVGRepo_iconCarrier">
+								<path
+									d="M15 5V19M21 5V19M3 7.20608V16.7939C3 17.7996 3 18.3024 3.19886 18.5352C3.37141 18.7373 3.63025 18.8445 3.89512 18.8236C4.20038 18.7996 4.55593 18.4441 5.26704 17.733L10.061 12.939C10.3897 12.6103 10.554 12.446 10.6156 12.2565C10.6697 12.0898 10.6697 11.9102 10.6156 11.7435C10.554 11.554 10.3897 11.3897 10.061 11.061L5.26704 6.26704C4.55593 5.55593 4.20038 5.20038 3.89512 5.17636C3.63025 5.15551 3.37141 5.26273 3.19886 5.46476C3 5.69759 3 6.20042 3 7.20608Z"
+									stroke="#fbfcfc"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								></path>
+							</g>
 						</svg>
 					</button>
 					<button
@@ -503,18 +517,60 @@
 					>
 						<span class="btn-text">Repeat</span>
 						<svg
-							class="btn-icon hidden h-5 w-5"
+							class="btn-icon hidden h-8 w-8"
+							width="128px"
+							height="128px"
+							viewBox="-2.4 -2.4 28.80 28.80"
+							version="1.1"
 							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
+							xmlns:xlink="http://www.w3.org/1999/xlink"
+							fill="#000000"
 						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 11H7m0 0a4 4 0 014-4h2m0 0a4 4 0 014 4h-2m0 0v2m0-2h2m-2 6v2m0-2h-2a4 4 0 01-4-4h2"
-							/>
+							<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+							<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+							<g id="SVGRepo_iconCarrier">
+								<title>Repeat-Play</title>
+								<g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+									<g id="Repeat-Play">
+										<rect
+											id="Rectangle"
+											fill-rule="nonzero"
+											x="0"
+											y="0"
+											width="24"
+											height="24"
+										></rect>
+										<path
+											d="M5,18.0002 L17,18.0002 C18.6569,18.0002 20,16.657 20,15.0002 L20,14"
+											id="Path"
+											stroke="#fbfcfc"
+											stroke-width="2"
+											stroke-linecap="round"
+										></path>
+										<path
+											d="M16,2 L19.2929,5.29289 C19.6834,5.68342 19.6834,6.31658 19.2929,6.70711 L16,10"
+											id="Path"
+											stroke="#fbfcfc"
+											stroke-width="2"
+											stroke-linecap="round"
+										></path>
+										<path
+											d="M8,14 L4.70711,17.2929 C4.31658,17.6834 4.31658,18.3166 4.70711,18.7071 L8,22"
+											id="Path"
+											stroke="#fbfcfc"
+											stroke-width="2"
+											stroke-linecap="round"
+										></path>
+										<path
+											d="M19,6 L7,6 C5.34315,6 4,7.34315 4,9 L4,10"
+											id="Path"
+											stroke="#fbfcfc"
+											stroke-width="2"
+											stroke-linecap="round"
+										></path>
+									</g>
+								</g>
+							</g>
 						</svg>
 					</button>
 					<button
@@ -524,18 +580,38 @@
 					>
 						<span class="btn-text">Play Next</span>
 						<svg
-							class="btn-icon hidden h-5 w-5"
-							xmlns="http://www.w3.org/2000/svg"
+							class="btn-icon hidden h-8 w-8"
+							width="124px"
+							height="124px"
+							viewBox="-2.4 -2.4 28.80 28.80"
 							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
+							xmlns="http://www.w3.org/2000/svg"
 						>
-							<path
+							<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+							<g
+								id="SVGRepo_tracerCarrier"
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 5l7 7-7 7m7-14v14"
-							/>
+								stroke="#CCCCCC"
+								stroke-width="0.096"
+							></g>
+							<g id="SVGRepo_iconCarrier">
+								<path
+									d="m3 5 10 7-10 7V5Z"
+									fill="#fcfcfc"
+									fill-opacity=".16"
+									stroke="#fcfcfc"
+									stroke-width="1.5"
+									stroke-linejoin="round"
+								></path>
+								<path
+									d="M20.2 5h-2.4a.8.8 0 0 0-.8.8v12.4a.8.8 0 0 0 .8.8h2.4a.8.8 0 0 0 .8-.8V5.8a.8.8 0 0 0-.8-.8Z"
+									fill="#ffffff"
+									stroke="#fcfcfc"
+									stroke-width="1.5"
+									stroke-miterlimit="10"
+								></path>
+							</g>
 						</svg>
 					</button>
 				</div>
