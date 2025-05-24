@@ -758,6 +758,15 @@
 				} else {
 					videoPlayer.pause();
 				}
+				//broadcast play/pause event to server
+				if (socket) {
+					const song = currentQueue[currentSongIndex];
+					socket.emit('playback-state', {
+						state: videoPlayer.paused ? 'paused' : 'playing',
+						sessionID: sessionId,
+						songid: song ? song.songid : null,
+					});
+				}
 			}
 
 			// Skip to next song

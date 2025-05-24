@@ -1432,6 +1432,12 @@ io.on('connection', (socket) => {
 		io.emit('playback-progress', data);
 	});
 
+	socket.on('playback-state', (data) => {
+		console.log('playback-state received:', data);
+		// Broadcast the message to all connected clients
+		io.emit('playback-state', data);
+	});
+
 	// Handle disconnection
 	socket.on('disconnect', () => {
 		console.log('A user disconnected:', socket.id);

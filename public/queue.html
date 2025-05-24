@@ -872,6 +872,8 @@
 			let focusedSongIndex = -1;
 			let currentFilterLetter = 'A';
 			const HARDCODED_PIN = '1234'; // Hardcoded PIN for unlocking playback
+			let currentPlayingSongId = null;
+			let isCurrentlyPlaying = false; // New flag to track if song is actively playing
 
 			// DOM elements
 			const searchInput = document.getElementById('search-input');
@@ -1230,6 +1232,19 @@
 						updateSeekBar(data);
 					}
 				});
+				// New listener for playback state changes
+				socket.on('playback-state', (data) => {
+					if (data.sessionID === sessionId) {
+						currentPlayingSongId = data.songid || currentPlayingSongId;
+						if (data.state === 'paused') {
+							isCurrentlyPlaying = true;
+							updateButtonStates();
+						} else if (data.state === 'playing') {
+							isCurrentlyPlaying = true;
+							updateButtonStates();
+						}
+					}
+				});
 			}
 
 			// Update seek bar based on playback progress
@@ -1239,8 +1254,13 @@
 					console.warn('Invalid playback progress data:', data);
 					return;
 				}
+				console.log(
+					`Updating seek bar for songid: ${songid}, currentTime: ${parseInt(currentTime, 10)}`
+				);
+				currentPlayingSongId = songid;
+				isCurrentlyPlaying = true; // Set flag to indicate song is playing
 
-				// Remove existing seek bars from all song cards
+				// Remove all existing seekbars
 				const allSeekBars = queueResults.querySelectorAll('.seek-bar');
 				allSeekBars.forEach((seekBar) => seekBar.remove());
 
@@ -1258,6 +1278,9 @@
 
 				// Calculate progress
 				const progress = Math.min((currentTime / duration) * 100, 100);
+				queueItems = queueItems.map((song) =>
+					song.songid === songid ? { ...song, progress } : song
+				);
 
 				// Create seek bar if it doesn't exist
 				const songDetails = songCard.querySelector('div:first-child');
@@ -1274,6 +1297,8 @@
 				if (seekBarProgress) {
 					seekBarProgress.style.width = `${progress}%`;
 				}
+
+				updateButtonStates();
 			}
 
 			// Update queue based on socket message
@@ -1288,6 +1313,10 @@
 				} else if (data.action === 'remove') {
 					// Remove the song from queueItems
 					queueItems = queueItems.filter((song) => song.sequenceID !== data.song.sequenceID);
+					if (data.song.songid === currentPlayingSongId) {
+						currentPlayingSongId = null;
+						isCurrentlyPlaying = false;
+					}
 					showMessage(`"${data.song.Title}" by ${data.song.Artist} removed from queue`, 'info');
 				} else if (data.action === 'reorder') {
 					fetchQueue(); // Refresh the queue to reflect the new order
@@ -1726,26 +1755,41 @@
 						queueItem.className =
 							'song-card border-b border-gray-700 py-2 flex justify-between items-center';
 						queueItem.setAttribute('data-song-id', song.songid);
+
+						// Determine button states
+						const isPositionOne = index === 0;
+						const isPositionTwo = index === 1;
+						const isTopSongPlaying =
+							queueItems[0]?.songid === currentPlayingSongId && isCurrentlyPlaying;
+						const isMoveUpDisabled = index === 0 || (isPositionTwo && isTopSongPlaying);
+						const isMoveDownDisabled =
+							index === queueItems.length - 1 || (isPositionOne && isTopSongPlaying);
+
 						queueItem.innerHTML = `
 							<div>
 								<h3 class="text-xl font-bold text-white">${escapeHtml(song.Title || '')}</h3>
-								<p class="text-gray-400">${escapeHtml(song.Artist || '')}</p>
+								<p class="text-gray-400">${escapeHtml(song.Artist || '')} • ${song.status || 'pending'}</p>
+								${
+									song.songid === currentPlayingSongId
+										? '<div class="seek-bar"><div class="seek-bar-progress"></div></div>'
+										: ''
+								}
 							</div>
 							<div class="flex items-center">
-								<button class="reorder-btn ${index === 0 ? 'disabled-btn' : ''}" 
+								<button class="reorder-btn ${isMoveUpDisabled ? 'disabled-btn' : ''}" 
 									data-sequence-id="${song.sequenceID}" 
 									data-direction="up"
-									${index === 0 ? 'disabled' : ''}
+									${isMoveUpDisabled ? 'disabled' : ''}
 									aria-label="Move song up in queue"
 									title="Move Up">
 									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
 									</svg>
 								</button>
-								<button class="reorder-btn ${index === queueItems.length - 1 ? 'disabled-btn' : ''}" 
+								<button class="reorder-btn ${isMoveDownDisabled ? 'disabled-btn' : ''}" 
 									data-sequence-id="${song.sequenceID}" 
 									data-direction="down"
-									${index === queueItems.length - 1 ? 'disabled' : ''}
+									${isMoveDownDisabled ? 'disabled' : ''}
 									aria-label="Move song down in queue"
 									title="Move Down">
 									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1756,12 +1800,22 @@
 							</div>
 						`;
 
+						// Restore seekbar progress for the currently playing song
+						if (song.songid === currentPlayingSongId) {
+							const seekBarProgress = queueItem.querySelector('.seek-bar-progress');
+							if (seekBarProgress) {
+								const progress =
+									queueItems.find((s) => s.songid === currentPlayingSongId)?.progress || 0;
+								seekBarProgress.style.width = `${progress}%`;
+							}
+						}
+
 						const upButton = queueItem.querySelector('button[data-direction="up"]');
 						const downButton = queueItem.querySelector('button[data-direction="down"]');
-						if (upButton) {
+						if (upButton && !isMoveUpDisabled) {
 							upButton.addEventListener('click', () => reorderQueue(song.sequenceID, 'up'));
 						}
-						if (downButton) {
+						if (downButton && !isMoveDownDisabled) {
 							downButton.addEventListener('click', () => reorderQueue(song.sequenceID, 'down'));
 						}
 
@@ -1772,6 +1826,79 @@
 				}
 			}
 
+			// New function to update button states for #1 and #2 songs
+			function updateButtonStates() {
+				const songCards = queueResults.querySelectorAll('.song-card');
+				if (songCards.length === 0) return;
+
+				const isTopSongPlaying =
+					queueItems[0]?.songid === currentPlayingSongId && isCurrentlyPlaying;
+
+				// Update #1 song (index 0)
+				const firstSong = songCards[0];
+				if (firstSong) {
+					const upButton = firstSong.querySelector('button[data-direction="up"]');
+					const downButton = firstSong.querySelector('button[data-direction="down"]');
+					// #1 Move Up is always disabled
+					if (upButton) {
+						upButton.classList.add('disabled-btn');
+						upButton.disabled = true;
+					}
+					// #1 Move Down disabled when playing
+					if (downButton) {
+						if (isTopSongPlaying) {
+							downButton.classList.add('disabled-btn');
+							downButton.disabled = true;
+						} else {
+							downButton.classList.remove('disabled-btn');
+							downButton.disabled = false;
+							downButton.addEventListener(
+								'click',
+								() => reorderQueue(downButton.getAttribute('data-sequence-id'), 'down'),
+								{ once: true }
+							);
+						}
+					}
+				}
+
+				// Update #2 song (index 1)
+				const secondSong = songCards[1];
+				if (secondSong) {
+					const upButton = secondSong.querySelector('button[data-direction="up"]');
+					const downButton = secondSong.querySelector('button[data-direction="down"]');
+					// #2 Move Up disabled when #1 is playing
+					if (upButton) {
+						if (isTopSongPlaying) {
+							upButton.classList.add('disabled-btn');
+							upButton.disabled = true;
+						} else {
+							upButton.classList.remove('disabled-btn');
+							upButton.disabled = false;
+							upButton.addEventListener(
+								'click',
+								() => reorderQueue(upButton.getAttribute('data-sequence-id'), 'up'),
+								{ once: true }
+							);
+						}
+					}
+					// #2 Move Down disabled if last song
+					if (downButton) {
+						const isLastSong = queueItems.length === 2;
+						if (isLastSong) {
+							downButton.classList.add('disabled-btn');
+							downButton.disabled = true;
+						} else {
+							downButton.classList.remove('disabled-btn');
+							downButton.disabled = false;
+							downButton.addEventListener(
+								'click',
+								() => reorderQueue(downButton.getAttribute('data-sequence-id'), 'down'),
+								{ once: true }
+							);
+						}
+					}
+				}
+			}
 			function showMessage(html, type) {
 				messageContainer.innerHTML = html;
 				messageContainer.className = `p-3 rounded text-sm message animate-slide-in ${
