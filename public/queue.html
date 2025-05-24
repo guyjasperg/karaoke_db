@@ -800,7 +800,7 @@
 
 				repeatBtn.addEventListener('click', () => {
 					if (socket && socket.connected) {
-						socket.emit('playback-control', { sessionId, action: 'play_repeat' });
+						socket.emit('playback-control', { sessionID: sessionId, action: 'play_repeat' });
 						showMessage('Repeat action sent', 'info');
 					} else {
 						showMessage('Not connected to server', 'error');
