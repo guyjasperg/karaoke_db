@@ -1390,6 +1390,11 @@ io.on('connection', (socket) => {
 		io.emit('playback-control', data);
 	});
 
+	socket.on('playback-progress', (data) => {
+		//console.log('playback-progress received', data.sessionID);
+		io.emit('playback-progress', data);
+	});
+
 	// Handle disconnection
 	socket.on('disconnect', () => {
 		console.log('A user disconnected:', socket.id);

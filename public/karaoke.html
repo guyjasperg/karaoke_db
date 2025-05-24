@@ -4,7 +4,6 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/public/karaoke-sing-svgrepo-com.svg" />
-
 		<title>Karaoke Player</title>
 		<script src="/socket.io/socket.io.js"></script>
 		<style>
@@ -878,6 +877,25 @@
 					const formattedCurrentTime = formatTime(currentTime);
 					const formattedDuration = formatTime(duration);
 					timeDisplay.textContent = `${formattedCurrentTime} / ${formattedDuration}`;
+				}
+
+				//braodcast update to server
+				// Only send update if seconds changed
+				if (socket && currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
+					const song = currentQueue[currentSongIndex];
+					const currentSeconds = Math.floor(currentTime);
+					if (
+						typeof updateProgress.lastSentSecond === 'undefined' ||
+						updateProgress.lastSentSecond !== currentSeconds
+					) {
+						updateProgress.lastSentSecond = currentSeconds;
+						socket.emit('playback-progress', {
+							songid: song.songid,
+							duration: duration,
+							currentTime: currentTime,
+							sessionID: sessionId,
+						});
+					}
 				}
 
 				if (videoPlayer.muted) {

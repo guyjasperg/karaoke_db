@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/public/karaoke-sing-svgrepo-com.svg" />
 		<title>Queue</title>
 		<link href="./styles.css" rel="stylesheet" />
 		<script src="/socket.io/socket.io.js"></script>
@@ -337,6 +338,35 @@
 				gap: 1rem; /* space-x-4 */
 				justify-content: flex-end;
 			}
+			/* Song card styles for queue */
+			#queue-results .song-card {
+				position: relative; /* Contain absolute-positioned seek bar */
+				padding-bottom: 1rem; /* Space for seek bar */
+			}
+			/* Seek bar styles */
+			.seek-bar {
+				position: absolute;
+				left: 0;
+				right: 0;
+				bottom: 4px; /* Position above the bottom padding */
+				height: 3px;
+				background: #97aac6; /* bg-gray-600 */
+				border-radius: 2px;
+				overflow: hidden;
+				pointer-events: none; /* Non-interactive */
+			}
+			.seek-bar-progress {
+				height: 100%;
+				background: #6d28d9; /* bg-purple-600 */
+				width: 0%;
+				border-radius: 2px;
+				transition: width 0.5s linear;
+			}
+			/* Ensure queue position badge stays above seek bar */
+			#queue-results .song-card .flex.items-center {
+				position: relative;
+				z-index: 1;
+			}
 		</style>
 	</head>
 	<body class="flex flex-col h-screen bg-gray-900 text-gray-100">
@@ -448,22 +478,22 @@
 			</div>
 		</div>
 
-		<div class="flex justify-center space-x-4 py-4 bg-gray-900">
+		<div class="flex justify-center space-x-4 py-4 bg-gray-900 mx-2">
 			<button
 				id="search-tab-btn"
-				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-24 sm:w-36"
+				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32 sm:w-46"
 			>
 				<span>Search</span>
 			</button>
 			<button
 				id="queue-tab-btn"
-				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500 w-24 sm:w-36"
+				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-2 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500 w-32 sm:w-46"
 			>
 				Queue (<span id="queue-count">0</span>)
 			</button>
 			<button
 				id="catalog-tab-btn"
-				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500 w-24 sm:w-36"
+				class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-2 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-500 w-32 sm:w-46"
 			>
 				Catalog
 			</button>
@@ -1163,6 +1193,57 @@
 						updateQueueFromSocket(data);
 					}
 				});
+
+				// Listen for playback progress updates
+				socket.on('playback-progress', (data) => {
+					if (data.sessionID === sessionId) {
+						updateSeekBar(data);
+					}
+				});
+			}
+
+			// Update seek bar based on playback progress
+			function updateSeekBar(data) {
+				const { songid, currentTime, duration } = data;
+				if (!songid || currentTime == null || duration == null || duration <= 0) {
+					console.warn('Invalid playback progress data:', data);
+					return;
+				}
+
+				// Remove existing seek bars from all song cards
+				const allSeekBars = queueResults.querySelectorAll('.seek-bar');
+				allSeekBars.forEach((seekBar) => seekBar.remove());
+
+				// Find the song card with matching songid
+				const songCard = queueResults.querySelector(`[data-song-id="${songid}"]`);
+				if (!songCard) {
+					console.warn(`No song card found for songid: ${songid}`);
+					return;
+				}
+
+				// Only show seek bar if currentTime > 0 (indicating active playback)
+				if (currentTime <= 0) {
+					return;
+				}
+
+				// Calculate progress
+				const progress = Math.min((currentTime / duration) * 100, 100);
+
+				// Create seek bar if it doesn't exist
+				const songDetails = songCard.querySelector('div:first-child');
+				let seekBar = songCard.querySelector('.seek-bar');
+				if (!seekBar) {
+					seekBar = document.createElement('div');
+					seekBar.className = 'seek-bar';
+					seekBar.innerHTML = '<div class="seek-bar-progress"></div>';
+					songDetails.appendChild(seekBar);
+				}
+
+				// Update progress bar width
+				const seekBarProgress = seekBar.querySelector('.seek-bar-progress');
+				if (seekBarProgress) {
+					seekBarProgress.style.width = `${progress}%`;
+				}
 			}
 
 			// Update queue based on socket message
@@ -1582,6 +1663,7 @@
 						const queueItem = document.createElement('div');
 						queueItem.className =
 							'song-card border-b border-gray-700 py-2 flex justify-between items-center';
+						queueItem.setAttribute('data-song-id', song.songid);
 						queueItem.innerHTML = `
 							<div>
 								<h3 class="text-xl font-bold text-white">${escapeHtml(song.Title || '')}</h3>
