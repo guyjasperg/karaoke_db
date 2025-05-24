@@ -367,6 +367,31 @@
 				position: relative;
 				z-index: 1;
 			}
+			/* Reorder button styles */
+			.reorder-btn {
+				width: 2rem;
+				height: 2rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background-color: #4b5563; /* bg-gray-600 */
+				color: #ffffff;
+				border-radius: 0.25rem;
+				margin-left: 0.5rem;
+				transition: background-color 0.2s;
+			}
+			.reorder-btn:hover:not(.disabled-btn) {
+				background-color: #6b7280; /* bg-gray-500 */
+			}
+			.reorder-btn.disabled-btn {
+				opacity: 0.5;
+				cursor: not-allowed;
+				pointer-events: none;
+			}
+			.reorder-btn svg {
+				width: 1rem;
+				height: 1rem;
+			}
 		</style>
 	</head>
 	<body class="flex flex-col h-screen bg-gray-900 text-gray-100">
@@ -1264,6 +1289,9 @@
 					// Remove the song from queueItems
 					queueItems = queueItems.filter((song) => song.sequenceID !== data.song.sequenceID);
 					showMessage(`"${data.song.Title}" by ${data.song.Artist} removed from queue`, 'info');
+				} else if (data.action === 'reorder') {
+					fetchQueue(); // Refresh the queue to reflect the new order
+					showMessage(`Queue reordered`, 'info');
 				}
 
 				// Update queue count
@@ -1606,6 +1634,35 @@
 				}
 			}
 
+			async function reorderQueue(sequenceID, direction) {
+				if (!sessionId) {
+					showMessage('Session ID not found. Please refresh the page.', 'error');
+					return;
+				}
+
+				try {
+					const response = await fetch('/api/songqueue_reorder', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							sessionID: sessionId,
+							sequenceID: sequenceID,
+							direction: direction,
+						}),
+					});
+
+					if (!response.ok) {
+						throw new Error('Failed to reorder queue');
+					}
+
+					fetchQueue();
+					showMessage(`Song moved ${direction}`, 'success');
+				} catch (error) {
+					console.error('Error reordering queue:', error);
+					showMessage('Failed to reorder queue. Please try again.', 'error');
+				}
+			}
+
 			async function fetchQueue() {
 				if (!sessionId) {
 					showMessage('Session ID not found. Please refresh the page.', 'error');
@@ -1672,12 +1729,41 @@
 						queueItem.innerHTML = `
 							<div>
 								<h3 class="text-xl font-bold text-white">${escapeHtml(song.Title || '')}</h3>
-								<p class="text-gray-400">${escapeHtml(song.Artist || '')} • ${song.status || 'pending'}</p>
+								<p class="text-gray-400">${escapeHtml(song.Artist || '')}</p>
 							</div>
 							<div class="flex items-center">
-								<span class="bg-purple-800 text-white px-3 py-1 rounded-md">#${index + 1}</span>
+								<button class="reorder-btn ${index === 0 ? 'disabled-btn' : ''}" 
+									data-sequence-id="${song.sequenceID}" 
+									data-direction="up"
+									${index === 0 ? 'disabled' : ''}
+									aria-label="Move song up in queue"
+									title="Move Up">
+									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+									</svg>
+								</button>
+								<button class="reorder-btn ${index === queueItems.length - 1 ? 'disabled-btn' : ''}" 
+									data-sequence-id="${song.sequenceID}" 
+									data-direction="down"
+									${index === queueItems.length - 1 ? 'disabled' : ''}
+									aria-label="Move song down in queue"
+									title="Move Down">
+									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</button>
+								<span class="bg-purple-800 text-white px-3 py-1 rounded-md ml-2">#${index + 1}</span>
 							</div>
 						`;
+
+						const upButton = queueItem.querySelector('button[data-direction="up"]');
+						const downButton = queueItem.querySelector('button[data-direction="down"]');
+						if (upButton) {
+							upButton.addEventListener('click', () => reorderQueue(song.sequenceID, 'up'));
+						}
+						if (downButton) {
+							downButton.addEventListener('click', () => reorderQueue(song.sequenceID, 'down'));
+						}
 
 						queueResults.appendChild(queueItem);
 					});

@@ -352,6 +352,43 @@ app.post('/api/songqueue', (req, res) => {
 	res.status(201).json(newSong);
 });
 
+// Endpoint to reorder songs in the queue
+app.post('/api/songqueue_reorder', (req, res) => {
+	const { sessionID, sequenceID, direction } = req.body;
+
+	if (!sessionID || !sequenceID || !direction) {
+		return res.status(400).json({ error: 'sessionID, sequenceID, and direction are required.' });
+	}
+
+	const queue = songQueue[sessionID]?.songs;
+	if (!queue) {
+		return res.status(404).json({ error: 'Session not found.' });
+	}
+
+	const index = queue.findIndex(
+		(song) => song.sequenceID === sequenceID || song.sequenceID === parseInt(sequenceID)
+	);
+	if (index === -1) {
+		return res.status(404).json({ error: 'Song not found in queue.' });
+	}
+
+	if (direction === 'up' && index > 0) {
+		[queue[index - 1], queue[index]] = [queue[index], queue[index - 1]];
+	} else if (direction === 'down' && index < queue.length - 1) {
+		[queue[index], queue[index + 1]] = [queue[index + 1], queue[index]];
+	} else {
+		return res.status(400).json({ error: 'Invalid move.' });
+	}
+
+	songQueue[sessionID].lastUpdate = new Date();
+	saveToFile(songQueue, SONGQUEUE_LIST_FILE);
+
+	// Broadcast reorder event
+	io.emit('songQueueUpdated', { action: 'reorder', sessionID, queue: queue });
+
+	res.status(200).json({ message: 'Queue reordered successfully.' });
+});
+
 // Endpoint to delete a song from the queue
 app.delete('/api/songqueue/:sequenceID', (req, res) => {
 	const { sequenceID } = req.params;
