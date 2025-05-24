@@ -3,11 +3,10 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/public/karaoke-sing-svgrepo-com.svg" />
 		<title>Queue</title>
 		<link href="./styles.css" rel="stylesheet" />
 		<script src="/socket.io/socket.io.js"></script>
-		<link rel="icon" type="image/svg+xml" href="/public/karaoke-sing-svgrepo-com.svg" />
-		\
 		<style>
 			.animate-pulse {
 				animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -253,15 +252,15 @@
 			@media (max-width: 639px) {
 				#search-results .song-card,
 				#queue-results .song-card {
-					padding-top: 0.5rem; /* py-2 reduced from py-4 */
-					padding-bottom: 0.5rem;
-					margin-bottom: 0.25rem; /* Reduced from space-y-4 */
+					padding-top: 0.25rem; /* Reduced from 0.5rem */
+					padding-bottom: 0.25rem;
+					margin-bottom: 0.125rem; /* Reduced from 0.25rem */
 				}
-				#search-results .space-y-4,
-				#queue-results .space-y-4 {
+				#search-results .space-y-2,
+				#queue-results .space-y-2 {
 					--tw-space-y-reverse: 0;
-					margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
-					margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+					margin-top: calc(0.125rem * calc(1 - var(--tw-space-y-reverse)));
+					margin-bottom: calc(0.125rem * var(--tw-space-y-reverse));
 				}
 			}
 		</style>
@@ -317,6 +316,7 @@
 				</div>
 			</div>
 		</header>
+
 		<!-- Session Panel (collapsible) -->
 		<div id="session-panel" class="bg-gray-800 border-b border-gray-700 p-4 hidden">
 			<div class="container mx-auto">
@@ -458,7 +458,7 @@
 					<h2 id="results-heading" class="text-2xl font-bold mb-4 text-white"></h2>
 				</div>
 				<div class="results-scroll-container" style="max-height: calc(100vh - 320px)">
-					<div id="search-results" class="space-y-4"></div>
+					<div id="search-results" class="space-y-2"></div>
 					<div id="no-results" class="text-center py-8 text-gray-400 hidden">
 						No songs found matching your search. Try different keywords.
 					</div>
@@ -471,7 +471,7 @@
 				class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 hidden"
 			>
 				<h2 class="text-2xl font-bold mb-4 text-white">Current Queue</h2>
-				<div id="queue-results" class="space-y-4"></div>
+				<div id="queue-results" class="space-y-2"></div>
 				<div id="empty-queue" class="text-center py-8 text-gray-400">
 					Your queue is empty. Search for songs to add to your queue.
 				</div>
@@ -1074,7 +1074,7 @@
 					searchResults.forEach((song, index) => {
 						const songElement = document.createElement('div');
 						songElement.className =
-							'song-card border-b border-gray-700 py-4 flex justify-between items-center';
+							'song-card border-b border-gray-700 py-2 flex justify-between items-center';
 						songElement.tabIndex = 0;
 						const duration =
 							song.duration ||
@@ -1414,7 +1414,7 @@
 					queueItems.forEach((song, index) => {
 						const queueItem = document.createElement('div');
 						queueItem.className =
-							'song-card border-b border-gray-700 py-4 flex justify-between items-center';
+							'song-card border-b border-gray-700 py-2 flex justify-between items-center';
 						queueItem.innerHTML = `
 							<div>
 								<h3 class="text-xl font-bold text-white">${escapeHtml(song.Title || '')}</h3>
