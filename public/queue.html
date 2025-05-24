@@ -209,6 +209,17 @@
 			.catalog-song-card .song-details {
 				font-size: 0.875rem; /* text-sm */
 			}
+			/* Playback controls */
+			.playback-controls {
+				display: flex;
+				gap: 1rem; /* space-x-4 */
+				justify-content: center;
+				padding: 1rem 0; /* py-4 */
+				position: sticky;
+				bottom: 0;
+				background: #1f2937; /* bg-gray-800 */
+				z-index: 10;
+			}
 		</style>
 	</head>
 	<body class="flex flex-col h-screen bg-gray-900 text-gray-100">
@@ -229,7 +240,7 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 							stroke-width="2"
-							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3统计2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
 						/>
 					</svg>
 					Select a song
@@ -262,7 +273,6 @@
 				</div>
 			</div>
 		</header>
-
 		<!-- Session Panel (collapsible) -->
 		<div id="session-panel" class="bg-gray-800 border-b border-gray-700 p-4 hidden">
 			<div class="container mx-auto">
@@ -421,6 +431,26 @@
 				<div id="empty-queue" class="text-center py-8 text-gray-400">
 					Your queue is empty. Search for songs to add to your queue.
 				</div>
+				<div class="playback-controls">
+					<button
+						id="play-pause-btn"
+						class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+					>
+						Play/Pause
+					</button>
+					<button
+						id="repeat-btn"
+						class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+					>
+						Repeat
+					</button>
+					<button
+						id="play-next-btn"
+						class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+					>
+						Play Next
+					</button>
+				</div>
 			</div>
 
 			<div
@@ -527,8 +557,10 @@
 			const noCatalogResults = document.getElementById('no-catalog-results');
 			const refreshCatalogBtn = document.getElementById('refresh-catalog-btn');
 			const collapseAllBtn = document.getElementById('collapse-all-btn');
-			// At the top of the script, add the search input container to the DOM elements
 			const searchInputContainer = document.querySelector('.search-input-container');
+			const playPauseBtn = document.getElementById('play-pause-btn');
+			const repeatBtn = document.getElementById('repeat-btn');
+			const playNextBtn = document.getElementById('play-next-btn');
 
 			// Set current year in footer
 			currentYearElement.textContent = new Date().getFullYear();
@@ -590,6 +622,33 @@
 					const toggleIcons = catalogResults.querySelectorAll('.artist-group-header svg');
 					artistSongs.forEach((songsDiv) => songsDiv.classList.add('hidden'));
 					toggleIcons.forEach((icon) => icon.classList.remove('rotate-180'));
+				});
+
+				// Playback controls
+				playPauseBtn.addEventListener('click', () => {
+					if (socket && socket.connected) {
+						socket.emit('playback-control', { sessionID: sessionId, action: 'play_pause' });
+						showMessage('Play/Pause action sent', 'info');
+					} else {
+						showMessage('Not connected to server', 'error');
+					}
+				});
+
+				repeatBtn.addEventListener('click', () => {
+					if (socket && socket.connected) {
+						socket.emit('playback-control', { sessionID: sessionId, action: 'play_repeat' });
+						showMessage('Repeat action sent', 'info');
+					} else {
+						showMessage('Not connected to server', 'error');
+					}
+				});
+				playNextBtn.addEventListener('click', () => {
+					if (socket && socket.connected) {
+						socket.emit('playback-control', { sessionID: sessionId, action: 'play_next' });
+						showMessage('Play Next action sent', 'info');
+					} else {
+						showMessage('Not connected to server', 'error');
+					}
 				});
 
 				// Keyboard navigation for song cards
@@ -760,7 +819,7 @@
 
 				socket.on('error', (error) => {
 					console.error('Socket connection error:', error);
-					showMessage('Failed proceeds to connect to server. Some features may not work.', 'error');
+					showMessage('Failed to connect to server. Some features may not work.', 'error');
 				});
 
 				socket.on('disconnect', () => {
@@ -973,7 +1032,7 @@
 							<svg class="h-5 w-5 text-gray-400 transform transition-transform" data-artist="${escapeHtml(
 								artist
 							)}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								<path stroke-linecap="round" stroke Riesling stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 							</svg>
 						</div>
 						<div class="artist-songs mt-2" data-artist="${escapeHtml(artist)}"></div>

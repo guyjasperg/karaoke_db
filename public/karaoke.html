@@ -367,7 +367,7 @@
 
 		<div class="main-container">
 			<div class="video-container">
-				<video id="videoPlayer" autoplay></video>
+				<video id="videoPlayer" muted autoplay></video>
 				<div class="loading-spinner" id="loadingSpinner">
 					<div class="spinner"></div>
 				</div>
@@ -554,6 +554,26 @@
 					}
 					lastRemovedSequenceID = null;
 				});
+
+				//handle playback events
+				socket.on('playback-control', (data) => {
+					console.log('Playback Control:', data);
+					if (data.sessionID === sessionId) {
+						console.log('Playback control event received:', data);
+						console.log(data.action);
+						// do not show toast if the song was added / removed
+						if (data.action === 'play_next') {
+							skipSong();
+						} else if (data.action === 'play_pause') {
+							togglePlayPause();
+						} else if (data.action === 'play_repeat') {
+							console.log('Repeat song');
+							if (currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
+								playSong(currentSongIndex);
+							}
+						}
+					}
+				});
 			}
 
 			// Set up event listeners
@@ -599,7 +619,9 @@
 				});
 				videoPlayer.addEventListener('error', (e) => {
 					loadingSpinner.style.display = 'none';
-					showToast('Error loading video', 'error');
+					if (currentQueue.length > 0) {
+						showToast('Error loading video', 'error');
+					}
 					console.error('Video error:', e);
 					setTimeout(skipSong, 2000);
 				});
@@ -833,7 +855,7 @@
 					// Update skip button state
 					updateSkipButtonState();
 
-					showToast('Song removed from queue', 'success');
+					//showToast('Song removed from queue', 'success');
 				} catch (error) {
 					console.error('Error removing song from queue:', error);
 					showToast('Failed to remove song from queue', 'error');
@@ -855,6 +877,10 @@
 					const formattedDuration = formatTime(duration);
 					timeDisplay.textContent = `${formattedCurrentTime} / ${formattedDuration}`;
 				}
+
+				if (videoPlayer.muted) {
+					videoPlayer.muted = false; // Unmute when playing
+				}
 			}
 
 			// Format time in MM:SS format
@@ -870,6 +896,10 @@
 				const clickPosition = e.offsetX;
 				const seekTime = (clickPosition / progressContainerWidth) * videoPlayer.duration;
 				videoPlayer.currentTime = seekTime;
+
+				if (videoPlayer.muted) {
+					videoPlayer.muted = false;
+				}
 			}
 
 			// Toggle mute

@@ -1293,11 +1293,11 @@ app.get('/api/file-exists', (req, res) => {
 
 // API endpoint to get distinct subfolders
 app.get('/api/subfolders', (req, res) => {
-    // Set to store unique folder names
-    const uniqueFolders = new Set();
+	// Set to store unique folder names
+	const uniqueFolders = new Set();
 
-    // SQL query to get folders from database
-    const sql = `
+	// SQL query to get folders from database
+	const sql = `
         SELECT DISTINCT
             SUBSTR(
                 path,
@@ -1311,50 +1311,50 @@ app.get('/api/subfolders', (req, res) => {
         ORDER BY parent_folder;
     `;
 
-    // Get folders from database
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error('Error fetching subfolders from database:', err);
-            return res.status(500).json({ error: err.message });
-        }
+	// Get folders from database
+	db.all(sql, [], (err, rows) => {
+		if (err) {
+			console.error('Error fetching subfolders from database:', err);
+			return res.status(500).json({ error: err.message });
+		}
 
-        // Add database folders to Set
-        rows.forEach(row => {
-            if (row.parent_folder && row.parent_folder.trim() !== '') {
-                uniqueFolders.add(row.parent_folder.trim());
-            }
-        });
+		// Add database folders to Set
+		rows.forEach((row) => {
+			if (row.parent_folder && row.parent_folder.trim() !== '') {
+				uniqueFolders.add(row.parent_folder.trim());
+			}
+		});
 
-        // Get folders from filesystem
-        fs.readdir(videoDir, { withFileTypes: true }, (err, files) => {
-            if (err) {
-                console.error('Error reading video directory:', err);
-                return res.status(500).json({ error: 'Failed to read video directory' });
-            }
+		// Get folders from filesystem
+		fs.readdir(videoDir, { withFileTypes: true }, (err, files) => {
+			if (err) {
+				console.error('Error reading video directory:', err);
+				return res.status(500).json({ error: 'Failed to read video directory' });
+			}
 
-            // Add filesystem folders to Set
-            files.forEach(file => {
-                if (file.isDirectory() && !file.name.startsWith('.')) {
-                    uniqueFolders.add(file.name);
-                }
-            });
+			// Add filesystem folders to Set
+			files.forEach((file) => {
+				if (file.isDirectory() && !file.name.startsWith('.')) {
+					uniqueFolders.add(file.name);
+				}
+			});
 
-            // Convert Set to sorted array
-            const subfolders = Array.from(uniqueFolders).sort();
+			// Convert Set to sorted array
+			const subfolders = Array.from(uniqueFolders).sort();
 
-            console.log(`Found ${subfolders.length} total subfolders:`);
-            console.log(subfolders);
+			console.log(`Found ${subfolders.length} total subfolders:`);
+			console.log(subfolders);
 
-            res.json({ 
-                subfolders,
-                total: subfolders.length,
-                source: {
-                    path: videoDir,
-                    database: DB_PATH
-                }
-            });
-        });
-    });
+			res.json({
+				subfolders,
+				total: subfolders.length,
+				source: {
+					path: videoDir,
+					database: DB_PATH,
+				},
+			});
+		});
+	});
 });
 
 app.use('/videos', express.static(videoDir));
@@ -1381,6 +1381,13 @@ io.on('connection', (socket) => {
 		console.log('Message received:', data);
 		// Broadcast the message to all connected clients
 		io.emit('message', data);
+	});
+
+	//handle playback control
+	socket.on('playback-control', (data) => {
+		console.log('playback-control received:', data);
+		// Broadcast the message to all connected clients
+		io.emit('playback-control', data);
 	});
 
 	// Handle disconnection
