@@ -548,7 +548,8 @@
 				socket.on('songQueueUpdated', (data) => {
 					console.log('Song queue updated:', data);
 					if (data.sessionID === sessionId && data.sequenceID !== lastRemovedSequenceID) {
-						showToast(`Queue updated: ${data.action} song`, 'info');
+						// do not show toast if the song was added / removed
+						//showToast(`Queue updated: ${data.action} song`, 'info');
 						fetchQueue();
 					}
 					lastRemovedSequenceID = null;
