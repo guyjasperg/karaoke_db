@@ -220,6 +220,48 @@
 				background: #1f2937; /* bg-gray-800 */
 				z-index: 10;
 			}
+			/* Responsive playback button styles */
+			.playback-controls button {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			@media (max-width: 639px) {
+				.playback-controls button {
+					width: 2.5rem; /* Smaller buttons on mobile */
+					height: 2.5rem;
+					padding: 0;
+				}
+				.playback-controls .btn-text {
+					display: none;
+				}
+				.playback-controls .btn-icon {
+					display: block;
+				}
+			}
+			@media (min-width: 640px) {
+				.playback-controls .btn-text {
+					display: block;
+				}
+				.playback-controls .btn-icon {
+					display: none;
+				}
+			}
+			/* Responsive search and queue list compression */
+			@media (max-width: 639px) {
+				#search-results .song-card,
+				#queue-results .song-card {
+					padding-top: 0.5rem; /* py-2 reduced from py-4 */
+					padding-bottom: 0.5rem;
+					margin-bottom: 0.25rem; /* Reduced from space-y-4 */
+				}
+				#search-results .space-y-4,
+				#queue-results .space-y-4 {
+					--tw-space-y-reverse: 0;
+					margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+					margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+				}
+			}
 		</style>
 	</head>
 	<body class="flex flex-col h-screen bg-gray-900 text-gray-100">
@@ -240,7 +282,7 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 							stroke-width="2"
-							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3统计2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
 						/>
 					</svg>
 					Select a song
@@ -335,7 +377,8 @@
 				id="search-tab-btn"
 				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 			>
-				Search Songs
+				<span class="sm:inline hidden">Search Songs</span>
+				<span class="sm:hidden">Search</span>
 			</button>
 			<button
 				id="queue-tab-btn"
@@ -435,20 +478,65 @@
 					<button
 						id="play-pause-btn"
 						class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						aria-label="Play or Pause"
 					>
-						Play/Pause
+						<span class="btn-text">Play/Pause</span>
+						<svg
+							class="btn-icon hidden h-5 w-5"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M10 9v6m4-6v6m-7 3h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v9a2 2 0 002 2z"
+							/>
+						</svg>
 					</button>
 					<button
 						id="repeat-btn"
 						class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						aria-label="Repeat"
 					>
-						Repeat
+						<span class="btn-text">Repeat</span>
+						<svg
+							class="btn-icon hidden h-5 w-5"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 11H7m0 0a4 4 0 014-4h2m0 0a4 4 0 014 4h-2m0 0v2m0-2h2m-2 6v2m0-2h-2a4 4 0 01-4-4h2"
+							/>
+						</svg>
 					</button>
 					<button
 						id="play-next-btn"
 						class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						aria-label="Play Next"
 					>
-						Play Next
+						<span class="btn-text">Play Next</span>
+						<svg
+							class="btn-icon hidden h-5 w-5"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 5l7 7-7 7m7-14v14"
+							/>
+						</svg>
 					</button>
 				</div>
 			</div>
@@ -636,7 +724,7 @@
 
 				repeatBtn.addEventListener('click', () => {
 					if (socket && socket.connected) {
-						socket.emit('playback-control', { sessionID: sessionId, action: 'play_repeat' });
+						socket.emit('playback-control', { sessionId, action: 'play_repeat' });
 						showMessage('Repeat action sent', 'info');
 					} else {
 						showMessage('Not connected to server', 'error');
@@ -717,7 +805,7 @@
 				queueTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
 				catalogTabBtn.classList.replace('bg-blue-600', 'bg-gray-700');
 				catalogTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
-				searchInputContainer.classList.add('hidden'); // Show search input
+				searchInputContainer.classList.add('hidden'); // Hide search input
 				fetchQueue();
 				focusedSongIndex = -1;
 			}
@@ -732,7 +820,7 @@
 				queueTabBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
 				catalogTabBtn.classList.replace('bg-gray-700', 'bg-blue-600');
 				catalogTabBtn.classList.replace('hover:bg-gray-600', 'hover:bg-blue-700');
-				searchInputContainer.classList.add('hidden'); // Show search input
+				searchInputContainer.classList.add('hidden'); // Hide search input
 				const savedCatalog = localStorage.getItem('karaoke-catalog');
 				if (savedCatalog) {
 					try {
@@ -1032,7 +1120,7 @@
 							<svg class="h-5 w-5 text-gray-400 transform transition-transform" data-artist="${escapeHtml(
 								artist
 							)}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke Riesling stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 							</svg>
 						</div>
 						<div class="artist-songs mt-2" data-artist="${escapeHtml(artist)}"></div>
