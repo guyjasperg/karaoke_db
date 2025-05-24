@@ -1067,6 +1067,7 @@
 					return;
 				}
 
+				console.log('Adding song to queue:', song);
 				// Disable the button
 				addButton.disabled = true;
 				addButton.classList.add('disabled-btn', 'loading');
@@ -1085,7 +1086,7 @@
 							Title: song.Title,
 							filePath: song.path,
 							status: 'pending',
-							startTime: 0,
+							startTime: song.startTime || 0,
 						}),
 					});
 
