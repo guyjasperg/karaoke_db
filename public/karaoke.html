@@ -41,6 +41,37 @@
 				color: #c4b5fd;
 			}
 
+			.nav {
+				display: flex;
+				gap: 32px;
+				align-items: center;
+			}
+
+			.nav a {
+				color: #f3f4f6;
+				text-decoration: none;
+				font-weight: 500;
+				padding: 8px 12px;
+				border-radius: 6px;
+				transition: all 0.2s ease;
+			}
+
+			.nav a:hover {
+				color: #93c5fd;
+				background-color: rgba(147, 197, 253, 0.1);
+			}
+
+			.nav a.active {
+				color: #60a5fa;
+				font-weight: bold;
+			}
+
+			.session-id {
+				font-size: 14px;
+				color: #9ca3af;
+				white-space: nowrap;
+			}
+
 			.main-container {
 				display: flex;
 				flex: 1;
@@ -261,7 +292,6 @@
 				left: 0;
 				width: 100vw;
 				height: 100vh;
-				/* Removed background dimming */
 				display: flex;
 				justify-content: center;
 				align-items: flex-start;
@@ -320,8 +350,29 @@
 			}
 
 			@media (max-width: 768px) {
+				.header {
+					flex-direction: column;
+					height: auto;
+					padding: 15px 20px;
+					gap: 10px;
+				}
+
+				.nav {
+					gap: 16px;
+				}
+
+				.nav a {
+					padding: 6px 10px;
+					font-size: 14px;
+				}
+
+				.session-id {
+					font-size: 12px;
+				}
+
 				.main-container {
 					flex-direction: column;
+					height: calc(100vh - 120px);
 				}
 
 				.video-container,
@@ -358,15 +409,30 @@
 					height: 16px;
 				}
 			}
+
+			@media (max-width: 480px) {
+				.nav {
+					gap: 8px;
+				}
+
+				.nav a {
+					padding: 4px 8px;
+					font-size: 13px;
+				}
+
+				.logo {
+					font-size: 20px;
+				}
+			}
 		</style>
 	</head>
 	<body>
-		<div class="header text-white p-4 shadow-md bg-purple-900">
+		<div class="header">
 			<div class="logo">Karaoke Player</div>
-			<nav class="sm:flex space-x-8">
-				<a href="queue.html" class="font-bold text-blue-400 hover:text-blue-300">Queue</a>
-				<a href="preview.html" class="text-white hover:text-blue-300">Preview</a>
-				<a href="update.html" class="text-white hover:text-blue-300">Update</a>
+			<nav class="nav">
+				<a href="queue.html" class="active">Queue</a>
+				<a href="preview.html">Preview</a>
+				<a href="update.html">Update</a>
 			</nav>
 			<div class="session-id">Session ID: <span id="sessionIdDisplay">Loading...</span></div>
 		</div>
