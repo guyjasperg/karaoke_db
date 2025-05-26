@@ -6,513 +6,200 @@
 		<link rel="icon" type="image/svg+xml" href="/public/karaoke-sing-svgrepo-com.svg" />
 		<title>Karaoke Player</title>
 		<script src="/socket.io/socket.io.js"></script>
+		<link href="./styles.css" rel="stylesheet" />
 		<style>
-			* {
-				margin: 0;
-				padding: 0;
-				box-sizing: border-box;
-				font-family: 'Arial', sans-serif;
-			}
-
-			body {
-				width: 100vw;
-				height: 100vh;
-				overflow: hidden;
-				background-color: #1f2937;
-				color: #f3f4f6;
-				display: flex;
-				flex-direction: column;
-			}
-
-			.header {
-				background-color: #5f2fab;
-				height: 60px;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				padding: 0 20px;
-				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-				z-index: 200;
-			}
-
-			.logo {
-				font-size: 24px;
-				font-weight: bold;
-				color: #c4b5fd;
-			}
-
-			.nav {
-				display: flex;
-				gap: 32px;
-				align-items: center;
-			}
-
-			.nav a {
-				color: #f3f4f6;
-				text-decoration: none;
-				font-weight: 500;
-				padding: 8px 12px;
-				border-radius: 6px;
-				transition: all 0.2s ease;
-			}
-
-			.nav a:hover {
-				color: #93c5fd;
-				background-color: rgba(147, 197, 253, 0.1);
-			}
-
-			.nav a.active {
-				color: #60a5fa;
-				font-weight: bold;
-			}
-
-			.session-id {
-				font-size: 14px;
-				color: #9ca3af;
-				white-space: nowrap;
-			}
-
-			.main-container {
-				display: flex;
-				flex: 1;
-				height: calc(100vh - 60px);
-			}
-
-			.video-container {
-				flex: 2;
-				position: relative;
-				background-color: #000;
-				overflow: hidden;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-			}
-
-			#videoPlayer {
-				width: 100%;
-				height: 100%;
-				object-fit: contain;
-				cursor: pointer;
-			}
-
-			.video-controls {
-				position: absolute;
-				bottom: 0;
-				left: 0;
-				right: 0;
-				height: 60px;
-				background: linear-gradient(transparent, rgba(31, 41, 55, 0.8));
-				display: flex;
-				align-items: center;
-				padding: 0 15px;
-				opacity: 0;
-				transition: opacity 0.3s;
-			}
-
-			.video-container:hover .video-controls {
-				opacity: 1;
-			}
-
-			.control-button {
-				background: none;
-				border: none;
-				color: #f3f4f6;
-				font-size: 24px;
-				margin: 0 10px;
-				cursor: pointer;
-				transition: transform 0.2s;
-			}
-
-			.control-button:hover {
-				transform: scale(1.2);
-				color: #2563eb;
-			}
-
-			.control-button:hover .svg-icon {
-				fill: #2563eb;
-			}
-
-			.progress-container {
-				flex: 1;
-				height: 8px;
-				background-color: rgba(156, 163, 175, 0.2);
-				margin: 0 15px;
-				border-radius: 4px;
-				cursor: pointer;
-				position: relative;
-			}
-
-			.progress-bar {
-				height: 100%;
-				background-color: #7c3aed;
-				border-radius: 4px;
-				width: 0%;
-			}
-
-			.time-display {
-				color: #f3f4f6;
-				font-size: 14px;
-				margin-left: 10px;
-			}
-
-			.queue-container {
-				flex: 0.8;
-				background-color: #2d3748;
-				padding: 20px;
-				overflow-y: auto;
-				display: flex;
-				flex-direction: column;
-				position: relative;
-			}
-
-			.queue-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: 20px;
-			}
-
-			.queue-title {
-				font-size: 20px;
-				font-weight: bold;
-				color: #c4b5fd;
-			}
-
-			.session-id {
-				font-size: 14px;
-				color: #9ca3af;
-			}
-
 			.queue-list {
-				flex: 1;
+				-webkit-overflow-scrolling: touch;
+				min-height: 0;
 				overflow-y: auto;
 			}
-
-			.queue-item {
-				background-color: #374151;
-				border-radius: 8px;
-				padding: 15px;
-				margin-bottom: 10px;
-				border-left: 4px solid #7c3aed;
-				transition: transform 0.2s;
+			.queue-header {
+				min-height: 2rem;
+				background: inherit;
 			}
-
-			.now-playing {
-				background-color: rgba(124, 58, 237, 0.2);
-				border-left: 4px solid #7c3aed;
-			}
-
-			.queue-item:hover {
-				transform: translateX(5px);
-			}
-
-			.song-title {
-				font-size: 16px;
-				font-weight: bold;
-				margin-bottom: 5px;
-			}
-
-			.song-artist {
-				font-size: 14px;
-				color: #9ca3af;
-			}
-
-			.no-songs {
-				text-align: center;
-				color: #9ca3af;
-				margin-top: 50px;
-			}
-
-			.queue-footer {
-				background-color: #374151;
-				border-radius: 8px;
-				padding: 15px;
-				margin-top: 10px;
-				border-top: 2px solid #7c3aed;
-			}
-
-			.now-playing-title {
-				font-size: 16px;
-				font-weight: bold;
-				margin-bottom: 5px;
-			}
-
-			.now-playing-artist {
-				font-size: 14px;
-				color: #9ca3af;
-			}
-
-			.skip-next-btn {
-				background-color: #7c3aed;
-				border: none;
-				color: #f3f4f6;
-				padding: 8px 15px;
-				border-radius: 4px;
-				font-size: 14px;
-				cursor: pointer;
-				margin-top: 10px;
-				transition: background-color 0.2s;
-			}
-
-			.skip-next-btn:hover {
-				background-color: #6d28d9;
-			}
-
-			.skip-next-btn:disabled {
-				background-color: #4b5563;
-				cursor: not-allowed;
-			}
-
-			.loading-spinner {
-				display: none;
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
-			}
-
-			.spinner {
-				width: 50px;
-				height: 50px;
-				border: 5px solid rgba(124, 58, 237, 0.3);
-				border-radius: 50%;
-				border-top-color: #7c3aed;
-				animation: spin 1s ease-in-out infinite;
-			}
-
-			@keyframes spin {
-				to {
-					transform: rotate(360deg);
-				}
-			}
-
-			.toast-overlay {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100vw;
-				height: 100vh;
+			.queue-container {
 				display: flex;
-				justify-content: center;
-				align-items: flex-start;
-				z-index: 9999;
-				opacity: 0;
-				pointer-events: none;
-				transition: opacity 0.3s ease;
-			}
-
-			.toast-overlay.show {
-				opacity: 1;
-			}
-
-			.toast {
-				background-color: rgba(45, 55, 72, 0.7); /* Matches gray-800 with 70% opacity */
-				color: #f3f4f6;
-				padding: 12px 18px; /* Slightly reduced padding for less prominence */
-				border-radius: 5px;
-				box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-				display: flex;
-				align-items: center;
-				max-width: 80%;
-				text-align: center;
-				margin-top: 80px;
-			}
-
-			.toast-icon {
-				margin-right: 8px; /* Slightly reduced margin */
-				width: 18px; /* Smaller icon for less visual weight */
-				height: 18px;
-			}
-
-			.success {
-				background-color: rgba(22, 163, 74, 0.7); /* Matches green-600 with 70% opacity */
-			}
-
-			.error {
-				background-color: rgba(220, 38, 38, 0.7); /* Matches red-600 with 70% opacity */
-			}
-
-			.info {
-				background-color: rgba(37, 99, 235, 0.7); /* Matches blue-600 with 70% opacity */
-			}
-
-			.svg-icon {
-				width: 100%;
-				height: 100%;
-				fill: #f3f4f6;
-				display: inline-block;
-				vertical-align: middle;
-			}
-
-			.control-button .svg-icon {
-				width: 24px;
-				height: 24px;
-			}
-
-			@media (max-width: 768px) {
-				.header {
-					flex-direction: column;
-					height: auto;
-					padding: 15px 20px;
-					gap: 10px;
-				}
-
-				.nav {
-					gap: 16px;
-				}
-
-				.nav a {
-					padding: 6px 10px;
-					font-size: 14px;
-				}
-
-				.session-id {
-					font-size: 12px;
-				}
-
-				.main-container {
-					flex-direction: column;
-					height: calc(100vh - 120px);
-				}
-
-				.video-container,
-				.queue-container {
-					flex: none;
-				}
-
-				.video-container {
-					height: 50%;
-				}
-
-				.queue-container {
-					height: 50%;
-				}
-
-				.queue-footer {
-					padding: 10px;
-				}
-
-				.skip-next-btn {
-					padding: 6px 10px;
-					font-size: 12px;
-				}
-
-				.toast {
-					padding: 10px 14px;
-					max-width: 90%;
-					font-size: 14px;
-					margin-top: 70px;
-				}
-
-				.toast-icon {
-					width: 16px;
-					height: 16px;
-				}
-			}
-
-			@media (max-width: 480px) {
-				.nav {
-					gap: 8px;
-				}
-
-				.nav a {
-					padding: 4px 8px;
-					font-size: 13px;
-				}
-
-				.logo {
-					font-size: 20px;
-				}
+				flex-direction: column;
 			}
 		</style>
 	</head>
-	<body>
-		<div class="header">
-			<div class="logo">Karaoke Player</div>
-			<nav class="nav">
-				<a href="queue.html" class="active">Queue</a>
-				<a href="preview.html">Preview</a>
-				<a href="update.html">Update</a>
+	<body class="w-screen h-screen overflow-hidden bg-gray-800 text-gray-100 flex flex-col font-sans">
+		<div class="bg-purple-700 h-16 flex justify-between items-center px-4 sm:px-5 shadow-lg z-50">
+			<div class="text-xl sm:text-2xl font-bold text-purple-300">Karaoke Player</div>
+			<nav class="flex gap-4 sm:gap-8 items-center">
+				<a
+					href="queue.html"
+					class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400 active:font-bold sm:px-3"
+				>
+					<span class="inline sm:hidden">
+						<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+							<path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+						</svg>
+					</span>
+					<span class="hidden sm:inline">Queue</span>
+				</a>
+				<a
+					href="preview.html"
+					class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400"
+				>
+					<span class="inline sm:hidden">
+						<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+							<path
+								d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+							/>
+						</svg>
+					</span>
+					<span class="hidden sm:inline">Preview</span>
+				</a>
+				<a
+					href="update.html"
+					class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400"
+				>
+					<span class="inline sm:hidden">
+						<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+							<path
+								d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+							/>
+						</svg>
+					</span>
+					<span class="hidden sm:inline">Update</span>
+				</a>
 			</nav>
-			<div class="session-id">Session ID: <span id="sessionIdDisplay">Loading...</span></div>
+			<div class="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
+				ID:
+				<a id="sessionIdDisplay" class="text-blue-300 hover:text-blue-400 underline cursor-pointer"
+					>Loading...</a
+				>
+			</div>
 		</div>
 
-		<div class="main-container">
-			<div class="video-container">
-				<video id="videoPlayer" muted autoplay></video>
-				<div class="loading-spinner" id="loadingSpinner">
-					<div class="spinner"></div>
+		<div class="flex flex-col sm:flex-row flex-1 h-[calc(100vh-4rem)]">
+			<div
+				class="relative bg-black overflow-hidden flex justify-center items-center w-full sm:flex-[2] sm:h-full aspect-video sm:aspect-auto"
+			>
+				<video
+					id="videoPlayer"
+					class="w-full h-full object-contain cursor-pointer"
+					controls
+					autoplay
+				></video>
+				<div
+					class="loading-spinner absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden"
+					id="loadingSpinner"
+				>
+					<div
+						class="w-10 sm:w-12 h-10 sm:h-12 border-4 border-purple-500/30 border-t-purple-600 rounded-full animate-spin"
+					></div>
 				</div>
-				<div class="video-controls">
-					<button class="control-button" id="playPauseBtn">
-						<svg class="svg-icon icon-play" viewBox="0 0 24 24">
-							<path d="M8 5v14l11-7z" />
-						</svg>
+				<div
+					id="autoplayPrompt"
+					class="absolute inset-0 bg-black/70 flex items-center justify-center hidden z-10"
+				>
+					<button
+						id="startPlaybackBtn"
+						class="bg-purple-600 text-gray-100 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-base sm:text-lg font-medium hover:bg-purple-700 transition-colors duration-200"
+					>
+						Start Playback
 					</button>
-					<button class="control-button" id="skipBtn">
-						<svg class="svg-icon icon-step-forward" viewBox="0 0 24 24">
-							<path d="M6 18V6h2v12H6zm4-2V8l7 4-7 4z" />
-						</svg>
-					</button>
-					<div class="progress-container" id="progressContainer">
-						<div class="progress-bar" id="progressBar"></div>
+				</div>
+			</div>
+
+			<div
+				class="w-full sm:w-1/4 bg-gray-700 p-2 sm:p-5 flex flex-col queue-container relative h-auto sm:h-full"
+			>
+				<div class="queue-header flex justify-between items-center mb-2 sm:mb-2">
+					<div class="queue-title text-lg sm:text-xl font-bold text-purple-300">Song Queue</div>
+				</div>
+				<div class="queue-list flex-1 overflow-y-auto mb-2 sm:mb-2.5" id="queueList">
+					<div class="no-songs text-center text-gray-400 mt-4 sm:mt-4" id="noSongs">
+						No songs in queue
 					</div>
-					<div class="time-display" id="timeDisplay">0:00 / 0:00</div>
-					<button class="control-button" id="volumeBtn">
-						<svg class="svg-icon icon-volume-up" viewBox="0 0 24 24">
-							<path
-								d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
-							/>
-						</svg>
+				</div>
+				<div
+					class="queue-footer bg-gray-600 rounded-lg p-3 sm:p-4 border-t-2 border-purple-600 sticky bottom-0"
+				>
+					<div
+						class="now-playing-title text-sm sm:text-base font-bold mb-1 sm:mb-1.5"
+						id="nowPlayingTitle"
+					></div>
+					<div
+						class="now-playing-artist text-xs sm:text-sm text-gray-400"
+						id="nowPlayingArtist"
+					></div>
+					<button
+						class="skip-next-btn bg-purple-600 text-gray-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm cursor-pointer mt-2 sm:mt-2.5 transition-colors duration-200 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed w-full"
+						id="skipNextBtn"
+						disabled
+					>
+						Skip to Next
 					</button>
-					<button class="control-button" id="fullscreenBtn">
-						<svg class="svg-icon icon-expand" viewBox="0 0 24 24">
-							<path
-								d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
-							/>
-						</svg>
-					</button>
-				</div>
-			</div>
-
-			<div class="queue-container">
-				<div class="queue-header">
-					<div class="queue-title">Song Queue</div>
-				</div>
-				<div class="queue-list" id="queueList">
-					<div class="no-songs" id="noSongs">No songs in queue</div>
-				</div>
-				<div class="queue-footer" id="queueFooter">
-					<div class="now-playing-title" id="nowPlayingTitle"></div>
-					<div class="now-playing-artist" id="nowPlayingArtist"></div>
-					<button class="skip-next-btn" id="skipNextBtn" disabled>Skip to Next</button>
 				</div>
 			</div>
 		</div>
 
-		<div class="toast-overlay" id="toastOverlay">
-			<div class="toast" id="toast">
-				<span class="toast-icon">
-					<svg class="svg-icon icon-info-circle" viewBox="0 0 24 24">
+		<div
+			class="fixed inset-0 bg-black/70 flex justify-center items-center z-[1000] opacity-0 pointer-events-none transition-opacity duration-300"
+			id="sessionIdPopup"
+		>
+			<div class="bg-gray-700 p-6 rounded-lg w-11/12 max-w-md shadow-lg">
+				<h2 class="text-lg font-bold text-purple-300 mb-4">Change Session ID</h2>
+				<div class="mb-4">
+					<label class="block text-sm text-gray-400 mb-2" for="sessionIdInput"
+						>New Session ID:</label
+					>
+					<input
+						id="sessionIdInput"
+						type="text"
+						class="w-full bg-gray-600 text-gray-100 p-2 rounded text-sm border border-gray-500 focus:outline-none focus:border-purple-500"
+						placeholder="Enter or generate a new ID"
+					/>
+				</div>
+				<button
+					id="generateSessionIdBtn"
+					class="bg-blue-600 text-gray-100 px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors mb-4 w-full"
+				>
+					Generate New ID
+				</button>
+				<div class="flex justify-end gap-2">
+					<button
+						id="cancelSessionIdBtn"
+						class="bg-gray-600 text-gray-100 px-4 py-2 rounded text-sm hover:bg-gray-700"
+					>
+						Cancel
+					</button>
+					<button
+						id="saveSessionIdBtn"
+						class="bg-purple-600 text-gray-100 px-4 py-2 rounded text-sm hover:bg-purple-700"
+						disabled
+					>
+						Save
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div
+			class="toast-overlay fixed inset-0 flex justify-center items-start z-[9999] opacity-0 pointer-events-none transition-opacity duration-300"
+			id="toastOverlay"
+		>
+			<div
+				class="toast bg-gray-800/70 text-gray-100 py-2 sm:py-3 px-3 sm:px-4 rounded-md shadow-lg flex items-center max-w-[90%] sm:max-w-[80%] text-center mt-16 sm:mt-20"
+				id="toast"
+			>
+				<span class="toast-icon mr-2 w-4 sm:w-4.5 h-4 sm:h-4.5">
+					<svg class="svg-icon icon-info-circle w-full h-full fill-current" viewBox="0 0 24 24">
 						<path
 							d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
 						/>
 					</svg>
 				</span>
-				<span id="toastMessage"></span>
+				<span id="toastMessage" class="text-sm sm:text-base"></span>
 			</div>
 		</div>
 
 		<script>
 			// DOM Elements
 			const videoPlayer = document.getElementById('videoPlayer');
-			const playPauseBtn = document.getElementById('playPauseBtn');
-			const skipBtn = document.getElementById('skipBtn');
-			const progressContainer = document.getElementById('progressContainer');
-			const progressBar = document.getElementById('progressBar');
-			const timeDisplay = document.getElementById('timeDisplay');
-			const volumeBtn = document.getElementById('volumeBtn');
-			const fullscreenBtn = document.getElementById('fullscreenBtn');
 			const queueList = document.getElementById('queueList');
 			const noSongs = document.getElementById('noSongs');
 			const loadingSpinner = document.getElementById('loadingSpinner');
@@ -523,44 +210,137 @@
 			const nowPlayingTitle = document.getElementById('nowPlayingTitle');
 			const nowPlayingArtist = document.getElementById('nowPlayingArtist');
 			const skipNextBtn = document.getElementById('skipNextBtn');
+			const autoplayPrompt = document.getElementById('autoplayPrompt');
+			const startPlaybackBtn = document.getElementById('startPlaybackBtn');
+			const sessionIdPopup = document.getElementById('sessionIdPopup');
+			const sessionIdInput = document.getElementById('sessionIdInput');
+			const generateSessionIdBtn = document.getElementById('generateSessionIdBtn');
+			const saveSessionIdBtn = document.getElementById('saveSessionIdBtn');
+			const cancelSessionIdBtn = document.getElementById('cancelSessionIdBtn');
 			const videoBaseURL = '/videos/';
 
 			// Configuration
-			const API_URL = ''; // Base URL, empty for same domain
-			const DEFAULT_SESSION_ID = 'default'; // Default session ID if none provided
+			const API_URL = '';
+			const DEFAULT_SESSION_ID = 'default';
+			const AUTOPLAY_FLAG = 'karaokeAutoplayEnabled';
 
 			// State variables
 			let currentQueue = [];
 			let currentSongIndex = -1;
 			let sessionId = '';
-			let isPlaying = false;
 			let socket;
 			let lastRemovedSequenceID = null;
 			let toastTimeout = null;
 
-			// SVG icon definitions for dynamic updates
+			// Detect mobile device
+			const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+				navigator.userAgent
+			);
+
+			// SVG icon definitions for toast notifications
 			const svgIcons = {
-				'info-circle': `<svg class="svg-icon icon-info-circle" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
-				'check-circle': `<svg class="svg-icon icon-check-circle" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
-				'exclamation-circle': `<svg class="svg-icon icon-exclamation-circle" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
-				play: `<svg class="svg-icon icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
-				pause: `<svg class="svg-icon icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`,
-				'volume-mute': `<svg class="svg-icon icon-volume-mute" viewBox="0 0 24 24"><path d="M7 9v6h4l5 5V4l-5 5H7zm10.59 2L15 8.41 13.59 7 12 8.59 10.41 7 9 8.41 11.59 11 9 13.59 10.41 15 12 13.41 13.59 15 15 13.59 12.41 11z"/></svg>`,
-				'volume-up': `<svg class="svg-icon icon-volume-up" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
-				expand: `<svg class="svg-icon icon-expand" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`,
-				compress: `<svg class="svg-icon icon-compress" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`,
+				'info-circle': `<svg class="svg-icon icon-info-circle w-full h-full fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
+				'check-circle': `<svg class="svg-icon icon-check-circle w-full h-full fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
+				'exclamation-circle': `<svg class="svg-icon icon-exclamation-circle w-full h-full fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
 			};
+
+			// Adjust queue height dynamically
+			function adjustQueueHeight() {
+				const queueContainer = document.querySelector('.queue-container');
+				const header = document.querySelector('.bg-purple-700');
+				const video = document.querySelector('.relative.bg-black');
+				const queueHeader = document.querySelector('.queue-header');
+				const queueFooter = document.querySelector('.queue-footer');
+				const headerHeight = header.offsetHeight || 64;
+				const videoHeight = video.offsetHeight || window.innerWidth * 0.5625;
+				const queueHeaderHeight = queueHeader.offsetHeight || 32;
+				const queueFooterHeight = queueFooter.offsetHeight || 80;
+				const containerPadding = 16;
+				const availableHeight =
+					window.innerHeight - headerHeight - videoHeight - containerPadding - 10;
+				queueContainer.style.height = `${availableHeight}px`;
+				const queueListHeight = availableHeight - queueHeaderHeight - 8;
+				queueList.style.height = `${queueListHeight}px`;
+				console.log(
+					'Adjusted queue height:',
+					availableHeight,
+					'px, queueList height:',
+					queueListHeight,
+					'px'
+				);
+				console.log(
+					'Queue scrollHeight:',
+					queueList.scrollHeight,
+					'clientHeight:',
+					queueList.clientHeight
+				);
+				console.log(
+					'Queue header height:',
+					queueHeaderHeight,
+					'visible:',
+					queueHeader.getBoundingClientRect().top >= 0
+				);
+			}
+
+			// Show session ID popup
+			function showSessionIdPopup() {
+				sessionIdInput.value = '';
+				saveSessionIdBtn.disabled = true;
+				sessionIdPopup.classList.add('opacity-100', 'pointer-events-auto');
+			}
+
+			// Hide session ID popup
+			function hideSessionIdPopup() {
+				sessionIdPopup.classList.remove('opacity-100', 'pointer-events-auto');
+				sessionIdInput.value = '';
+				saveSessionIdBtn.disabled = true;
+			}
+
+			// Generate new session ID
+			async function generateNewSessionId() {
+				try {
+					const response = await fetch(`${API_URL}/api/getNewSessionID`);
+					if (!response.ok) throw new Error('Failed to generate new session ID');
+					const data = await response.json();
+					const newId = data.sessionId || DEFAULT_SESSION_ID;
+					sessionIdInput.value = newId;
+					saveSessionIdBtn.disabled = false;
+					showToast('New session ID generated', 'success');
+				} catch (error) {
+					console.error('Error generating session ID:', error);
+					showToast('Failed to generate session ID', 'error');
+				}
+			}
+
+			// Change session ID
+			function changeSessionId() {
+				const newId = sessionIdInput.value.trim();
+				if (!newId) {
+					showToast('Please enter a valid session ID', 'error');
+					return;
+				}
+				sessionId = newId;
+				localStorage.setItem('karaokeSessionId', sessionId);
+				sessionIdDisplay.textContent = sessionId;
+				currentQueue = [];
+				currentSongIndex = -1;
+				videoPlayer.src = '';
+				videoPlayer.pause();
+				nowPlayingTitle.textContent = '';
+				nowPlayingArtist.textContent = '';
+				fetchQueue();
+				showToast('Session ID updated', 'success');
+				hideSessionIdPopup();
+			}
 
 			// Initialize the application
 			async function init() {
-				// Check localStorage for sessionId first
+				// Check localStorage for sessionId
 				sessionId = localStorage.getItem('karaokeSessionId');
 				if (!sessionId) {
-					// If no sessionId in localStorage, check URL query parameter
 					const urlParams = new URLSearchParams(window.location.search);
 					sessionId = urlParams.get('session');
 					if (!sessionId) {
-						// If no sessionId in URL, generate a new one
 						try {
 							const response = await fetch(`${API_URL}/api/getNewSessionID`);
 							if (response.ok) {
@@ -576,70 +356,63 @@
 						}
 					}
 				}
-				// Save sessionId to localStorage
 				localStorage.setItem('karaokeSessionId', sessionId);
 				sessionIdDisplay.textContent = sessionId;
 
 				// Initialize Socket.IO
 				initializeSocket();
 
-				// Fetch and display queue
-				fetchQueue();
-
-				// Set up event listeners
-				setupEventListeners();
-
-				// Check for autoplay
+				// Fetch queue
 				const urlParams = new URLSearchParams(window.location.search);
 				const autoplay = urlParams.get('autoplay') !== 'false';
-				if (autoplay) {
-					setTimeout(() => {
-						if (currentQueue.length > 0) {
-							playSong(0);
-						}
-					}, 1000);
+				await fetchQueue();
+
+				// Apply queue height adjustment
+				if (isMobile) {
+					adjustQueueHeight();
+					window.addEventListener('resize', adjustQueueHeight);
 				}
+				// Set up event listeners
+				setupEventListeners();
+				// Debug scrolling
+				queueList.addEventListener('touchmove', (e) => console.log('Touch move on queueList:', e), {
+					passive: true,
+				});
 			}
 
 			// Initialize Socket.IO connection
 			function initializeSocket() {
 				socket = io({
-					auth: {
-						token: 'karaoke-player-app', // Auth token for socket connection
-					},
+					auth: { token: 'karaoke-player-app' },
 				});
 
-				socket.on('connect', () => {
-					showToast('Connected to server', 'info');
-				});
-
-				socket.on('disconnect', () => {
-					showToast('Disconnected from server', 'error');
-				});
-
+				socket.on('connect', () => showToast('Connected to server', 'info'));
+				socket.on('disconnect', () => showToast('Disconnected from server', 'error'));
 				socket.on('songQueueUpdated', (data) => {
-					console.log('Song queue updated:', data);
 					if (data.sessionID === sessionId && data.sequenceID !== lastRemovedSequenceID) {
-						// do not show toast if the song was added / removed
-						//showToast(`Queue updated: ${data.action} song`, 'info');
 						fetchQueue();
 					}
 					lastRemovedSequenceID = null;
 				});
-
-				//handle playback events
 				socket.on('playback-control', (data) => {
-					console.log('Playback Control:', data);
 					if (data.sessionID === sessionId) {
-						console.log('Playback control event received:', data);
-						console.log(data.action);
-						// do not show toast if the song was added / removed
 						if (data.action === 'play_next') {
 							skipSong();
 						} else if (data.action === 'play_pause') {
-							togglePlayPause();
+							if (videoPlayer.paused) {
+								videoPlayer.play().catch((error) => {
+									console.error('Error playing video:', error);
+									showToast('Could not play video', 'error');
+								});
+							} else {
+								videoPlayer.pause();
+							}
+							socket.emit('playback-state', {
+								state: videoPlayer.paused ? 'paused' : 'playing',
+								sessionID: sessionId,
+								songid: currentQueue[currentSongIndex]?.songid || null,
+							});
 						} else if (data.action === 'play_repeat') {
-							console.log('Repeat song');
 							if (currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
 								playSong(currentSongIndex);
 							}
@@ -650,45 +423,23 @@
 
 			// Set up event listeners
 			function setupEventListeners() {
-				// Video player controls
-				playPauseBtn.addEventListener('click', togglePlayPause);
-				skipBtn.addEventListener('click', skipSong);
-				skipNextBtn.addEventListener('click', skipSong);
-				volumeBtn.addEventListener('click', toggleMute);
-				fullscreenBtn.addEventListener('click', toggleFullscreen);
-
-				// Video interactions
-				videoPlayer.addEventListener('click', togglePlayPause);
-				videoPlayer.addEventListener('dblclick', toggleFullscreen);
-
-				// Keyboard support
-				document.addEventListener('keydown', (e) => {
-					if (e.key === ' ' && !e.target.matches('input, textarea, [contenteditable]')) {
-						e.preventDefault();
-						togglePlayPause();
+				videoPlayer.addEventListener('dblclick', () => {
+					if (!document.fullscreenElement) {
+						(
+							videoPlayer.requestFullscreen ||
+							videoPlayer.webkitRequestFullscreen ||
+							videoPlayer.msRequestFullscreen
+						)?.call(videoPlayer);
+					} else {
+						(
+							document.exitFullscreen ||
+							document.webkitExitFullscreen ||
+							document.msExitFullscreen
+						)?.call(document);
 					}
 				});
-
-				// Progress bar
-				progressContainer.addEventListener('click', seek);
-
-				// Video player events
-				videoPlayer.addEventListener('timeupdate', updateProgress);
-				videoPlayer.addEventListener('ended', onVideoEnd);
-				videoPlayer.addEventListener('play', () => {
-					playPauseBtn.innerHTML = svgIcons['pause'];
-					isPlaying = true;
-				});
-				videoPlayer.addEventListener('pause', () => {
-					playPauseBtn.innerHTML = svgIcons['play'];
-					isPlaying = false;
-				});
-				videoPlayer.addEventListener('loadstart', () => {
-					loadingSpinner.style.display = 'block';
-				});
-				videoPlayer.addEventListener('canplay', () => {
-					loadingSpinner.style.display = 'none';
-				});
+				videoPlayer.addEventListener('loadstart', () => (loadingSpinner.style.display = 'block'));
+				videoPlayer.addEventListener('canplay', () => (loadingSpinner.style.display = 'none'));
 				videoPlayer.addEventListener('error', (e) => {
 					loadingSpinner.style.display = 'none';
 					if (currentQueue.length > 0) {
@@ -697,10 +448,58 @@
 					console.error('Video error:', e);
 					setTimeout(skipSong, 2000);
 				});
+				videoPlayer.addEventListener('ended', onVideoEnd);
+				skipNextBtn.addEventListener('click', skipSong);
+				document.addEventListener('keydown', (e) => {
+					if (e.key === ' ' && !e.target.matches('input, button, textarea, [contenteditable]')) {
+						e.preventDefault();
+						if (videoPlayer.paused) {
+							videoPlayer.play().catch((error) => {
+								console.error('Error playing video:', error);
+								showToast('Could not play video', 'error');
+							});
+						} else {
+							videoPlayer.pause();
+						}
+						if (socket) {
+							socket.emit('playback-state', {
+								state: videoPlayer.paused ? 'paused' : 'playing',
+								sessionId: sessionId,
+								songid: currentQueue[currentSongIndex]?.songid || null,
+							});
+						}
+					}
+				});
+				document.addEventListener(
+					'click',
+					() => {
+						if (!autoplayPrompt.classList.contains('hidden')) {
+							autoplayPrompt.classList.add('hidden');
+							localStorage.setItem(AUTOPLAY_FLAG, 'true');
+							console.log('Autoplay prompt hidden due to user interaction');
+						}
+					},
+					{ once: true }
+				);
+				sessionIdDisplay.addEventListener('click', (e) => {
+					e.preventDefault();
+					showSessionIdPopup();
+				});
+				generateSessionIdBtn.addEventListener('click', generateNewSessionId);
+				saveSessionIdBtn.addEventListener('click', changeSessionId);
+				cancelSessionIdBtn.addEventListener('click', hideSessionIdPopup);
+				sessionIdInput.addEventListener('input', () => {
+					saveSessionIdBtn.disabled = !sessionIdInput.value.trim();
+				});
 			}
 
 			// Fetch song queue from API
 			async function fetchQueue() {
+				queueList.innerHTML = '';
+				if (currentQueue.length === 0) {
+					queueList.appendChild(noSongs);
+				}
+
 				try {
 					const response = await fetch(`${API_URL}/api/songqueue/session/${sessionId}`);
 					if (!response.ok) {
@@ -709,16 +508,8 @@
 
 					const data = await response.json();
 					currentQueue = Array.isArray(data) ? data : [];
-
 					renderQueue();
-
-					if (currentQueue.length === 0) {
-						noSongs.style.display = 'block';
-					} else {
-						noSongs.style.display = 'none';
-					}
-
-					// Update skip button state
+					noSongs.style.display = currentQueue.length === 0 ? 'block' : 'none';
 					updateSkipButtonState();
 				} catch (error) {
 					console.error('Error fetching queue:', error);
@@ -729,48 +520,44 @@
 			// Render the queue in the UI
 			function renderQueue() {
 				queueList.innerHTML = '';
-
 				if (currentQueue.length === 0) {
 					queueList.appendChild(noSongs);
 					return;
 				}
-
 				currentQueue.forEach((song, index) => {
 					const queueItem = document.createElement('div');
-					queueItem.className = `queue-item ${index === currentSongIndex ? 'now-playing' : ''}`;
+					queueItem.className = `queue-item bg-gray-600 rounded-lg p-3 sm:p-4 mb-2 border-l-4 border-purple-600 transition-transform duration-200 hover:transform hover:bg-gray-500 hover:translate-x-1 ${
+						index === currentSongIndex ? 'now-playing bg-purple-600/20' : ''
+					}`;
 					queueItem.dataset.index = index;
-
 					const titleElement = document.createElement('div');
-					titleElement.className = 'song-title';
+					titleElement.className =
+						'song-title text-sm sm:text-base font-bold mb-1 sm:mb-1.5 overflow-x-hidden text-ellipsis';
 					titleElement.textContent = song.Title || 'Unknown Title';
-
 					const artistElement = document.createElement('div');
-					artistElement.className = 'song-artist';
+					artistElement.className =
+						'song-artist text-xs sm:text-sm text-gray-400 overflow-x-hidden text-ellipsis';
 					artistElement.textContent = song.Artist || 'Unknown Artist';
-
 					queueItem.appendChild(titleElement);
 					queueItem.appendChild(artistElement);
-
-					// Add click event to play the song
-					queueItem.addEventListener('click', () => {
-						playSong(index);
-					});
-
+					queueItem.addEventListener('click', () => playSong(index));
 					queueList.appendChild(queueItem);
 				});
+				console.log('Rendered queue with', currentQueue.length, 'items');
+				console.log(
+					'Queue scrollHeight after render:',
+					queueList.scrollHeight,
+					'clientHeight:',
+					queueList.clientHeight
+				);
 			}
 
 			// Play a song from the queue
 			function playSong(index) {
 				console.log('Playing song at index:', index);
-				if (index < 0 || index >= currentQueue.length) {
-					return;
-				}
-
+				if (index < 0 || index >= currentQueue.length) return;
 				currentSongIndex = index;
 				const song = currentQueue[index];
-
-				// Update video source
 				const videoPath = song.filePath;
 				const karaokeIndex = videoPath.indexOf('_Karaoke');
 				let cleanedPath = videoPath;
@@ -780,40 +567,80 @@
 				const videoUrl = videoBaseURL + cleanedPath;
 				console.log('Playing video:', videoUrl);
 				videoPlayer.src = videoUrl;
+				videoPlayer.setAttribute('autoplay', 'true');
 
-				// Handle startTime if it exists and is greater than 0
 				if (song.startTime && song.startTime > 0) {
 					const handleCanPlay = () => {
 						videoPlayer.currentTime = song.startTime;
-						videoPlayer.play().catch((error) => {
-							console.error('Error playing video:', error);
-							showToast('Could not play video automatically', 'error');
-						});
-						// Remove the event listener after it runs once
+						videoPlayer
+							.play()
+							.then(() => {
+								if (!autoplayPrompt.classList.contains('hidden')) {
+									autoplayPrompt.classList.add('hidden');
+									localStorage.setItem(AUTOPLAY_FLAG, 'true');
+									console.log('Autoplay prompt hidden due to successful playback');
+								}
+								console.log('Autoplay succeeded for song at index:', index);
+							})
+							.catch((error) => {
+								console.error('Error playing video:', error);
+								if (error.name === 'NotAllowedError' && !localStorage.getItem(AUTOPLAY_FLAG)) {
+									autoplayPrompt.classList.remove('hidden');
+									startPlaybackBtn.addEventListener(
+										'click',
+										() => {
+											localStorage.setItem(AUTOPLAY_FLAG, 'true');
+											autoplayPrompt.classList.add('hidden');
+											videoPlayer.play().catch((err) => console.error('Retry play failed:', err));
+										},
+										{ once: true }
+									);
+									if (isMobile) showToast('Tap Start Playback to begin', 'info');
+								} else {
+									showToast('Could not play video', 'error');
+								}
+							});
 						videoPlayer.removeEventListener('canplay', handleCanPlay);
 					};
 					videoPlayer.addEventListener('canplay', handleCanPlay);
 				} else {
-					// If no startTime, play normally
-					videoPlayer.play().catch((error) => {
-						console.error('Error playing video:', error);
-						showToast('Could not play video automatically', 'error');
-					});
+					videoPlayer
+						.play()
+						.then(() => {
+							if (!autoplayPrompt.classList.contains('hidden')) {
+								autoplayPrompt.classList.add('hidden');
+								localStorage.setItem(AUTOPLAY_FLAG, 'true');
+								console.log('Autoplay prompt hidden due to successful playback');
+							}
+							console.log('Autoplay succeeded for song at index:', index);
+						})
+						.catch((error) => {
+							console.error('Error playing video:', error);
+							if (error.name === 'NotAllowedError' && !localStorage.getItem(AUTOPLAY_FLAG)) {
+								autoplayPrompt.classList.remove('hidden');
+								startPlaybackBtn.addEventListener(
+									'click',
+									() => {
+										localStorage.setItem(AUTOPLAY_FLAG, 'true');
+										autoplayPrompt.classList.add('hidden');
+										videoPlayer.play().catch((err) => console.error('Retry play failed:', err));
+									},
+									{ once: true }
+								);
+								if (isMobile) showToast('Tap Start Playback to begin', 'info');
+							} else {
+								showToast('Could not play video', 'error');
+							}
+						});
 				}
 
 				nowPlayingTitle.textContent = song.Title || 'Unknown Title';
 				nowPlayingArtist.textContent = song.Artist || 'Unknown Artist';
-
-				// Update queue highlighting
 				renderQueue();
-
-				// Scroll the current song into view
 				const currentSongElement = queueList.querySelector(`.queue-item[data-index="${index}"]`);
 				if (currentSongElement) {
 					currentSongElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 				}
-
-				// Update skip button state
 				updateSkipButtonState();
 			}
 
@@ -822,67 +649,38 @@
 				skipNextBtn.disabled = currentSongIndex >= currentQueue.length - 1;
 			}
 
-			// Toggle play/pause
-			function togglePlayPause() {
-				if (videoPlayer.paused) {
-					videoPlayer.play();
-				} else {
-					videoPlayer.pause();
-				}
-				//broadcast play/pause event to server
-				if (socket) {
-					const song = currentQueue[currentSongIndex];
-					socket.emit('playback-state', {
-						state: videoPlayer.paused ? 'paused' : 'playing',
-						sessionID: sessionId,
-						songid: song ? song.songid : null,
-					});
-				}
-			}
-
 			// Skip to next song
 			function skipSong() {
-				console.log('Skipping song...');
-				if (currentQueue.length === 0) {
-					console.log('No songs in queue to skip');
-					return;
-				}
-				const index = currentSongIndex;
+				if (currentQueue.length === 0) return;
 				if (currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
 					const song = currentQueue[currentSongIndex];
 					if (song.sequenceID) {
-						removeSongFromQueue(song.sequenceID, currentSongIndex); // Remove the current song
+						removeSongFromQueue(song.sequenceID, currentSongIndex);
 					}
 				}
 				if (currentSongIndex < currentQueue.length - 1) {
 					playSong(currentSongIndex + 1);
 				} else {
 					showToast('No more songs in queue', 'info');
-					videoPlayer.src = ''; // Clear the video player
+					videoPlayer.src = '';
 					nowPlayingTitle.textContent = '';
 					nowPlayingArtist.textContent = '';
-					currentSongIndex = -1; // Reset index
-					renderQueue(); // Update queue UI
+					currentSongIndex = -1;
+					renderQueue();
 					updateSkipButtonState();
 				}
 			}
 
 			// Handle video end
 			async function onVideoEnd() {
-				console.log('Video ended');
-				const index = currentSongIndex;
 				if (currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
 					const song = currentQueue[currentSongIndex];
 					if (song.sequenceID) {
-						await removeSongFromQueue(song.sequenceID, currentSongIndex); // Remove the current song
+						await removeSongFromQueue(song.sequenceID, currentSongIndex);
 					}
 				}
-				console.log('Playing next song...');
-				console.log(`Queue length: ${currentQueue.length}`);
-
-				//skipSong(); // Move to the next song
 				if (currentQueue.length > 0) {
-					playSong(0); // Play the next song
+					playSong(0);
 				} else {
 					videoPlayer.src = '';
 					nowPlayingTitle.textContent = '';
@@ -895,156 +693,41 @@
 
 			// Remove a song from the queue
 			async function removeSongFromQueue(sequenceID, index) {
-				console.log('Removing song from queue:', index);
 				try {
-					lastRemovedSequenceID = sequenceID; // Track the sequenceID being removed
+					lastRemovedSequenceID = sequenceID;
 					const response = await fetch(
 						`${API_URL}/api/songqueue/${sequenceID}?sessionID=${sessionId}`,
-						{
-							method: 'DELETE',
-						}
+						{ method: 'DELETE' }
 					);
-					if (!response.ok) {
-						throw new Error('Failed to remove song from queue');
-					}
-
-					// Remove song from local currentQueue
+					if (!response.ok) throw new Error('Failed to remove song from queue');
 					currentQueue.splice(index, 1);
-					console.log('Removed song from local queue.\nQueue count:', currentQueue.length);
-
-					// Adjust currentSongIndex if necessary
 					if (index <= currentSongIndex && currentSongIndex > 0) {
 						currentSongIndex--;
 					} else if (index === currentSongIndex) {
-						currentSongIndex = -1; // Reset if current song is removed
+						currentSongIndex = -1;
 						nowPlayingTitle.textContent = '';
 						nowPlayingArtist.textContent = '';
 					}
-
-					// Update queue UI
 					renderQueue();
-
-					// Update no songs display
-					if (currentQueue.length === 0) {
-						noSongs.style.display = 'block';
-						nowPlayingTitle.textContent = '';
-						nowPlayingArtist.textContent = '';
-					} else {
-						noSongs.style.display = 'none';
-					}
-
-					// Update skip button state
+					noSongs.style.display = currentQueue.length === 0 ? 'block' : 'none';
 					updateSkipButtonState();
-
-					//showToast('Song removed from queue', 'success');
 				} catch (error) {
 					console.error('Error removing song from queue:', error);
 					showToast('Failed to remove song from queue', 'error');
 				}
 			}
 
-			// Update progress bar
-			function updateProgress() {
-				const currentTime = videoPlayer.currentTime;
-				const duration = videoPlayer.duration;
-
-				if (duration) {
-					// Update progress bar
-					const progressPercent = (currentTime / duration) * 100;
-					progressBar.style.width = `${progressPercent}%`;
-
-					// Update time display
-					const formattedCurrentTime = formatTime(currentTime);
-					const formattedDuration = formatTime(duration);
-					timeDisplay.textContent = `${formattedCurrentTime} / ${formattedDuration}`;
-				}
-
-				//braodcast update to server
-				// Only send update if seconds changed
-				if (socket && currentSongIndex >= 0 && currentSongIndex < currentQueue.length) {
-					const song = currentQueue[currentSongIndex];
-					const currentSeconds = Math.floor(currentTime);
-					if (
-						typeof updateProgress.lastSentSecond === 'undefined' ||
-						updateProgress.lastSentSecond !== currentSeconds
-					) {
-						updateProgress.lastSentSecond = currentSeconds;
-						socket.emit('playback-progress', {
-							songid: song.songid,
-							duration: duration,
-							currentTime: currentTime,
-							sessionID: sessionId,
-						});
-					}
-				}
-
-				if (videoPlayer.muted) {
-					videoPlayer.muted = false; // Unmute when playing
-				}
-			}
-
-			// Format time in MM:SS format
-			function formatTime(timeInSeconds) {
-				const minutes = Math.floor(timeInSeconds / 60);
-				const seconds = Math.floor(timeInSeconds % 60);
-				return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-			}
-
-			// Seek in the video
-			function seek(e) {
-				const progressContainerWidth = progressContainer.clientWidth;
-				const clickPosition = e.offsetX;
-				const seekTime = (clickPosition / progressContainerWidth) * videoPlayer.duration;
-				videoPlayer.currentTime = seekTime;
-
-				if (videoPlayer.muted) {
-					videoPlayer.muted = false;
-				}
-			}
-
-			// Toggle mute
-			function toggleMute() {
-				videoPlayer.muted = !videoPlayer.muted;
-
-				if (videoPlayer.muted) {
-					volumeBtn.innerHTML = svgIcons['volume-mute'];
-				} else {
-					volumeBtn.innerHTML = svgIcons['volume-up'];
-				}
-			}
-
-			// Toggle fullscreen for video only
-			function toggleFullscreen() {
-				if (!document.fullscreenElement) {
-					if (videoPlayer.requestFullscreen) {
-						videoPlayer.requestFullscreen();
-					} else if (videoPlayer.webkitRequestFullscreen) {
-						videoPlayer.webkitRequestFullscreen();
-					} else if (videoPlayer.msRequestFullscreen) {
-						videoPlayer.msRequestFullscreen();
-					}
-					fullscreenBtn.innerHTML = svgIcons['compress'];
-				} else if (document.fullscreenElement === videoPlayer) {
-					if (document.exitFullscreen) {
-						document.exitFullscreen();
-					} else if (document.webkitExitFullscreen) {
-						document.webkitExitFullscreen();
-					} else if (document.msExitFullscreen) {
-						document.msExitFullscreen();
-					}
-					fullscreenBtn.innerHTML = svgIcons['expand'];
-				}
-			}
-
 			// Show toast notification
 			function showToast(message, type = 'info') {
-				if (toastTimeout) {
-					clearTimeout(toastTimeout);
-					toastOverlay.classList.remove('show');
-				}
+				if (toastTimeout) clearTimeout(toastTimeout);
 				toastMessage.textContent = message;
-				toast.className = 'toast';
-				toast.classList.add(type);
+				toast.className = `toast ${
+					type === 'success'
+						? 'bg-green-600/70'
+						: type === 'error'
+						? 'bg-red-600/70'
+						: 'bg-blue-600/70'
+				} text-gray-100 py-2 sm:py-3 px-3 sm:px-4 rounded-md shadow-lg flex items-center max-w-[90%] sm:max-w-[80%] text-center mt-16 sm:mt-20`;
 				const iconName =
 					type === 'success'
 						? 'check-circle'
@@ -1052,9 +735,7 @@
 						? 'exclamation-circle'
 						: 'info-circle';
 				const iconElement = toast.querySelector('.toast-icon');
-				if (iconElement) {
-					iconElement.innerHTML = svgIcons[iconName];
-				}
+				if (iconElement) iconElement.innerHTML = svgIcons[iconName];
 				toastOverlay.classList.add('show');
 				toastTimeout = setTimeout(() => {
 					toastOverlay.classList.remove('show');
