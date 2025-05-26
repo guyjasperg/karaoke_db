@@ -1366,15 +1366,15 @@ app.get('/api/subfolders', (req, res) => {
 		fs.readdir(videoDir, { withFileTypes: true }, (err, files) => {
 			if (err) {
 				console.error('Error reading video directory:', err);
-				return res.status(500).json({ error: 'Failed to read video directory' });
+				// return res.status(500).json({ error: 'Failed to read video directory' });
+			} else {
+				// Add filesystem folders to Set
+				files.forEach((file) => {
+					if (file.isDirectory() && !file.name.startsWith('.')) {
+						uniqueFolders.add(file.name);
+					}
+				});
 			}
-
-			// Add filesystem folders to Set
-			files.forEach((file) => {
-				if (file.isDirectory() && !file.name.startsWith('.')) {
-					uniqueFolders.add(file.name);
-				}
-			});
 
 			// Convert Set to sorted array
 			const subfolders = Array.from(uniqueFolders).sort();
