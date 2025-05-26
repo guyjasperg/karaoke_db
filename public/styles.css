@@ -2083,8 +2083,8 @@ video {
     align-items: flex-end;
   }
 
-  .sm\:gap-8 {
-    gap: 2rem;
+  .sm\:gap-10 {
+    gap: 2.5rem;
   }
 
   .sm\:space-x-4 > :not([hidden]) ~ :not([hidden]) {
