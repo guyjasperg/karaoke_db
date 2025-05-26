@@ -25,14 +25,14 @@
 			}
 
 			.header {
-				background-color: #4c1d95;
+				background-color: #5f2fab;
 				height: 60px;
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
 				padding: 0 20px;
 				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-				z-index: 10;
+				z-index: 200;
 			}
 
 			.logo {
@@ -361,8 +361,13 @@
 		</style>
 	</head>
 	<body>
-		<div class="header">
+		<div class="header text-white p-4 shadow-md bg-purple-900">
 			<div class="logo">Karaoke Player</div>
+			<nav class="sm:flex space-x-8">
+				<a href="queue.html" class="font-bold text-blue-400 hover:text-blue-300">Queue</a>
+				<a href="preview.html" class="text-white hover:text-blue-300">Preview</a>
+				<a href="update.html" class="text-white hover:text-blue-300">Update</a>
+			</nav>
 			<div class="session-id">Session ID: <span id="sessionIdDisplay">Loading...</span></div>
 		</div>
 

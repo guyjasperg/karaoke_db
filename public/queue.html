@@ -367,17 +367,23 @@
 				position: relative;
 				z-index: 1;
 			}
+			.reorder-btn-container {
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem; /* Space between up/down buttons */
+				margin-left: 0.5rem;
+			}
 			/* Reorder button styles */
 			.reorder-btn {
-				width: 2rem;
-				height: 2rem;
+				width: 1.5rem; /* Smaller width for icon-only */
+				height: 1.5rem;
 				display: flex;
 				align-items: center;
 				justify-content: center;
 				background-color: #4b5563; /* bg-gray-600 */
 				color: #ffffff;
 				border-radius: 0.25rem;
-				margin-left: 0.5rem;
+				padding: 0; /* Remove padding for tighter fit */
 				transition: background-color 0.2s;
 			}
 			.reorder-btn:hover:not(.disabled-btn) {
@@ -417,6 +423,13 @@
 					</svg>
 					Select a song
 				</h1>
+				<nav class="sm:flex space-x-4">
+					<a href="karaoke.html" class="nav-link font-bold text-blue-400 hover:text-blue-300"
+						>Karaoke</a
+					>
+					<a href="preview.html" class="nav-link text-gray-300 hover:text-blue-300">Preview</a>
+					<a href="update.html" class="nav-link text-gray-300 hover:text-blue-300">Update</a>
+				</nav>
 				<div class="flex items-center mt-2 md:mt-0">
 					<div class="mr-2 text-sm text-gray-300">Session:</div>
 					<div
@@ -1756,7 +1769,6 @@
 							'song-card border-b border-gray-700 py-2 flex justify-between items-center';
 						queueItem.setAttribute('data-song-id', song.songid);
 
-						// Determine button states
 						const isPositionOne = index === 0;
 						const isPositionTwo = index === 1;
 						const isTopSongPlaying =
@@ -1776,31 +1788,32 @@
 								}
 							</div>
 							<div class="flex items-center">
-								<button class="reorder-btn ${isMoveUpDisabled ? 'disabled-btn' : ''}" 
-									data-sequence-id="${song.sequenceID}" 
-									data-direction="up"
-									${isMoveUpDisabled ? 'disabled' : ''}
-									aria-label="Move song up in queue"
-									title="Move Up">
-									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-									</svg>
-								</button>
-								<button class="reorder-btn ${isMoveDownDisabled ? 'disabled-btn' : ''}" 
-									data-sequence-id="${song.sequenceID}" 
-									data-direction="down"
-									${isMoveDownDisabled ? 'disabled' : ''}
-									aria-label="Move song down in queue"
-									title="Move Down">
-									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-									</svg>
-								</button>
+								<div class="reorder-btn-container">
+									<button class="reorder-btn ${isMoveUpDisabled ? 'disabled-btn' : ''}" 
+										data-sequence-id="${song.sequenceID}" 
+										data-direction="up"
+										${isMoveUpDisabled ? 'disabled' : ''}
+										aria-label="Move song up in queue"
+										title="Move song up in queue">
+										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+										</svg>
+									</button>
+									<button class="reorder-btn ${isMoveDownDisabled ? 'disabled-btn' : ''}" 
+										data-sequence-id="${song.sequenceID}" 
+										data-direction="down"
+										${isMoveDownDisabled ? 'disabled' : ''}
+										aria-label="Move song down in queue"
+										title="Move song down in queue">
+										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+										</svg>
+									</button>
+								</div>
 								<span class="bg-purple-800 text-white px-3 py-1 rounded-md ml-2">#${index + 1}</span>
 							</div>
 						`;
 
-						// Restore seekbar progress for the currently playing song
 						if (song.songid === currentPlayingSongId) {
 							const seekBarProgress = queueItem.querySelector('.seek-bar-progress');
 							if (seekBarProgress) {
