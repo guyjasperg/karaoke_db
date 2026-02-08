@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -193,6 +193,15 @@
 					</svg>
 					Karaoke Database Update
 				</h1>
+				<div class="flex items-center justify-center">
+					<nav class="sm:flex space-x-4">
+						<a href="karaoke.html" class="nav-link font-bold text-blue-400 hover:text-blue-300"
+							>Karaoke</a
+						>
+						<a href="queue.html" class="nav-link text-gray-300 hover:text-blue-300">Queue</a>
+						<a href="preview.html" class="nav-link text-gray-300 hover:text-blue-300">Preview</a>
+					</nav>
+				</div>
 			</div>
 		</header>
 
@@ -800,8 +809,8 @@
 					type === 'success'
 						? 'bg-green-800 text-green-100'
 						: type === 'info'
-						? 'bg-blue-800 text-blue-100'
-						: 'bg-red-800 text-red-100'
+							? 'bg-blue-800 text-blue-100'
+							: 'bg-red-800 text-red-100'
 				}`;
 				messageContainer.classList.remove('hidden');
 

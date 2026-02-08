@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -393,6 +393,61 @@
 		</style>
 	</head>
 	<body class="flex flex-col min-h-screen bg-gray-900 text-gray-100">
+		<div class="bg-purple-700 h-16 flex justify-between items-center px-4 sm:px-5 shadow-lg z-50">
+			<div class="text-xl sm:text-2xl font-bold text-purple-300">Karaoke Master</div>
+			<div class="flex items-center justify-center">
+				<nav class="flex gap-2 sm:gap-10 items-center">
+					<a href="karaoke.html" class="nav-link font-bold text-blue-400 hover:text-blue-300"
+						>Karaoke</a
+					>
+					<a
+						href="queue.html"
+						class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400 active:font-bold sm:px-3"
+					>
+						<span class="inline sm:hidden">
+							<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+								<path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+							</svg>
+						</span>
+						<span class="hidden sm:inline">Queue</span>
+					</a>
+					<a
+						href="update.html"
+						class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400"
+					>
+						<span class="inline sm:hidden">
+							<svg
+								width="32px"
+								height="32px"
+								viewBox="0 -4 36 36"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="#000000"
+							>
+								<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+								<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+								<g id="SVGRepo_iconCarrier">
+									<path
+										fill="none"
+										stroke="#fbfcfc"
+										stroke-width="2"
+										d="M2.99787498,6.99999999 L2.99787498,0.999999992 L17.4999998,0.999999992 L20.9999998,4.50000005 L21,23 L15,23 M16,1 L16,6 L21,6 M8,23 C11.8659932,23 15,19.8659932 15,16 C15,12.1340068 11.8659932,9 8,9 C4.13400675,9 1,12.1340068 1,16 C1,19.8659932 4.13400675,23 8,23 Z M4.5,16.5 L8,13 L11.5,16.5 M8,13.5 L8,20"
+									></path>
+								</g>
+							</svg>
+						</span>
+						<span class="hidden sm:inline">Update</span>
+					</a>
+				</nav>
+			</div>
+
+			<div class="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
+				ID:
+				<a id="sessionIdDisplay" class="text-blue-300 hover:text-blue-400 underline cursor-pointer"
+					>Loading...</a
+				>
+			</div>
+		</div>
+
 		<div id="message-container" class="p-3 rounded text-sm hidden" aria-live="polite"></div>
 
 		<main class="flex-1 container mx-auto">
@@ -715,8 +770,8 @@
 								<div class="font-bold">${song.title || 'Unknown'}</div>
 								<div class="text-sm">${song.artist || 'Unknown'}</div>
 								<div class="text-sm">Start: ${song.startTime != null ? song.startTime : '0'}s | Time: ${formatTime(
-							song.duration || 0
-						)}</div>
+									song.duration || 0
+								)}</div>
 							</td>
 							<td>
 								<div class="action-buttons">
@@ -1114,8 +1169,8 @@
 					type === 'success'
 						? 'bg-green-800 text-green-100'
 						: type === 'info'
-						? 'bg-blue-800 text-blue-100'
-						: 'bg-red-800 text-red-100'
+							? 'bg-blue-800 text-blue-100'
+							: 'bg-red-800 text-red-100'
 				}`;
 				messageContainer.classList.remove('hidden');
 

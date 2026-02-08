@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -770,15 +770,15 @@
 					type === 'success'
 						? 'bg-green-600/70'
 						: type === 'error'
-						? 'bg-red-600/70'
-						: 'bg-blue-600/70'
+							? 'bg-red-600/70'
+							: 'bg-blue-600/70'
 				} text-gray-100 py-2 sm:py-3 px-3 sm:px-4 rounded-md shadow-lg flex items-center max-w-[90%] sm:max-w-[80%] text-center mt-16 sm:mt-20`;
 				const iconName =
 					type === 'success'
 						? 'check-circle'
 						: type === 'error'
-						? 'exclamation-circle'
-						: 'info-circle';
+							? 'exclamation-circle'
+							: 'info-circle';
 				const iconElement = toast.querySelector('.toast-icon');
 				if (iconElement) iconElement.innerHTML = svgIcons[iconName];
 				toastOverlay.classList.add('show');
