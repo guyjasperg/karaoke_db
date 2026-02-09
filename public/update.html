@@ -172,38 +172,57 @@
 		</style>
 	</head>
 	<body class="flex flex-col min-h-screen bg-gray-900 text-gray-100">
-		<div id="message-container" class="p-3 rounded text-sm hidden" aria-live="polite"></div>
-
-		<header class="bg-purple-900 text-white p-4 shadow-md">
-			<div class="container mx-auto flex justify-between items-center">
-				<h1 class="text-2xl font-bold flex items-center">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-6 w-6 mr-2"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
+		<div class="bg-purple-700 h-16 flex justify-between items-center px-4 sm:px-5 shadow-lg z-50">
+			<div class="text-xl sm:text-2xl font-bold text-purple-300">Karaoke Master</div>
+			<div class="flex items-center justify-center">
+				<nav class="flex gap-2 sm:gap-10 items-center">
+					<a
+						href="karaoke.html"
+						class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400 active:font-bold sm:px-3"
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-						/>
-					</svg>
-					Karaoke Database Update
-				</h1>
-				<div class="flex items-center justify-center">
-					<nav class="sm:flex space-x-4">
-						<a href="karaoke.html" class="nav-link font-bold text-blue-400 hover:text-blue-300"
-							>Karaoke</a
-						>
-						<a href="queue.html" class="nav-link text-gray-300 hover:text-blue-300">Queue</a>
-						<a href="preview.html" class="nav-link text-gray-300 hover:text-blue-300">Preview</a>
-					</nav>
-				</div>
+						<span class="inline sm:hidden">
+							<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+								<path d="M12 3v9.28c-.47-.29-.99-.72-1.6-1.53L6.6 7.07A1 1 0 006 5.92a1 1 0 00-1.6.53c-.63 2.05.96 5.44 7.6 10.84 6.64-5.4 8.23-8.79 7.6-10.84A1 1 0 0018 7.07l-3.8 3.68c-.61.81-1.13 1.24-1.6 1.53V3z" />
+							</svg>
+						</span>
+						<span class="hidden sm:inline">Karaoke</span>
+					</a>
+					<a
+						href="queue.html"
+						class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400 active:font-bold sm:px-3"
+					>
+						<span class="inline sm:hidden">
+							<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+								<path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+							</svg>
+						</span>
+						<span class="hidden sm:inline">Queue</span>
+					</a>
+					<a
+						href="preview.html"
+						class="text-gray-100 no-underline px-2 py-2 rounded-md transition-all duration-200 hover:text-blue-300 hover:bg-blue-300/10 active:text-blue-400"
+					>
+						<span class="inline sm:hidden">
+							<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+								<path
+									d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"
+								/>
+							</svg>
+						</span>
+						<span class="hidden sm:inline">Preview</span>
+					</a>
+				</nav>
 			</div>
-		</header>
+
+			<div class="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
+				ID:
+				<a id="sessionIdDisplay" class="text-blue-300 hover:text-blue-400 underline cursor-pointer"
+					>Loading...</a
+				>
+			</div>
+		</div>
+
+		<div id="message-container" class="p-3 rounded text-sm hidden" aria-live="polite"></div>
 
 		<main class="flex-1 container mx-auto p-4">
 			<div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
